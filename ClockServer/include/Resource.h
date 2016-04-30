@@ -1,0 +1,1 @@
+../../foundation/include/Resource.h

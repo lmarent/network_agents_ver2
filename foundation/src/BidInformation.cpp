@@ -11,7 +11,6 @@
 
 #include "BidServiceInformation.h"
 #include "BidInformation.h"
-#include "MarketPlaceException.h"
 
 namespace ChoiceNet
 {

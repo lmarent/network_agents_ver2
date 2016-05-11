@@ -1,5 +1,5 @@
-#ifndef QualityParameter_INCLUDED
-#define QualityParameter_INCLUDED
+#ifndef Decision_Variable_INCLUDED
+#define Decision_Variable_INCLUDED
 
 #include <string>
 #include <Poco/DOM/Document.h>
@@ -108,4 +108,4 @@ private:
 
 }  /// End ChoiceNet namespace
 
-#endif // QualityParameter_INCLUDED
+#endif // Decision_Variable_INCLUDED

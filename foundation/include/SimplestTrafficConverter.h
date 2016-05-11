@@ -41,4 +41,4 @@ private:
 
 }  /// End ChoiceNet namespace
 
-#endif // Simplest_Traffic_Converter
+#endif // SimplestTrafficConverter_INCLUDED

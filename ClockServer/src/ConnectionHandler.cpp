@@ -50,9 +50,9 @@
 #include <Poco/NumberParser.h>
 #include <Poco/NumberFormatter.h>
 
-#include "ConnectionHandler.h"
 #include "FoundationException.h"
 #include "ClockServerException.h"
+#include "ConnectionHandler.h"
 #include "ClockSys.h"
 #include "ClockServer.h"
 

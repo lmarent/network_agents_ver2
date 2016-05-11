@@ -2,10 +2,10 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.68])
-AC_INIT([libnetagentsfdtion], [0.1], [tteixeira@umass.edu])
+AC_INIT([ClockServer], [0.1], [tteixeira@umass.edu])
 AM_INIT_AUTOMAKE
 LT_INIT
-AC_CONFIG_SRCDIR([src/Bid.cpp])
+AC_CONFIG_SRCDIR([src/main.cpp])
 
 ## ------------------------Begin instantiation part 
 ## Meaning:
@@ -53,7 +53,6 @@ if test $tst = true ; then
   AC_DEFINE(ENABLE_TEST, 1, [enable test applications])
 fi
 
-
 # Checks for header files.
 
 
@@ -82,22 +81,15 @@ CPPFLAGS=$SAVED_CPPFLAGS
 LDFLAGS=$SAVED_LDFLAGS
 LIBS= $SAVED_LIBS
 
-
-# Additional arguments (and substitutions)
-# Allow the pkg-config directory to be set
-AC_ARG_WITH(pkgconfigdir,
-	AC_HELP_STRING([--with-pkgconfigdir],
-	[Use the specified pkgconfig dir (default is pkgconfig)]),
-	[pkgconfigdir=${withval}],
-	[pkgconfigdir='${exec_prefix}/lib/pkgconfig'])
+PKG_CHECK_MODULES([LIBNETAGENTSFDTION], [libnetagentsfdtion-0.0])
+AC_SUBST([LIBNETAGENTSFDTION_CFLAGS])
+AC_SUBST([LIBNETAGENTSFDTION_LIBS])
 
 AC_SUBST(poco_CFLAGS)
 AC_SUBST(poco_LIBS)
 AC_SUBST(poco_LDFLAGS)
-AC_SUBST(pkgconfigdir)
 
-AC_CONFIG_FILES([Makefile \
-				 libnetagentsfdtion-0.0.pc \
+AC_CONFIG_FILES([Makefile
                  src/Makefile])
 
 AC_OUTPUT

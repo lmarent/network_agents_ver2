@@ -33,6 +33,8 @@
 #ifndef Connection_Handler_INCLUDED
 #define Connection_Handler_INCLUDED
 
+#include "Message.h"
+
 
 #include <Poco/Net/SocketReactor.h>
 #include <Poco/Net/SocketAcceptor.h>
@@ -49,8 +51,6 @@
 #include <Poco/Util/OptionSet.h>
 #include <Poco/Util/HelpFormatter.h>
 #include <iostream>
-
-#include "Message.h"
 
 namespace ChoiceNet
 {
@@ -88,19 +88,19 @@ public:
 	void onSocketIdle(const Poco::AutoPtr<Poco::Net::IdleNotification>& pNf);
 	
 	void doProcessing(Poco::Net::SocketAddress socketAddress, 
-					  Message & message);
+					  ChoiceNet::Eco::Message & message);
 		
 	void providerConnect(Poco::Net::SocketAddress socketAddress, 
-						 Message & messageRequest,
-						 Message & messageResponse);
+						 ChoiceNet::Eco::Message & messageRequest,
+						 ChoiceNet::Eco::Message & messageResponse);
 	
 	void providerStartListening(Poco::Net::SocketAddress socketAddress, 
-								Message & messageRequest,
-								Message & messageResponse);
+								ChoiceNet::Eco::Message & messageRequest,
+								ChoiceNet::Eco::Message & messageResponse);
 	
 	void sendCurrentPeriod(Poco::Net::SocketAddress socketAddress, 
-						   Message & messageRequest,
-						   Message & messageResponse);
+						   ChoiceNet::Eco::Message & messageRequest,
+						   ChoiceNet::Eco::Message & messageResponse);
 	
 	void disconnectListener(Poco::Net::SocketAddress socketAddress, 
 							 Message & messageRequest,

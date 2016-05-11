@@ -1,9 +1,9 @@
 //
-// ClockServerException.h
+// FoundationException.h
 //
-// $Id: /ClockServer/include/ClockServerException.h#1 $
+// $Id: /ClockServer/include/FoundationException.h#1 $
 //
-// Definition of the ClockServerException class.
+// Definition of the FoundationException class.
 //
 // Copyright (c) 2014, Choice Net Project
 // and Contributors.
@@ -32,8 +32,8 @@
 //
 
 
-#ifndef ClockServerException_INCLUDED
-#define ClockServerException_INCLUDED
+#ifndef FoundationException_INCLUDED
+#define FoundationException_INCLUDED
 
 
 #include <Poco/Exception.h>
@@ -46,20 +46,20 @@ namespace Eco
 {
 
 
-class ClockServerException: public Poco::Exception
-	/// Base class for all Clock Server Exceptions
+class FoundationException: public Poco::Exception
+	/// Base class for all Service Exceptions
 {
 public:
-	ClockServerException(const std::string& msg, int code = 0);
-		/// Creates a Clock Server Exception.
+	FoundationException(const std::string& msg, int code = 0);
+		/// Creates a Foundation Exception.
 
-	ClockServerException(const ClockServerException& exc);
-		/// Creates a clock server Exception from another one.
+	FoundationException(const FoundationException& exc);
+		/// Creates a Foundation Exception from another one.
 
-	~ClockServerException() throw();
-		/// Destroys Clock server Exception.
+	~FoundationException() throw();
+		/// Destroys Foundation Exception.
 
-	ClockServerException& operator=(const ClockServerException& exc);
+	FoundationException& operator=(const FoundationException& exc);
 		/// Assignment operator.
 
 	const char* name() const throw();
@@ -86,38 +86,40 @@ public:
 //
 // inlines
 //
-inline ClockServerException& ClockServerException::operator=(const ClockServerException& exc)
+inline FoundationException& FoundationException::operator=(const FoundationException& exc)
 {
 	Poco::Exception::operator=(exc);
 	return *this;
 }
 
 
-inline const char* ClockServerException::name() const throw()
+inline const char* FoundationException::name() const throw()
 {
-	return "Clock Server";
+	return "Foundation Exception";
 }
 
 
-inline const char* ClockServerException::className() const throw()
+inline const char* FoundationException::className() const throw()
 {
 	return typeid(*this).name();
 }
 
 
-inline Poco::Exception* ClockServerException::clone() const
+inline Poco::Exception* FoundationException::clone() const
 {
-	return new ClockServerException(*this);
+	return new FoundationException(*this);
 }
 
 
-inline void ClockServerException::rethrow() const
+inline void FoundationException::rethrow() const
 {
 	throw *this;
 }
 
 
-} } // namespace ChoiceNet::Eco
+} 
+
+} // namespace ChoiceNet::Eco
 
 
-#endif // ClockServerException_INCLUDED
+#endif // FoundationException_INCLUDED

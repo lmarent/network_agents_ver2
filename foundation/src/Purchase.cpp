@@ -11,7 +11,6 @@
 #include "Message.h"
 #include "Datapoint.h"
 #include "FoundationException.h"
-#include "MarketPlaceException.h"
 
 
 namespace ChoiceNet
@@ -71,7 +70,7 @@ Datapoint()
 	}
 	catch (FoundationException &e){
 		// Some of the parameters where not found, so the Purchase is incomplete
-		throw MarketPlaceException("Incomplete Purchase - " + e.message(), 306);
+		throw FoundationException("Incomplete Purchase - " + e.message(), 306);
 	}
 }
 		
@@ -105,7 +104,7 @@ void Purchase::setDecisionVariable(std::string decisionVariableId, size_t dimens
 		Datapoint::setNumberAtDim(dimension, value);
 	}
 	else{
-		throw MarketPlaceException("The decision variable is already in the Purchase");
+		throw FoundationException("The decision variable is already in the Purchase");
 	}
 }
 
@@ -123,7 +122,7 @@ double Purchase::getDecisionVariable(std::string decisionVariableId)
 	}
 	else
 	{
-		throw MarketPlaceException("The decision variable is not part of the bid");
+		throw FoundationException("The decision variable is not part of the bid");
 	}
 }
 

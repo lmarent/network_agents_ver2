@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@/libnetagentsfdtion
+
+Name:libauctionfdtion
+Description: ChoiceNet agent model foundation library
+Version: 0.0.1
+Cflags: -I${includedir}
+Libs: -L${libdir} -lnetagentsfdtion

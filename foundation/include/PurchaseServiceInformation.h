@@ -8,7 +8,6 @@
 #include <Poco/DOM/Text.h>
 #include <Poco/DOM/AutoPtr.h>
 
-#include "MarketPlaceException.h"
 #include "Purchase.h"
 
 

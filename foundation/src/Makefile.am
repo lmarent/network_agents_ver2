@@ -2,16 +2,21 @@ ACLOCAL_AMFLAGS = -I m4
 
 lib_LTLIBRARIES = libnetagentsfdtion.la
 
-INC_DIR 	= $(top_srcdir)/foundation/include
+INC_DIR 	= $(top_srcdir)/include
 
 pkginclude_HEADERS = $(INC_DIR)/Bid.h \
 					 $(INC_DIR)/BidInformation.h  \
 					 $(INC_DIR)/BidProviderInformation.h \
 					 $(INC_DIR)/BidServiceInformation.h \
+					 $(INC_DIR)/Datapoint.h \
 					 $(INC_DIR)/DecisionVariable.h \
 					 $(INC_DIR)/DemandForecaster.h \
+					 $(INC_DIR)/FoundationException.h \
+					 $(INC_DIR)/FoundationSys.h \
 					 $(INC_DIR)/Listener.h \
 					 $(INC_DIR)/Message.h \
+					 $(INC_DIR)/NondominatedsortAlgo.h \
+					 $(INC_DIR)/ParetoAlgo.h \
 					 $(INC_DIR)/PointSetDemandForecaster.h \
 					 $(INC_DIR)/ProbabilityDistribution.h \
 					 $(INC_DIR)/Provider.h \
@@ -32,7 +37,7 @@ else
 endif
 
 libnetagentsfdtion_la_CPPFLAGS = -I$(top_srcdir) \
-							   -I$(top_srcdir)/foundation/include
+							   -I$(top_srcdir)/include
 
 libnetagentsfdtion_la_SOURCES =  Bid.cpp \
 								 BidInformation.cpp \
@@ -42,8 +47,10 @@ libnetagentsfdtion_la_SOURCES =  Bid.cpp \
 								 DemandForecaster.cpp \
 								 FoundationException.cpp \
 								 FoundationSys.cpp \
+								 Datapoint.cpp \
 								 Listener.cpp \
 								 Message.cpp \
+								 NondominatedsortAlgo.cpp \
 								 PointSetDemandForecaster.cpp \
 								 ProbabilityDistribution.cpp \
 								 Provider.cpp \

@@ -9,7 +9,6 @@
 
 #include "Bid.h"
 #include "Message.h"
-#include "MarketPlaceException.h"
 #include "FoundationException.h"
 #include "Datapoint.h"
 #include "Service.h"
@@ -88,7 +87,7 @@ Datapoint()
 		}
 	}
 	catch (FoundationException &ex){
-		throw MarketPlaceException(ex.message(), ex.code());
+		throw FoundationException(ex.message(), ex.code());
 	}
 }
 		
@@ -168,7 +167,7 @@ void Bid::setDecisionVariable(std::string decisionVariableId, size_t dimension, 
 		
 	}
 	else{
-		throw MarketPlaceException("The decision variable is already in the Bid");
+		throw FoundationException("The decision variable is already in the Bid");
 	}
 }
 
@@ -191,7 +190,7 @@ double Bid::getDecisionVariable(std::string decisionVariableId)
 	}
 	else
 	{
-		throw MarketPlaceException("The decision variable is not part of the bid");
+		throw FoundationException("The decision variable is not part of the bid");
 	}
 }
 

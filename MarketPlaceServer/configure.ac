@@ -2,10 +2,10 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.68])
-AC_INIT([libnetagentsfdtion], [0.1], [tteixeira@umass.edu])
+AC_INIT([MarketPlaceServer], [0.1], [tteixeira@umass.edu])
 AM_INIT_AUTOMAKE
 LT_INIT
-AC_CONFIG_SRCDIR([src/Bid.cpp])
+AC_CONFIG_SRCDIR([src/main.cpp])
 
 ## ------------------------Begin instantiation part 
 ## Meaning:
@@ -53,13 +53,38 @@ if test $tst = true ; then
   AC_DEFINE(ENABLE_TEST, 1, [enable test applications])
 fi
 
-
 # Checks for header files.
 
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
 
+# Checks for library functions.
+
+
+AC_ARG_ENABLE(debug,
+  [  --enable-debug            enable debug build ],
+  [case "${enableval}" in
+    yes) debug=true ;;
+    no)  debug=false ;;
+    *) AC_MSG_ERROR(bad value ${enableval} for --enable-debug) ;;
+  esac],[debug=false])
+AM_CONDITIONAL(ENABLE_DEBUG, test x$debug = xtrue)
+if test $debug = true ; then
+  AC_DEFINE(ENABLE_DEBUG, 1, [enable debug build])
+fi
+
+AC_ARG_ENABLE(test,
+  [  --enable-test            enable all test applications ],
+  [case "${enableval}" in
+    yes) tst=true ;;
+    no)  tst=false ;;
+    *) AC_MSG_ERROR(bad value ${enableval} for --enable-test) ;;
+  esac],[tst=false])
+AM_CONDITIONAL(ENABLE_TEST, test x$tst = xtrue)
+if test $tst = true ; then
+  AC_DEFINE(ENABLE_TEST, 1, [enable test applications])
+fi
 
 # check for Poco Foundation library
 # Checks for libraries.
@@ -83,21 +108,16 @@ LDFLAGS=$SAVED_LDFLAGS
 LIBS= $SAVED_LIBS
 
 
-# Additional arguments (and substitutions)
-# Allow the pkg-config directory to be set
-AC_ARG_WITH(pkgconfigdir,
-	AC_HELP_STRING([--with-pkgconfigdir],
-	[Use the specified pkgconfig dir (default is pkgconfig)]),
-	[pkgconfigdir=${withval}],
-	[pkgconfigdir='${exec_prefix}/lib/pkgconfig'])
+PKG_CHECK_MODULES([LIBNETAGENTSFDTION], [libnetagentsfdtion-0.0])
+AC_SUBST([LIBNETAGENTSFDTION_CFLAGS])
+AC_SUBST([LIBNETAGENTSFDTION_LIBS])
+
 
 AC_SUBST(poco_CFLAGS)
 AC_SUBST(poco_LIBS)
 AC_SUBST(poco_LDFLAGS)
-AC_SUBST(pkgconfigdir)
 
-AC_CONFIG_FILES([Makefile \
-				 libnetagentsfdtion-0.0.pc \
+AC_CONFIG_FILES([Makefile
                  src/Makefile])
 
 AC_OUTPUT

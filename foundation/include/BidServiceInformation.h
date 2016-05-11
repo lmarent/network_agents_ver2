@@ -7,7 +7,7 @@
 #include <Poco/AutoPtr.h>
 #include "BidProviderInformation.h"
 #include "Datapoint.h"
-#include "MarketPlaceException.h"
+#include "FoundationException.h"
 
 namespace ChoiceNet
 {

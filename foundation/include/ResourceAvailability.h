@@ -51,4 +51,4 @@ private:
 
 }  /// End ChoiceNet namespace
 
-#endif // Resource_INCLUDED
+#endif // ResourceAvailability_INCLUDED

@@ -2,7 +2,7 @@
 #include <Poco/AutoPtr.h>
 #include <iostream>
 
-#include "MarketPlaceException.h"
+#include "FoundationException.h"
 #include "Bid.h"
 #include "BidProviderInformation.h"
 
@@ -57,7 +57,7 @@ void BidProviderInformation::addBid(Bid * bidPtr)
 	}
 	else
 	{
-		MarketPlaceException("Bid is already inserted in the provider information", 311);
+		FoundationException("Bid is already inserted in the provider information", 311);
 	}
 }
 
@@ -71,7 +71,7 @@ void BidProviderInformation::deleteBid(Bid * bidPtr)
 	}
 	else
 	{
-		MarketPlaceException("Bid was not found in the provider information", 312);
+		FoundationException("Bid was not found in the provider information", 312);
 	}
 	
 }

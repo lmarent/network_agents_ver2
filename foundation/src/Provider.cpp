@@ -1,6 +1,6 @@
 
 #include <Poco/Util/ServerApplication.h>
-#include "MarketPlaceException.h"
+#include "FoundationException.h"
 #include "Provider.h"
 
 namespace ChoiceNet
@@ -36,7 +36,7 @@ void Provider::addResourceAvailability(std::string resourceId)
 	}
 	else
 	{
-		throw MarketPlaceException("Resource already registered in the provider", 313);
+		throw FoundationException("Resource already registered in the provider", 313);
 	}	
 }
     

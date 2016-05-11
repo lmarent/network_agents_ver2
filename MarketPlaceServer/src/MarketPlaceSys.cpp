@@ -1,5 +1,6 @@
 #include <vector>
 #include <Poco/Net/SocketAddress.h>
+#include <Poco/Exception.h>
 #include <Poco/Net/NetException.h>
 #include <Poco/NumberParser.h>
 #include <Poco/NumberFormatter.h>
@@ -35,6 +36,7 @@ _clockSocket(NULL),
 _current_bids(NULL),
 _current_purchases(NULL)
 {
+
 }
 
 MarketPlaceSys::~MarketPlaceSys(void)
@@ -142,6 +144,10 @@ void MarketPlaceSys::initialize(Poco::Util::Application &app)
 	FoundationSys::initialize(app, 0, pareto_fronts_to_send);
 	
     std::string clock_address = app.config().getString("clock_server_address");
+    
+    if (clock_address.empty()){
+	   throw MarketPlaceException("Clock server address not found");
+	}
     std::string name = app.config().getString("name");
     // Initialize the name of the market place
     p_cName = name;
@@ -149,7 +155,13 @@ void MarketPlaceSys::initialize(Poco::Util::Application &app)
 	// Establish the connection with the clock server.
 	Poco::Net::IPAddress ipadd(clock_address, Poco::Net::IPAddress::IPv4); 
 	Poco::Net::SocketAddress sockadd(ipadd, u16Port);
-	_clockSocket = new Poco::Net::StreamSocket(sockadd);
+	try
+	{
+		_clockSocket = new Poco::Net::StreamSocket(sockadd);
+		
+	} catch (Poco::InvalidArgumentException &e) {
+		throw MarketPlaceException(e.what(), e.code());
+	}
 	
 	Message connect_msg;
 	Message response;

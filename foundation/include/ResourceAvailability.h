@@ -2,6 +2,7 @@
 #define ResourceAvailability_INCLUDED
 
 #include <map>
+#include <iostream>
 #include "Resource.h"
 #include "DecisionVariable.h"
 

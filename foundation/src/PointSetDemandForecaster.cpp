@@ -3,6 +3,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <Poco/StringTokenizer.h>
 #include <Poco/NumberParser.h>
 #include <Poco/NumberFormatter.h>
@@ -83,7 +84,9 @@ PointSetDemandForecaster::PointSetDemandForecaster(std::map<std::string, std::st
     }
     else
     {
-		throw FoundationException("Demand file was not found", 333);
+    	std::stringstream ss;
+    	ss << "Demand file was not found" << absFileName << std::endl;
+    	throw FoundationException(ss.str(), 333);
     }
 
 }

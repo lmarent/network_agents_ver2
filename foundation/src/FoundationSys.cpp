@@ -7,6 +7,7 @@
 #include "FoundationSys.h"
 #include "FoundationException.h"
 
+using namespace Poco::Data::Keywords;
 
 namespace ChoiceNet
 {
@@ -115,9 +116,9 @@ void FoundationSys::readGeneralParametersFromDataBase(void)
 	
 	Poco::Data::Statement select(session);
 	select << "select bid_periods, pareto_fronts_to_exchange from simulation_generalparameters limit 1",
-	          Poco::Data::into(bid_periods),
-	          Poco::Data::into(pareto_fronts_to_exchange),
-	          Poco::Data::range(0, 1); //  iterate over result set one row at a time
+	          into(bid_periods),
+	          into(pareto_fronts_to_exchange),
+	          range(0, 1); //  iterate over result set one row at a time
 	 while (!select.done())
 	 {
 		 select.execute();
@@ -139,10 +140,10 @@ void FoundationSys::readDiscreteProbabilityDistributionsFromDataBase( int probab
 	double probability;
 	Poco::Data::Statement select(session);
 	select << "SELECT value, probability FROM simulation_discreteprobabilitydistribution where probability_id_id = ?",
-			Poco::Data::into(value),
-			Poco::Data::into(probability),
-			Poco::Data::use(probabilityId),
-			Poco::Data::range(0, 1); //  iterate over result set one row at a time
+			into(value),
+			into(probability),
+			use(probabilityId),
+			range(0, 1); //  iterate over result set one row at a time
 	
 	while (!select.done())
     {
@@ -162,10 +163,10 @@ void FoundationSys::readContinuousProbabilityDistributionsFromDataBase(int proba
 	double value;
 	Poco::Data::Statement select(session);
 	select << "SELECT parameter, value FROM simulation_continuousprobabilitydistribution where probability_id_id = ?",
-			Poco::Data::into(parameter),
-			Poco::Data::into(value),
-			Poco::Data::use(probabilityId),
-			Poco::Data::range(0, 1); //  iterate over result set one row at a time
+			into(parameter),
+			into(value),
+			use(probabilityId),
+			range(0, 1); //  iterate over result set one row at a time
 	
 	while (!select.done())
     {
@@ -188,11 +189,11 @@ void FoundationSys::readProbabilityDistributionsFromDataBase(void)
 	
 	Poco::Data::Statement select(session);
 	select << "SELECT id, name, domain, class_name FROM simulation_probabilitydistribution",
-			Poco::Data::into(id),
-			Poco::Data::into(name),
-			Poco::Data::into(domainStr),
-			Poco::Data::into(class_name),
-			Poco::Data::range(0, 1); //  iterate over result set one row at a time
+			into(id),
+			into(name),
+			into(domainStr),
+			into(class_name),
+			range(0, 1); //  iterate over result set one row at a time
 	
 	while (!select.done())
     {
@@ -228,9 +229,9 @@ void FoundationSys::readResourcesFromDataBase(void)
 	std::string name;
 	Poco::Data::Statement select(session);
 	select << "SELECT id, name FROM simulation_resource",
-			Poco::Data::into(id),
-			Poco::Data::into(name),
-			Poco::Data::range(0, 1); //  iterate over result set one row at a time
+			into(id),
+			into(name),
+			range(0, 1); //  iterate over result set one row at a time
 	
 	while (!select.done())
     {
@@ -261,16 +262,16 @@ void FoundationSys::readDecisionVariablesFromDataBase(void)
 	
 	Poco::Data::Statement select(session);
 	select << "SELECT id, name, optimization, min_value, max_value, resource_id, modeling, sensitivity_distribution_id, value_distribution_id FROM simulation_decisionvariable",
-			Poco::Data::into(id),
-			Poco::Data::into(name),
-			Poco::Data::into(optimizationStr),
-			Poco::Data::into(minValue),
-			Poco::Data::into(maxValue),
-			Poco::Data::into(resId),
-			Poco::Data::into(modelingStr),
-			Poco::Data::into(sensDistribId),
-			Poco::Data::into(valDistribId),
-			Poco::Data::range(0, 1); //  iterate over result set one row at a time
+			into(id),
+			into(name),
+			into(optimizationStr),
+			into(minValue),
+			into(maxValue),
+			into(resId),
+			into(modelingStr),
+			into(sensDistribId),
+			into(valDistribId),
+			range(0, 1); //  iterate over result set one row at a time
 	
 	while (!select.done())
     {
@@ -312,9 +313,9 @@ void FoundationSys::readServiceDecisionVariablesFromDataBase(int serviceId,  Ser
 	
 	int id;
 	select << "SELECT id_decision_variable_id FROM simulation_service_decisionvariable where id_service_id = ?",
-			Poco::Data::into(id),
-			Poco::Data::use(serviceId),
-			Poco::Data::range(0, 1);
+			into(id),
+			use(serviceId),
+			range(0, 1);
 			
 	while (!select.done())
 	{
@@ -335,12 +336,12 @@ void FoundationSys::readServicesFromDataBase(void)
 	std::string name, file_name_demand, converter_origin, file_name_converter;
 	Poco::Data::Statement select(session);
 	select << "SELECT id, name, file_name_demand, converter_origin, file_name_converter FROM simulation_service",
-			Poco::Data::into(id),
-			Poco::Data::into(name),
-			Poco::Data::into(file_name_demand),
-			Poco::Data::into(converter_origin),
-			Poco::Data::into(file_name_converter),
-			Poco::Data::range(0, 1);
+			into(id),
+			into(name),
+			into(file_name_demand),
+			into(converter_origin),
+			into(file_name_converter),
+			range(0, 1);
 	while (!select.done())
     {
 		select.execute();
@@ -371,8 +372,8 @@ void FoundationSys::readServiceToExecute(void)
 	std::string name;
 	Poco::Data::Statement select(session);
 	select << "select distinct b.service_id from simulation_consumer a, simulation_consumerservice b where a.id = b.consumer_id and b.execute = 1",
-			Poco::Data::into(id),
-			Poco::Data::range(0, 1);
+			into(id),
+			range(0, 1);
 	while (!select.done())
     {
 		select.execute();
@@ -513,11 +514,11 @@ SimplestTrafficConverter * FoundationSys::loadTrafficConverter(std::string servi
 	double average, variance, market_potential;
 	Poco::Data::Statement select(session);
 	select << "SELECT average, variance, market_potential FROM simulation_consumerservice where service_id = ?",
-				Poco::Data::into(average),
-				Poco::Data::into(variance),
-				Poco::Data::into(market_potential),
-				Poco::Data::use(serviceId),
-				Poco::Data::range(0, 1); //  iterate over result set one row at a time
+				into(average),
+				into(variance),
+				into(market_potential),
+				use(serviceId),
+				range(0, 1); //  iterate over result set one row at a time
 
 	while (!select.done())
 	{

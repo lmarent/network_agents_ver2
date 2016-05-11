@@ -22,6 +22,7 @@
 #include "TimerNotification.h"
 #include "Service.h"
 #include "DecisionVariable.h"
+#include "FoundationException.h"
 
 namespace ChoiceNet
 {
@@ -43,9 +44,14 @@ namespace Eco
 
     void ClockServer::initialize(Poco::Util::Application& self)
     {
-        loadConfiguration();
-		_clockSysPtr = new ClockSys();
-		(*_clockSysPtr).initialize(self);		
+        try{
+        	loadConfiguration();
+        	_clockSysPtr = new ClockSys();
+        	(*_clockSysPtr).initialize(self);
+        } catch(FoundationException &e) {
+        	std::cout << e.message() << std::endl;
+        	terminate();
+        }
         Poco::Util::ServerApplication::initialize(self);               
     }
 

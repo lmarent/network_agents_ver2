@@ -31,9 +31,9 @@ pkginclude_HEADERS = $(INC_DIR)/Bid.h \
 					 $(INC_DIR)/WaitingSocketReactor.h
 
 if ENABLE_DEBUG
-  AM_CXXFLAGS = -g  -fno-inline -DDEBUG -ggdb
+  AM_CXXFLAGS = -g  -fno-inline -DDEBUG -ggdb -std=c++11
 else
-  AM_CXXFLAGS = -O2 
+  AM_CXXFLAGS = -O2 -std=c++11
 endif
 
 libnetagentsfdtion_la_CPPFLAGS = -I$(top_srcdir) \

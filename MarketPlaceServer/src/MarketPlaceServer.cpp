@@ -17,6 +17,7 @@
 #include "MarketPlaceSys.h"
 #include "ConnectionHandler.h"
 #include "WaitingSocketReactor.h"
+#include "FoundationException.h"
 
 namespace ChoiceNet
 {
@@ -39,10 +40,15 @@ namespace Eco
 
     void MarketPlaceServer::initialize(Poco::Util::Application& self)
     {
-        loadConfiguration();
-		_marketSubsystemPtr  = new MarketPlaceSys();		
-		(*_marketSubsystemPtr).initialize(self);
-		Poco::Util::ServerApplication::initialize(self);     
+        try{
+        	loadConfiguration();
+        	_marketSubsystemPtr  = new MarketPlaceSys();
+        	(*_marketSubsystemPtr).initialize(self);
+        	Poco::Util::ServerApplication::initialize(self);
+        } catch	(FoundationException &e){
+        	std::cout << e.message() << std::endl;
+        	terminate();
+        }
     }	
 
     void MarketPlaceServer::uninitialize()

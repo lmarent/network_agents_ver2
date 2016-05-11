@@ -67,15 +67,15 @@ AC_LANG(C++)
 SAVED_LDFLAGS=$LDFLAGS
 SAVED_CPPFLAGS=$CPPFLAGS
 SAVED_LIBS=$LIBS
-CPPFLAGS="$CPPFLAGS -I/usr/local/include/Poco"
-LDFLAGS="$LDFLAGS -L/usr/local/lib/"
-LIBS="$LIBS -lPocoFoundation -lPocoUtil -lPocoNet -lPocoXML -lPocoData -lPocoDataMySQL"
+CPPFLAGS="$CPPFLAGS -I/usr/local/include/Poco -I/usr/include/Poco"
+LDFLAGS="$LDFLAGS -L/usr/local/lib/ -L/usr/lib/"
+LIBS="$LIBS -lPocoFoundation -lPocoUtil -lPocoNet -lPocoXML -lPocoData -lPocoMySQL"
 AC_LINK_IFELSE(
     [AC_LANG_PROGRAM([#include <DateTime.h>],
     [Poco::DateTime now])],
-    [poco_LIBS="-lPocoFoundation -lPocoUtil -lPocoNet -lPocoXML -lPocoData -lPocoDataMySQL"] 
-    [poco_CFLAGS="-DHAVE_PCAP -I/usr/local/include/Poco"] 
-    [poco_LDFLAGS]="-L/usr/local/lib/"]
+    [poco_LIBS="-lPocoFoundation -lPocoUtil -lPocoNet -lPocoXML -lPocoData -lPocoMySQL"] 
+    [poco_CFLAGS="-DHAVE_PCAP -I/usr/local/include/Poco -I/usr/local/include/Poco"] 
+    [poco_LDFLAGS]="-L/usr/local/lib/ -L/usr/lib/"]
     [HAVE_POCO=1],
     [AC_MSG_WARN([libPoco is not installed.])])
 CPPFLAGS=$SAVED_CPPFLAGS 

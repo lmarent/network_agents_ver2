@@ -176,8 +176,8 @@ void Service::to_XML(Poco::XML::AutoPtr<Poco::XML::Document> pDoc,
 std::string Service::findExecutionPath(void)
 {
 	// Finds the execution path, Only works for unix
-	char result[ PATH_MAX ];
-	ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
+	char result[ FILENAME_MAX  ];
+	ssize_t count = readlink( "/proc/self/exe", result, FILENAME_MAX  );
 	std::string path = std::string( result, (count > 0) ? count : 0 );
 	Poco::StringTokenizer elements(path, "/", Poco::StringTokenizer::TOK_TRIM);
 	int i = 0;

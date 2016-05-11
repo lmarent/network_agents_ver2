@@ -14,10 +14,10 @@ MarketPlaceServer_SOURCES = Datapoint.cpp \
 
 if ENABLE_DEBUG
   AM_CXXFLAGS = -g  -I@top_srcdir@/include @LIBNETAGENTSFDTION_CFLAGS@ \
-				 @poco_CFLAGS@ -fno-inline -DDEBUG -ggdb
+				 @poco_CFLAGS@ -fno-inline -DDEBUG -ggdb -std=c++11
 else
   AM_CXXFLAGS = -O2 -I@top_srcdir@/include @LIBNETAGENTSFDTION_CFLAGS@ \
-				@poco_CFLAGS@
+				@poco_CFLAGS@ -std=c++11
 endif
 
 # what flags you want to pass to the C compiler & linker

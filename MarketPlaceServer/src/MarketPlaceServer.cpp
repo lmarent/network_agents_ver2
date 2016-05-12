@@ -12,12 +12,15 @@
 #include <Poco/DateTimeFormat.h>
 #include <Poco/Net/ServerSocket.h>
 #include <Poco/AutoPtr.h>
+#include <Poco/Exception.h>
+#include <Poco/Net/NetException.h>
 
 #include "MarketPlaceServer.h"
 #include "MarketPlaceSys.h"
 #include "ConnectionHandler.h"
 #include "WaitingSocketReactor.h"
 #include "FoundationException.h"
+#include "MarketPlaceException.h"
 
 namespace ChoiceNet
 {
@@ -46,6 +49,12 @@ namespace Eco
         	(*_marketSubsystemPtr).initialize(self);
         	Poco::Util::ServerApplication::initialize(self);
         } catch	(FoundationException &e){
+        	std::cout << e.message() << std::endl;
+        	terminate();
+        } catch (Poco::NotFoundException &e){
+        	std::cout << e.message() << std::endl;
+        	terminate();
+        } catch (MarketPlaceException &e){
         	std::cout << e.message() << std::endl;
         	terminate();
         }

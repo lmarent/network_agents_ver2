@@ -143,56 +143,64 @@ void MarketPlaceSys::initialize(Poco::Util::Application &app)
     
 	FoundationSys::initialize(app, 0, pareto_fronts_to_send);
 	
-    std::string clock_address = app.config().getString("clock_server_address");
-    
-    if (clock_address.empty()){
-	   throw MarketPlaceException("Clock server address not found");
-	}
-    std::string name = app.config().getString("name");
-    // Initialize the name of the market place
-    p_cName = name;
-    
-	// Establish the connection with the clock server.
-	Poco::Net::IPAddress ipadd(clock_address, Poco::Net::IPAddress::IPv4); 
-	Poco::Net::SocketAddress sockadd(ipadd, u16Port);
-	try
-	{
+    try{
+    	std::string clock_address = app.config().getString("clock_server_address");
+
+    	// Establish the connection with the clock server.
+    	Poco::Net::IPAddress ipadd(clock_address, Poco::Net::IPAddress::IPv4);
+    	Poco::Net::SocketAddress sockadd(ipadd, u16Port);
+
 		_clockSocket = new Poco::Net::StreamSocket(sockadd);
-		
+
+
+    } catch (Poco::NotFoundException &e) {
+    	throw MarketPlaceException("Clock server address not found");
 	} catch (Poco::InvalidArgumentException &e) {
 		throw MarketPlaceException(e.what(), e.code());
+	} catch (Poco::Net::ConnectionRefusedException &e) {
+		throw MarketPlaceException("Connection refused by ClockServer", e.code());
 	}
-	
-	Message connect_msg;
-	Message response;
-	Method method = connect;
-	connect_msg.setMethod(method);
-	connect_msg.setParameter("Provider", p_cName);
-	sendMessageToClock(connect_msg, response);
 
-    // If the message is not ok, show the message description and raise an exception
-    if (!(response.isMessageStatusOk())){
-		std::string statusDescr = response.getParameter("Status_Description");
-		throw MarketPlaceException(statusDescr, statusCd);		
-	}	
-	// Finally get the current period
-	Message current_period_msg;
-	Message response2;
-	Method meth_cur = get_current_period;
-	current_period_msg.setMethod(meth_cur);
-	sendMessageToClock(current_period_msg, response2);
-	
-    // If the message is not ok, show the message description and raise an exception
-    if (!(response.isMessageStatusOk())){
-		std::string statusDescr = response2.getParameter("Status_Description");
-		throw MarketPlaceException(statusDescr, statusCd);
+    try {
+    	std::string name = app.config().getString("name");
+		// Initialize the name of the market place
+		p_cName = name;
+
+
+		Message connect_msg;
+		Message response;
+		Method method = connect;
+		connect_msg.setMethod(method);
+		connect_msg.setParameter("Provider", p_cName);
+		sendMessageToClock(connect_msg, response);
+
+		// If the message is not ok, show the message description and raise an exception
+		if (!(response.isMessageStatusOk())){
+			std::string statusDescr = response.getParameter("Status_Description");
+			throw MarketPlaceException(statusDescr, statusCd);
+		}
+		// Finally get the current period
+		Message current_period_msg;
+		Message response2;
+		Method meth_cur = get_current_period;
+		current_period_msg.setMethod(meth_cur);
+		sendMessageToClock(current_period_msg, response2);
+
+		// If the message is not ok, show the message description and raise an exception
+		if (!(response.isMessageStatusOk())){
+			std::string statusDescr = response2.getParameter("Status_Description");
+			throw MarketPlaceException(statusDescr, statusCd);
+		}
+		else{
+			// get the parameter from the response and put it on the variable
+			 int period = atoi((response2.getParameter("Period")).c_str());
+			 initializePeriodSession(period);
+		}
+
+    } catch (Poco::NotFoundException &e) {
+    	throw MarketPlaceException("name not found");
 	}
-	else{
-		// get the parameter from the response and put it on the variable
-		 int period = atoi((response2.getParameter("Period")).c_str());
-		 initializePeriodSession(period);
-	}   
-		
+
 	app.logger().debug("Market place System initialized");
 
 }

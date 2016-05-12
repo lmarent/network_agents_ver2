@@ -14,6 +14,12 @@
 #include <Poco/AutoPtr.h>
 #include <Poco/Timer.h>
 #include <Poco/Stopwatch.h>
+#include <Poco/FileChannel.h>
+#include <Poco/Logger.h>
+#include <Poco/AutoPtr.h>
+#include <Poco/FormattingChannel.h>
+#include <Poco/PatternFormatter.h>
+
 
 #include "ClockServer.h"
 #include "ClockSys.h"
@@ -23,6 +29,13 @@
 #include "Service.h"
 #include "DecisionVariable.h"
 #include "FoundationException.h"
+
+
+using Poco::Logger;
+using Poco::FileChannel;
+using Poco::AutoPtr;
+using Poco::PatternFormatter;
+using Poco::FormattingChannel;
 
 namespace ChoiceNet
 {
@@ -98,7 +111,17 @@ namespace Eco
     {
         if (!_helpRequested)
         {
-		   // Reads from the configuration the listening port
+			AutoPtr<FileChannel> fileChannel(new FileChannel("MarketPlaceServer.log"));
+			//"%d-%m-%Y %H:%M:%S: %t"
+			AutoPtr<PatternFormatter> formatter(new PatternFormatter("%d-%m-%Y %H:%M:%S %s: %t"));
+			AutoPtr<FormattingChannel> formattingChannel(new FormattingChannel(formatter, fileChannel));
+			fileChannel->setProperty("rotateOnOpen", "true");
+			Poco::Logger& logger = Poco::Util::ServerApplication::logger();
+			logger.setChannel(fileChannel);
+			logger.setLevel(Poco::Message::PRIO_TRACE);
+
+
+        	// Reads from the configuration the listening port
 		   unsigned short port = (unsigned short)
 					config().getInt("listening_port", 3333);
 					

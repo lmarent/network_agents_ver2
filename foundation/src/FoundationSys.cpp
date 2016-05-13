@@ -96,7 +96,8 @@ void FoundationSys::initialize(Poco::Util::Application &app, int bid_periods, in
 		std::string db_name = (std::string)
 					app.config().getString("db_name","Network_Simulation");
 	
-		std::string connectionStr = "host=" + db_host + ";port=" + std::to_string(db_port) + ";user=" + db_user + ";password=" + db_password + ";db=" + db_name;
+		std::string sPort = Poco::NumberFormatter::format(db_port);
+		std::string connectionStr = "host=" + db_host + ";port=" + sPort + ";user=" + db_user + ";password=" + db_password + ";db=" + db_name;
 
 		std::cout << "connectionStr:" << connectionStr << std::endl;
 		app.logger().information("Connecting with the database");

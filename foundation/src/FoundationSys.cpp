@@ -3,6 +3,8 @@
 #include <Poco/Data/SessionFactory.h>
 #include <Poco/Data/MySQL/Connector.h>
 #include <iostream>
+#include <Poco/Exception.h>
+#include <Poco/Net/NetException.h>
 
 #include "FoundationSys.h"
 #include "FoundationException.h"
@@ -76,13 +78,36 @@ FoundationSys::~FoundationSys(void)
 
 void FoundationSys::initialize(Poco::Util::Application &app, int bid_periods, int pareto_fronts)
 {
-	//
-	// Connection string to POCO
-	std::string connectionStr = "host=localhost;port=3306;user=root;password=password;db=Network_Simulation";
+
+	try{//
+		// Connection string to POCO
+		std::string db_host = (std::string)
+					app.config().getString("db_host");
+
+		unsigned short db_port = (unsigned short)
+					app.config().getInt("db_port",3306);
+
+		std::string db_user = (std::string)
+					app.config().getString("db_user","root");
+
+		std::string db_password = (std::string)
+					app.config().getString("db_password","password");
 	
-	app.logger().information("Connecting with the database");
-	_pool = new Poco::Data::SessionPool("MySQL", connectionStr);
+		std::string db_name = (std::string)
+					app.config().getString("db_name","Network_Simulation");
 	
+		std::string connectionStr = "host=" + db_host + ";port=" + std::to_string(db_port) + ";user=" + db_user + ";password=" + db_password + ";db=" + db_name;
+
+		std::cout << "connectionStr:" << connectionStr << std::endl;
+		app.logger().information("Connecting with the database");
+		_pool = new Poco::Data::SessionPool("MySQL", connectionStr);
+	} catch (Poco::NotFoundException &e) {
+    	throw FoundationException("Foundation information not found");
+	} catch (Poco::InvalidArgumentException &e) {
+		throw FoundationException(e.what(), e.code());
+	}
+
+	app.logger().debug("Read the general parameters");
 	readGeneralParametersFromDataBase();
 	if (_bid_periods == 0 ){
 		_bid_periods = bid_periods;
@@ -93,17 +118,21 @@ void FoundationSys::initialize(Poco::Util::Application &app, int bid_periods, in
 		_pareto_fronts_to_exchange = pareto_fronts;
 	}
 	
-	std::cout << "Read the general parameters" << std::endl;
+	app.logger().debug("Read the resources");
 	readResourcesFromDataBase();
-	std::cout << "Read the resources" << std::endl;
+
+	app.logger().debug("Read the probability distributions");
 	readProbabilityDistributionsFromDataBase();
-	std::cout << "Read the probability distributions" << std::endl;
+
+	app.logger().debug("Read the decision variables");
 	readDecisionVariablesFromDataBase();
-	std::cout << "Read the decision variables" << std::endl;
+
+	app.logger().debug("Read the services");
 	readServicesFromDataBase();
-	std::cout << "Read the services" << std::endl;
+
+	app.logger().debug("Read the service to execute");
 	readServiceToExecute();
-	std::cout << "Read the service to execute" << std::endl;
+
 	app.logger().debug("Data has been read from the database");
 }
 

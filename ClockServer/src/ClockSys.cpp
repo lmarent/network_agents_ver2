@@ -15,6 +15,7 @@
 #include <string>
 #include <limits.h>
 #include <unistd.h>
+#include <Poco/LogStream.h>
 
 
 
@@ -27,6 +28,8 @@
 #include "SimplestTrafficConverter.h"
 #include "Message.h"
 
+
+using Poco::LogStream;
 
 namespace ChoiceNet
 {
@@ -215,7 +218,11 @@ void ClockSys::insertListenerBytype(std::string type, std::string listenerId)
 void ClockSys::sendCurrentPeriod(Poco::Net::SocketAddress socketAddress,
 								 Message & messageResponse)
 {
-	std::cout << "Entering send current period" << socketAddress.toString() << std::endl;
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	LogStream lstr(app.logger());
+
+	lstr << "Entering send current period" << socketAddress.toString() << std::endl;
+
 	int val_return = -1;
 	Listeners::iterator it;
 	it = _listeners.begin();
@@ -238,7 +245,9 @@ void ClockSys::sendCurrentPeriod(Poco::Net::SocketAddress socketAddress,
     if (found == false){
 		throw ClockServerException("The agent is not inscribed as listener", 303);
 	}
-	std::cout << "Current period sent to" << socketAddress.toString() << std::endl;
+
+    lstr << "Ending Current period sent to" << socketAddress.toString() << std::endl;
+
 }
 
 bool ClockSys::getMessage(Poco::Net::SocketAddress socketAddress, 
@@ -260,9 +269,10 @@ bool ClockSys::getMessage(Poco::Net::SocketAddress socketAddress,
 
 void ClockSys::broadcastPeriodEnd(void)
 {
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	LogStream lstr(app.logger());
+	lstr << "In broadcastPeriodEnd" << _period << std::endl;
     
-    std::cout << "In broadcastPeriodEnd" << _period << std::endl;
-
     // Builds the message with the current period
     Message endPeriod;
     Method method = end_period;
@@ -291,14 +301,18 @@ void ClockSys::broadcastPeriodEnd(void)
 			++it_strings;
 		}
 	}
+
+	lstr << "Ending broadcastPeriodEnd" << _period << std::endl;
 }
 
 void ClockSys::broadcastPeriodStart(void)
 {
 	Listeners::iterator it;
-    std::cout << "In broadcastPeriodStart";
-    std::cout << _period;
-    std::cout << std::endl;
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	LogStream lstr(app.logger());
+	lstr << "Start broadcastPeriodStart" << _period << std::endl;
+
     
     ListenerType type = CONSUMER;
    
@@ -317,7 +331,7 @@ void ClockSys::broadcastPeriodStart(void)
 			// the listener is connected and is consumer.
 			(*(it->second)).write (startPeriod.to_string());
 			
-			std::cout << "Send Start period to " << (*(it->second)).getType() << std::endl;
+			lstr << "Send Start period to " << (*(it->second)).getType() << std::endl;
 		}
 		++it;
 	}
@@ -385,14 +399,19 @@ void ClockSys::broadcastPeriodStart(void)
 		++it;
 	}
     
-    std::cout << "Finish activate consumers" << std::endl;
+	lstr << "Ending broadcastPeriodStart"  << std::endl;
        
 	
 }
 
 Message * ClockSys::getActivationMessage(void)
 {
-   std::map<std::string, ServiceActivation>::iterator it;
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	LogStream lstr(app.logger());
+	lstr << "Start getActivationMessage" << std::endl;
+
+	std::map<std::string, ServiceActivation>::iterator it;
    it = _services_activation.begin();
    if (it != _services_activation.end())
    {
@@ -403,10 +422,18 @@ Message * ClockSys::getActivationMessage(void)
    {
 	  return NULL;
    }
+
+   lstr << "Ending getActivationMessage" << std::endl;
+
 }
 
 void ClockSys::decreaseActivationMessageCount(std::string serviceId)
 {
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	LogStream lstr(app.logger());
+	lstr << "Start decreaseActivationMessageCount" << std::endl;
+
 	std::map<std::string, ServiceActivation>::iterator it;
 	it = _services_activation.find(serviceId);
 	if (it != _services_activation.end())
@@ -418,14 +445,20 @@ void ClockSys::decreaseActivationMessageCount(std::string serviceId)
 			_services_activation.erase(it);
 		}
 	}
+
+	lstr << "Ending decreaseActivationMessageCount" << std::endl;
+
 }
 
 void ClockSys::broadcastTerminate(void)
 {
 	Listeners::iterator it;
 	
-    
-    std::cout << "In broadcastTerminate" << _period << std::endl;
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	LogStream lstr(app.logger());
+	lstr << "Start broadcastTerminate" << _period << std::endl;
+
 	
     // Builds the message with the current period
     Message m_disconnect;
@@ -461,6 +494,9 @@ void ClockSys::broadcastTerminate(void)
 		}
 		
 	}	
+
+	lstr << "Ending broadcastTerminate" << _period << std::endl;
+
 }
 
 int ClockSys::getInterval(void)
@@ -486,7 +522,12 @@ void ClockSys::incrementPeriod(void)
 void ClockSys::deleteListener( Poco::Net::SocketAddress socketAddress,
 						      Message & messageResponse )
 {    
-    // Find the listener
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	LogStream lstr(app.logger());
+	lstr << "Start deleteListener" << _period << std::endl;
+
+	// Find the listener
 	Listeners::iterator it;
 	it = _listeners.begin();
 	bool found = false;
@@ -514,10 +555,18 @@ void ClockSys::deleteListener( Poco::Net::SocketAddress socketAddress,
 	    // Build an exception to the agent saying that it is not a current listener.
 	    throw ClockServerException("The agent is not inscribed as listener", 303);
 	}
+
+	lstr << "Ending deleteListener" << _period << std::endl;
+
 }
 
 void ClockSys::getServices(std::string serviceId, Message & messageResponse)
 {
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	LogStream lstr(app.logger());
+	lstr << "Start getServices" << _period << std::endl;
+
 	messageResponse.setResponseOk();
 	// creates an empty xml document
 	// Creates an xml message with element "bestBids" as root
@@ -543,12 +592,20 @@ void ClockSys::getServices(std::string serviceId, Message & messageResponse)
 	writer.writeNode(output, pDoc);	
 	messageResponse.setBody(output.str());
 	// std::cout << "message: " << std::endl << output.str() << std::endl;
+
+	lstr << "Ending getServices" << _period << std::endl;
+
 }
 
 
     
 void ClockSys::getServices(Message & messageResponse)
 {
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	LogStream lstr(app.logger());
+	lstr << "Start getServices" << _period << std::endl;
+
+
 	messageResponse.setResponseOk();
 	// creates an empty xml document
 	// Creates an xml message with element "bestBids" as root
@@ -569,6 +626,9 @@ void ClockSys::getServices(Message & messageResponse)
 	std::stringstream  output; 
 	writer.writeNode(output, pDoc);	
 	messageResponse.setBody(output.str());
+
+	lstr << "Ending getServices" << _period << std::endl;
+
 }
 
 }  /// End Eco namespace

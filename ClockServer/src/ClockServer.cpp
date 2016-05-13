@@ -111,7 +111,7 @@ namespace Eco
     {
         if (!_helpRequested)
         {
-			AutoPtr<FileChannel> fileChannel(new FileChannel("MarketPlaceServer.log"));
+			AutoPtr<FileChannel> fileChannel(new FileChannel("ClockServer.log"));
 			//"%d-%m-%Y %H:%M:%S: %t"
 			AutoPtr<PatternFormatter> formatter(new PatternFormatter("%d-%m-%Y %H:%M:%S %s: %t"));
 			AutoPtr<FormattingChannel> formattingChannel(new FormattingChannel(formatter, fileChannel));

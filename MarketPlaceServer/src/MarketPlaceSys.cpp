@@ -16,6 +16,8 @@
 #include <Poco/DOM/AutoPtr.h>
 #include <Poco/Data/Session.h>
 #include <Poco/Data/SQLite/Connector.h>
+#include <Poco/Data/MySQL/Connector.h>
+
 
 #include "MarketPlaceException.h"
 #include "FoundationException.h"
@@ -34,9 +36,10 @@ MarketPlaceSys::MarketPlaceSys(void):
 FoundationSys(),
 _clockSocket(NULL),
 _current_bids(NULL),
-_current_purchases(NULL)
+_current_purchases(NULL),
+_pool(NULL)
 {
-
+	Poco::Data::MySQL::Connector::registerConnector();
 }
 
 MarketPlaceSys::~MarketPlaceSys(void)
@@ -109,7 +112,13 @@ MarketPlaceSys::~MarketPlaceSys(void)
 		_purchase_history.erase(it_history);
 		++it_history;
 	}	
-	
+
+	app.logger().debug("Disconnecting from the database");
+	if (_pool != NULL)
+		delete _pool;
+
+	Poco::Data::MySQL::Connector::unregisterConnector();
+
 	app.logger().information("Eliminating the market sys - Finished");	
 }
 
@@ -140,6 +149,37 @@ void MarketPlaceSys::initialize(Poco::Util::Application &app)
                 app.config().getInt("pareto_fronts_to_send", 3);
     
     Poco::UInt16 u16Port = (Poco::UInt16) port;
+
+	try{//
+		// Connection string to POCO
+		std::string db_host = (std::string)
+					app.config().getString("db_host");
+
+		unsigned short db_port = (unsigned short)
+					app.config().getInt("db_port",3306);
+
+		std::string db_user = (std::string)
+					app.config().getString("db_user","root");
+
+		std::string db_password = (std::string)
+					app.config().getString("db_password","password");
+
+		std::string db_name = (std::string)
+					app.config().getString("db_name","Network_Simulation");
+
+		std::string sPort = Poco::NumberFormatter::format(db_port);
+		std::string connectionStr = "host=" + db_host + ";port=" + sPort + ";user=" + db_user + ";password=" + db_password + ";db=" + db_name;
+
+		std::cout << "connectionStr:" << connectionStr << std::endl;
+		app.logger().information("Connecting with the database");
+		_pool = new Poco::Data::SessionPool("MySQL", connectionStr);
+
+	} catch (Poco::NotFoundException &e) {
+    	throw MarketPlaceException("Database connection information not found");
+	} catch (Poco::InvalidArgumentException &e) {
+		throw MarketPlaceException(e.what(), e.code());
+	}
+
     
 	FoundationSys::initialize(app, 0, pareto_fronts_to_send);
 	
@@ -151,7 +191,6 @@ void MarketPlaceSys::initialize(Poco::Util::Application &app)
     	Poco::Net::SocketAddress sockadd(ipadd, u16Port);
 
 		_clockSocket = new Poco::Net::StreamSocket(sockadd);
-
 
     } catch (Poco::NotFoundException &e) {
     	throw MarketPlaceException("Clock server address not found");
@@ -449,8 +488,28 @@ void MarketPlaceSys::broadCastInformation(Message & message, std::string type)
 	}
 }
 
+void MarketPlaceSys::saveBidInformation(void)
+{
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().information("Starting saveBidInformation");
+
+	BidContainer::iterator it;
+	for (it = _bids_to_broadcast.begin(); it != _bids_to_broadcast.end() ; ++it)
+	{
+
+		app.logger().information("saving Bid information");
+
+		Bid * bid = (it->second);
+		bid->to_Database(_pool,(int) _period);
+	}
+
+	app.logger().information("Ending saveBidInformation");
+
+}
+
 void MarketPlaceSys::broadCastBidInformation(void)
 {
+
 	Message message;
 	Method method = receive_bid_information;
 	message.setMethod(method);
@@ -462,7 +521,8 @@ void MarketPlaceSys::broadCastBidInformation(void)
 	BidContainer::iterator it;
 	for (it = _bids_to_broadcast.begin(); it != _bids_to_broadcast.end() ; ++it)
 	{
-		(*(it->second)).to_XML(pDoc, pCompetitorBids);
+		Bid * bid = (it->second);
+		bid->to_XML(pDoc, pCompetitorBids);
 		_bids_to_broadcast.erase(it);
 	}
 	
@@ -549,14 +609,24 @@ void MarketPlaceSys::activatePresenter(void)
 
 void MarketPlaceSys::finalizePeriodSession(Message & messageResponse)
 {
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().information("Starting finalize period session");
+
+	saveBidInformation();
 	broadCastBidInformation();
 	sendProviderPurchaseInformation();	
+	storeCurrentPurchaseInformation();
 	activatePresenter();
 	messageResponse.setResponseOk();
 }
 
 void MarketPlaceSys::addBid(Bid * bidPtr, Message & messageResponse)
 {
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().information("Starting add Bid");
+
 	// First verify that the bid was not included
 	std::map<std::string, Bid *>::iterator it;
 	 
@@ -582,12 +652,15 @@ void MarketPlaceSys::addBid(Bid * bidPtr, Message & messageResponse)
 		
 		// Insert in the brodcast container
 		_bids_to_broadcast.insert(std::pair<std::string, Bid *> ((*bidPtr).getId(), bidPtr));
-			
+
+		app.logger().information("New Bid added");
+
 		// set the response as Ok
 		messageResponse.setResponseOk();
 	}
 	else
 	{
+		app.logger().information("Bid is already included in the container");
 		throw MarketPlaceException("Bid is already included in the container", 310);
 	}
 }
@@ -791,6 +864,13 @@ Bid * MarketPlaceSys::getBid(std::string bidId)
 	}
 }
 
+void MarketPlaceSys::storeCurrentPurchaseInformation()
+{
+	if (_current_purchases != NULL)
+	{
+		_current_purchases->toDatabase(_pool, (int) _period);
+	}
+}
 
 }  /// End Eco namespace
 

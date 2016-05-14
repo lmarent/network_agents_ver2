@@ -25,6 +25,9 @@ public:
 										 Poco::XML::AutoPtr<Poco::XML::Element> pParent,
 										 std::map<std::string, std::vector<std::string> > &bids);
 
+    // Store purchases in the database pool.
+    void toDatabase(Poco::Data::SessionPool * _pool, int period);
+
 private:
 
 	typedef std::map<std::string, PurchaseServiceInformation *> PurchaseServiceInformationContainer;

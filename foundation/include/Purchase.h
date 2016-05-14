@@ -5,6 +5,8 @@
 #include <Poco/DOM/Element.h>
 #include <Poco/DOM/Text.h>
 #include <Poco/DOM/AutoPtr.h>
+#include <Poco/Data/SessionPool.h>
+
 
 #include <string>
 #include "Message.h"
@@ -15,6 +17,15 @@ namespace ChoiceNet
 {
 namespace Eco
 {
+
+struct PurchaseStruct
+{
+    int			_period;
+	std::string _id;
+    std::string _bid;
+    std::string _service;
+    double _quantity;
+};
 
 class Purchase : public Datapoint
 {
@@ -51,11 +62,14 @@ public:
 
     std::string getQuantityStr(void);
 			
+    /// Creates an XML node under pParent for the purchase, pDoc is the pointer
+    /// to the XML document.
 	void to_XML(Poco::XML::AutoPtr<Poco::XML::Document> pDoc,
 				 Poco::XML::AutoPtr<Poco::XML::Element> pParent);
-    /// Creates an XML node under pParent for the purchase, pDoc is the pointer 
-    /// to the XML document.
 	
+	// Store the purchase in the database.
+	void to_Database(Poco::Data::SessionPool * _pool, int period);
+
 private:
     
     std::string _id;

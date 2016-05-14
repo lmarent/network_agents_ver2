@@ -6,11 +6,17 @@
 #include <Poco/DOM/Element.h>
 #include <Poco/DOM/Text.h>
 #include <Poco/DOM/AutoPtr.h>
+#include <Poco/Data/Session.h>
+#include <Poco/Data/SQLite/Connector.h>
+
 
 #include "Purchase.h"
 #include "Message.h"
 #include "Datapoint.h"
 #include "FoundationException.h"
+
+
+using namespace Poco::Data::Keywords;
 
 
 namespace ChoiceNet
@@ -211,6 +217,47 @@ void Purchase::to_XML(Poco::XML::AutoPtr<Poco::XML::Document> pDoc,
 	pParent->appendChild(proot);
 
 }
+
+void Purchase::to_Database(Poco::Data::SessionPool * _pool, int period)
+{
+
+	Poco::Data::Session session(_pool->get());
+
+	PurchaseStruct PurchaseS = { period, getId(), getBid(), getService(), getQuantity() };
+
+	Poco::Data::Statement insert(session);
+	insert << "insert into simulation_purchase values(?,?,?,?,?)",
+				use(PurchaseS._period),
+				use(PurchaseS._id),
+				use(PurchaseS._bid),
+				use(PurchaseS._service),
+				use(PurchaseS._quantity);
+
+	insert.execute();
+
+	std::map<std::string, size_t>::iterator it;
+	for (it= _decision_variables.begin(); it != _decision_variables.end(); ++it)
+	{
+
+		DecisionVariableStruct DecisionVariableS =
+		{
+			getId(),
+			it->first,
+			getDecisionVariable(it->first)
+		};
+
+		Poco::Data::Statement insertDecisionVariable(session);
+		insertDecisionVariable << "insert into simulation_purchase_decision_variable values(?,?,?)",
+					use(DecisionVariableS._parentId),
+					use(DecisionVariableS._name),
+					use(DecisionVariableS._value);
+
+		insertDecisionVariable.execute();
+
+	}
+
+}
+
 
 }  /// End Eco namespace
 

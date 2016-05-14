@@ -15,7 +15,15 @@ namespace ChoiceNet
 {
 namespace Eco
 {
-	
+
+struct PurchaseServiceBidStruct
+{
+	int 		_period;
+	std::string _serviceId;
+	std::string _bidId;
+	double 		_quantity;
+};
+
 class PurchaseServiceInformation
 {
 
@@ -36,7 +44,10 @@ public:
 	void createBidNode(Poco::XML::AutoPtr<Poco::XML::Document> pDoc, 
 					   Poco::XML::AutoPtr<Poco::XML::Element> pParent, 
 					   std::string id, double quantity);
-		
+
+    // Store purchases for the service in the database pool.
+    void toDatabase(Poco::Data::SessionPool * _pool, int period, std::string serviceId);
+
 private:
     
     std::map<std::string, double> _summaries_by_bid;

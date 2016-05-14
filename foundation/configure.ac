@@ -69,7 +69,7 @@ SAVED_CPPFLAGS=$CPPFLAGS
 SAVED_LIBS=$LIBS
 CPPFLAGS="$CPPFLAGS -I/usr/local/include/Poco -I/usr/include/Poco"
 LDFLAGS="$LDFLAGS -L/usr/local/lib/ -L/usr/lib/"
-LIBS="$LIBS -lPocoFoundation -lPocoUtil -lPocoNet -lPocoXML -lPocoData -lPocoMySQL"
+LIBS="$LIBS -lPocoFoundation -lPocoUtil -lPocoNet -lPocoXML -lPocoData -lPocoDataMySQL"
 AC_LINK_IFELSE(
     [AC_LANG_PROGRAM([#include <DateTime.h>],
     [Poco::DateTime now])],

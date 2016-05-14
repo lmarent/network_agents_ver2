@@ -5,6 +5,8 @@
 #include <Poco/DOM/Element.h>
 #include <Poco/DOM/Text.h>
 #include <Poco/DOM/AutoPtr.h>
+#include <Poco/Data/SessionPool.h>
+
 
 #include <string>
 #include "Datapoint.h"
@@ -16,6 +18,17 @@ namespace ChoiceNet
 {
 namespace Eco
 {
+
+struct BidStruct
+{
+    int 		_period;
+	std::string _id;
+    std::string _provider;
+    std::string _service;
+    int         _status;
+    int 		_paretoStatus;
+    size_t 		_dominatedCount;
+};
 
 class Bid: public Datapoint
 {
@@ -74,7 +87,10 @@ public:
     /// to the XML document.
     
     void toMessage(Message & message);
-	
+
+    // Store the bid in the pool.
+    void to_Database(Poco::Data::SessionPool * _pool, int period);
+
 private:
     enum BidStatus
     {

@@ -12,6 +12,8 @@
 
 #include "PurchaseServiceInformation.h"
 
+using namespace Poco::Data::Keywords;
+
 namespace ChoiceNet
 {
 namespace Eco
@@ -176,6 +178,42 @@ void PurchaseServiceInformation::getPurchases(Poco::XML::AutoPtr<Poco::XML::Docu
 	
 	// std::cout << "Finish getPurchases:" << std::endl;
 }	
+
+void PurchaseServiceInformation::toDatabase(Poco::Data::SessionPool * _pool, int period, std::string serviceId)
+{
+
+	Poco::Data::Session session(_pool->get());
+	Poco::Data::Statement insert(session);
+	bool firstTime = true;
+	PurchaseServiceBidStruct PurchaseServiceBidS;
+
+	std::map<std::string, double>::iterator it_purchase;
+	for (it_purchase = _summaries_by_bid.begin(); it_purchase != _summaries_by_bid.end(); ++it_purchase)
+	{
+
+		PurchaseServiceBidS._period =  period;
+		PurchaseServiceBidS._serviceId =  serviceId;
+		PurchaseServiceBidS._bidId =  it_purchase->first;
+		PurchaseServiceBidS._quantity =  (double) it_purchase->second;
+
+		if (firstTime == true){
+
+			insert << "insert into simulation_bid_purchases(period, serviceId, bidId, quantity) values(?,?,?,?)",
+						use(PurchaseServiceBidS._period),
+						use(PurchaseServiceBidS._serviceId),
+						use(PurchaseServiceBidS._bidId),
+						use(PurchaseServiceBidS._quantity);
+
+			insert.execute();
+			firstTime = false;
+
+		} else {
+			insert.execute();
+		}
+
+
+	}
+}
 
 }  /// End Eco namespace
 

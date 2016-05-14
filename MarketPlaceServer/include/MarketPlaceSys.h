@@ -69,6 +69,8 @@ public:
 	
 	void sendProviderPurchaseInformation(void);
 	
+	void storeCurrentPurchaseInformation(void);
+
 	void addBid(Bid * bidPtr, Message & messageResponse);
 	
 	void deleteBid(Bid * bidPtr, Message & messageResponse);
@@ -96,6 +98,8 @@ public:
        
     Bid * getBid(std::string bidId);
     
+    void saveBidInformation(void);
+
     void broadCastBidInformation(void);
     
     void activatePresenter(void);
@@ -133,7 +137,9 @@ private:
     PurchaseHistory _purchase_history;
             
 	unsigned _period;
-	
+
+	Poco::Data::SessionPool * _pool;
+
 };
 
 

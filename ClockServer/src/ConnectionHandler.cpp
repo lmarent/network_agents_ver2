@@ -361,18 +361,24 @@ void ConnectionHandler::onSocketWritable(const Poco::AutoPtr<Poco::Net::Writable
 
 void ConnectionHandler::onSocketShutdown(const Poco::AutoPtr<Poco::Net::ShutdownNotification>& pNf)
 {
-	std::cout << "Socket Shutdown" << std::endl;
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("Socket shutdown");
+	std::cout << "Socket Error occurs" << std::endl;
 	delete this;
 }
 
 void ConnectionHandler::onSocketError(const Poco::AutoPtr<Poco::Net::ErrorNotification>& pNf)
 {
-	std::cout << "Error occurs" << std::endl;
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("Socket Error occurs");
+	std::cout << "Socket Error occurs" << std::endl;
 	delete this;
 }
 
 void ConnectionHandler::onSocketIdle(const Poco::AutoPtr<Poco::Net::IdleNotification>& pNf)
 {
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("On idle notification");
 	std::cout << "On idle notification" << std::endl;
 	sleep(0.00001);
 }

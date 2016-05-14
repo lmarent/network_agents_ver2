@@ -6,6 +6,11 @@
 #include <Poco/DOM/Element.h>
 #include <Poco/DOM/Text.h>
 #include <Poco/DOM/AutoPtr.h>
+#include <Poco/Data/Session.h>
+#include <Poco/Data/SQLite/Connector.h>
+#include <Poco/Data/SessionFactory.h>
+
+
 
 #include "Bid.h"
 #include "Message.h"
@@ -15,6 +20,9 @@
 #include "DecisionVariable.h"
 
 
+using namespace Poco::Data::Keywords;
+using Poco::Data::Session;
+using Poco::Data::Statement;
 
 namespace ChoiceNet
 {
@@ -266,6 +274,56 @@ void Bid::to_XML(Poco::XML::AutoPtr<Poco::XML::Document> pDoc,
 	}		
 	pParent->appendChild(proot);
 }
+
+void Bid::to_Database(Poco::Data::SessionPool * _pool, int period)
+{
+	// std::cout << "putting the information of the bid:" << getId() <<  std::endl;
+
+	Poco::Data::Session session(_pool->get());
+
+	BidStruct BidS = { period,
+					   getId(),
+					   getProvider(),
+					   getService(),
+					   (int) _status,
+					   getParetoStatus(),
+					   numDominated() };
+
+	Poco::Data::Statement insert(session);
+	insert << "insert into simulation_bid (period, bidId, providerId, status, paretoStatus, dominatedCount) values(?,?,?,?,?,?)",
+				use(BidS._period),
+				use(BidS._id),
+				use(BidS._provider),
+				use(BidS._status),
+				use(BidS._paretoStatus),
+				use(BidS._dominatedCount);
+
+	insert.execute();
+
+	std::map<std::string, size_t>::iterator it;
+	for (it= _decision_variables.begin(); it != _decision_variables.end(); ++it)
+	{
+
+		DecisionVariableStruct DecisionVariableS =
+		{
+			getId(),
+			it->first,
+			getDecisionVariable(it->first)
+		};
+
+		Poco::Data::Statement insertDecisionVariable(session);
+		insertDecisionVariable << "insert into simulation_bid_decision_variable (parentId, decisionVariableName, value) values(?,?,?)",
+					use(DecisionVariableS._parentId),
+					use(DecisionVariableS._name),
+					use(DecisionVariableS._value);
+
+		insertDecisionVariable.execute();
+
+	}
+
+	session.commit();
+}
+
 
 void Bid::addNeighbor(std::string bidId)
 {

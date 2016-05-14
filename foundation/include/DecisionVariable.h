@@ -15,6 +15,13 @@ namespace ChoiceNet
 namespace Eco
 {
 
+struct DecisionVariableStruct
+{
+	std::string _parentId;
+	std::string _name;
+	double _value;
+};
+
 enum OptimizationObjective
 {
 	MAXIME = 1,

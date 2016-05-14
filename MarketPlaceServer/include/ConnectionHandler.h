@@ -84,6 +84,8 @@ public:
 
 	void onSocketWritable(const Poco::AutoPtr<Poco::Net::WritableNotification>& pNf);
 
+	void onSocketTimeout(const Poco::AutoPtr<Poco::Net::TimeoutNotification >& pNf);
+
 	void onSocketShutdown(const Poco::AutoPtr<Poco::Net::ShutdownNotification>& pNf);
 
 	void onSocketError(const Poco::AutoPtr<Poco::Net::ErrorNotification>& pNf);

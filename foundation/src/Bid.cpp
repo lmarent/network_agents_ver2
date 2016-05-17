@@ -316,7 +316,7 @@ void Bid::toDatabase(Poco::Data::SessionPool * _pool, int execute_count, int per
 		};
 
 		Poco::Data::Statement insertDecisionVariable(session);
-		insertDecisionVariable << "insert into simulation_bid_decision_variable (parentId, decisionVariableName, value) values(?,?,?,?)",
+		insertDecisionVariable << "insert into simulation_bid_decision_variable (parentId, decisionVariableName, value, execution_count ) values(?,?,?,?)",
 					use(DecisionVariableS._parentId),
 					use(DecisionVariableS._name),
 					use(DecisionVariableS._value),

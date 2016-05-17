@@ -14,9 +14,17 @@ namespace ChoiceNet
 {
 namespace Eco
 {
+const char * ListenerTypeDesc[] = { "undefined",
+			 						 "market_place",
+									 "demand_server",
+									 "provider",
+									 "consumer",
+									 "presenter" };
+
+
 
 Listener::Listener(std::string idParam, Poco::Net::SocketAddress& ipAddressParam):
-_id(idParam), _type(UNDEFINED_TYPE), _ipAddress(ipAddressParam), _status(DISCONNECTED), _socket(new Poco::Net::StreamSocket)
+_id(idParam), _type(UNDEFINED_TYPE), _ipAddress(ipAddressParam), _status(DISCONNECTED), _socket(new Poco::Net::StreamSocket), _listeneningPort(0)
 {
 
 }
@@ -64,6 +72,12 @@ void Listener::setType(std::string type)
 	else{
 		_type = UNDEFINED_TYPE;
 	}
+}
+
+std::string
+Listener::getTypeStr()
+{
+	return std::string(ListenerTypeDesc[_type]);
 }
 
 void Listener::Disconnect()
@@ -132,48 +146,60 @@ bool Listener::getMessage(Message & message)
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().debug("Entering get Message");
-	app.logger().debug(_waitingProcessing);
 	
 	bool val_return = false;
 	unsigned size;
 	
-	std::size_t found = _waitingProcessing.find("Method");
-	if (found == 0)
-	{
-		std::size_t found2 = _waitingProcessing.find("Method", found + 1);
-		if (found2 != std::string::npos)
+	if (_waitingProcessing.size() > 0) {
+		std::size_t found = _waitingProcessing.find("Method");
+		if (found == 0)
 		{
-			std::string messageData = _waitingProcessing.substr(found, found2 - 1);
-			message.setData(messageData);	
-			// Even that the message could have errors is complete
-			_waitingProcessing.erase(0,found2 - 1);
-			val_return = true;
+			std::size_t found2 = _waitingProcessing.find("Method", found + 1);
+			if (found2 != std::string::npos)
+			{
+				std::string messageData = _waitingProcessing.substr(found, found2);
+				message.setData(messageData);
+				// Even that the message could have errors is complete
+				_waitingProcessing.erase(0,found2);
+				app.logger().debug("get Message from:%z to:%z", found, found2);
+				val_return = true;
+			}
+			else
+			{
+				std::string messageData = _waitingProcessing.substr(found, std::string::npos);
+				message.setData(messageData);
+				if (message.isComplete(_waitingProcessing.size()) )
+				{
+					_waitingProcessing.erase(0, std::string::npos);
+					val_return = true;
+				}
+				else{
+					val_return = false;
+				}
+			}
 		}
 		else
 		{
-			std::string messageData = _waitingProcessing.substr(found, std::string::npos);
-			message.setData(messageData);
-			if (message.isComplete(_waitingProcessing.size()) )
-			{
-				_waitingProcessing.erase(0, std::string::npos);
-				val_return = true;
-			}
-			else{
-				val_return = false;
-			}
+			// The message is not well formed, so we create a message with method
+			// not specified
+
+			app.logger().debug("undefined:%z", found);
+
+			Method method = undefined;
+			message.setMethod(method);
+			message.setParameter("Message_Size", (int) found);
+			_waitingProcessing.erase(0,found-1);
+			val_return = true;
 		}
+	} else {
+		app.logger().debug("buffer is empty nothing to do");
+		val_return = false;
 	}
+	if (val_return)
+		app.logger().debug("Leaving - get Message: true");
 	else
-	{
-		// The message is not well formed, so we create a message with method 
-		// not specified 
-		Method method = undefined;
-		message.setMethod(method);
-		message.setParameter("Message_Size", (int) found);
-		_waitingProcessing.erase(0,found-1);
-		val_return = true;
-	}
-	app.logger().debug("Leaving - get Message");
+		app.logger().debug("Leaving - get Message: false");
+
 	return val_return;
 }
 

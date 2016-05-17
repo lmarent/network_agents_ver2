@@ -36,11 +36,11 @@ public:
     
     void insertListener(std::string idListener, 
 					   Poco::Net::SocketAddress socketAddress,
-					   Message & messageResponse );
+					   ChoiceNet::Eco::Message & messageResponse );
 
 	void startListening(Poco::Net::SocketAddress socketAddress, 
 					   Poco::UInt16 port, std::string type,
-					   Message & messageResponse);
+					   ChoiceNet::Eco::Message & messageResponse);
 	
 	void insertListenerBytype(std::string type, std::string listenerId);
 	
@@ -51,7 +51,7 @@ public:
 	void getMessage(Poco::FIFOBuffer & fifoIn, int len, Message &message);
 	
 	bool getMessage(Poco::Net::SocketAddress socketAddress, 
-					Message & message);
+					ChoiceNet::Eco::Message & message);
 	
     void setDemandForecaster(PointSetDemandForecaster * demand_forecaster);
 
@@ -59,13 +59,13 @@ public:
 
 
 	void sendCurrentPeriod(Poco::Net::SocketAddress socketAddress, 
-						   Message & messageResponse);
+							ChoiceNet::Eco::Message & messageResponse);
 	
 	void broadcastPeriodEnd(void);
 	
 	void broadcastPeriodStart(void);
 	
-	Message * getActivationMessage(void);
+	ChoiceNet::Eco::Message * getActivationMessage(void);
 	
 	void decreaseActivationMessageCount(std::string serviceId);
 	
@@ -80,11 +80,11 @@ public:
 	void incrementInterval(void);
 	
 	void deleteListener( Poco::Net::SocketAddress socketAddress,
-						 Message & messageResponse );
+						 ChoiceNet::Eco::Message & messageResponse );
     
-    void getServices(std::string serviceId, Message & messageResponse);
+    void getServices(std::string serviceId, ChoiceNet::Eco::Message & messageResponse);
     
-    void getServices(Message & messageResponse);
+    void getServices(ChoiceNet::Eco::Message & messageResponse);
     
     void loadDemand(void);
 

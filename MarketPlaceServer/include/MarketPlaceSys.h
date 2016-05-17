@@ -53,6 +53,8 @@ public:
 					   Poco::Net::SocketAddress socketAddress,
 					   Message & messageResponse );
 
+    void removeListener(std::string idListener);
+
     void startListening(Poco::Net::SocketAddress socketAddress, 
 					   Poco::UInt16 port, std::string type,
 					   Message & messageResponse );

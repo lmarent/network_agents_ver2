@@ -93,53 +93,53 @@ public:
 	void onSocketIdle(const Poco::AutoPtr<Poco::Net::IdleNotification>& pNf);
 
 	void doProcessing(Poco::Net::SocketAddress socketAddress, 
-					  Message & message);	
+					  ChoiceNet::Eco::Message & message);
 	
-	void providerConnect(Poco::Net::SocketAddress socketAddress, 
-						 Message & messageRequest,
-						 Message & messageResponse);
+	void Connect(Poco::Net::SocketAddress socketAddress,
+						 ChoiceNet::Eco::Message & messageRequest,
+						 ChoiceNet::Eco::Message & messageResponse);
 	
-	void providerStartListening(Poco::Net::SocketAddress socketAddress, 
-								Message & messageRequest,
-								Message & messageResponse);
+	void StartListening(Poco::Net::SocketAddress socketAddress,
+						ChoiceNet::Eco::Message & messageRequest,
+						ChoiceNet::Eco::Message & messageResponse);
 	
 	void initializePeriodSession(Poco::Net::SocketAddress socketAddress, 
-								 Message & messageRequest,
-								 Message & messageResponse);
+								 ChoiceNet::Eco::Message & messageRequest,
+								 ChoiceNet::Eco::Message & messageResponse);
 	
 	void finalizePeriodSession(Poco::Net::SocketAddress socketAddress, 
-							   Message & messageRequest,
-							   Message & messageResponse);
+							   ChoiceNet::Eco::Message & messageRequest,
+							   ChoiceNet::Eco::Message & messageResponse);
 	
 	void receiveBid(Poco::Net::SocketAddress socketAddress, 
-				    Message & messageRequest, 
-				    Message & messageResponse);
+					ChoiceNet::Eco::Message & messageRequest,
+					ChoiceNet::Eco::Message & messageResponse);
 	
 	void addPurchase( Poco::Net::SocketAddress socketAddress,
-				      Message & messageRequest, 
-				      Message & messageResponse);
+					  ChoiceNet::Eco::Message & messageRequest,
+					  ChoiceNet::Eco::Message & messageResponse);
 	
 	void setProviderAvailability(Poco::Net::SocketAddress socketAddress,
-		  						 Message & messageRequest, 
-								 Message & messageResponse);
+								 ChoiceNet::Eco::Message & messageRequest,
+								 ChoiceNet::Eco::Message & messageResponse);
 	
 	void getBestBids( Poco::Net::SocketAddress socketAddress,
-					  Message & messageRequest, 
-					  Message & messageResponse);
+					  ChoiceNet::Eco::Message & messageRequest,
+					  ChoiceNet::Eco::Message & messageResponse);
 					   
 	void getBid( Poco::Net::SocketAddress socketAddress,
-					  Message & messageRequest, 
-					  Message & messageResponse);
+					  ChoiceNet::Eco::Message & messageRequest,
+					  ChoiceNet::Eco::Message & messageResponse);
 	
 	void getProviderChannel(Poco::Net::SocketAddress socketAddress,
-							Message & messageRequest, 
-							Message & messageResponse);
+							ChoiceNet::Eco::Message & messageRequest,
+							ChoiceNet::Eco::Message & messageResponse);
 	
 	void terminateProcess(void);
 
-	void missingParametersProcedure(Message & messageResponse);
+	void missingParametersProcedure(ChoiceNet::Eco::Message & messageResponse);
 	
-	void errorProcedure(Message & messageResponse);
+	void errorProcedure(ChoiceNet::Eco::Message & messageResponse);
 	
 	
 private:
@@ -152,6 +152,7 @@ private:
 	Poco::Net::SocketReactor& _reactor;
 	Poco::FIFOBuffer _fifoIn;
 	Poco::FIFOBuffer _fifoOut;
+	std::string _idListener;
 };
 
 }   /// End Eco namespace

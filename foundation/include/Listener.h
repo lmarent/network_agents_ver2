@@ -21,8 +21,11 @@ enum ListenerType
 	DEMAND_SERVER = 2,
 	PROVIDER = 3,
 	CONSUMER = 4,
-	PRESENTER = 5
+	PRESENTER = 5,
+	MAX_LISTENER_TYPE = 6
 };
+
+extern const char * ListenerTypeDesc[MAX_LISTENER_TYPE];
 
 enum ListenerStatus
 {
@@ -46,7 +49,8 @@ public:
 	void write (std::string text);
 	Poco::Net::SocketAddress getSocketAddress();
 	ListenerStatus getStatus();
-	ListenerType getType();
+	ChoiceNet::Eco::ListenerType getType();
+	std::string getTypeStr();
 	std::string getId();
 	void addStreamStagedForProcessing(Poco::FIFOBuffer & fifoIn, int len);
 	bool getMessage(Message & messsage);

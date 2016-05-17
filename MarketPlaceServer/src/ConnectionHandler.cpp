@@ -92,10 +92,6 @@ _fifoOut(BUFFER_SIZE, true)
 		);			
 
 	_reactor.addEventHandler(_socket,
-		Poco::NObserver<ConnectionHandler, Poco::Net::WritableNotification>(*this, &ConnectionHandler::onSocketWritable)
-		);
-
-	_reactor.addEventHandler(_socket,
 		Poco::NObserver<ConnectionHandler, Poco::Net::TimeoutNotification>(*this, &ConnectionHandler::onSocketTimeout)
 		);
 
@@ -108,21 +104,30 @@ _fifoOut(BUFFER_SIZE, true)
 ConnectionHandler::~ConnectionHandler()
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("Destroying connection handler");
 
 	try{
 		_reactor.removeEventHandler(_socket, Poco::NObserver<ConnectionHandler,
 					Poco::Net::ReadableNotification>(*this, &ConnectionHandler::onSocketReadable));
 		_reactor.removeEventHandler(_socket, Poco::NObserver<ConnectionHandler,
-					Poco::Net::WritableNotification>(*this, &ConnectionHandler::onSocketWritable));
-		_reactor.removeEventHandler(_socket, Poco::NObserver<ConnectionHandler,
 					Poco::Net::ShutdownNotification>(*this, &ConnectionHandler::onSocketShutdown));
+		_reactor.removeEventHandler(_socket, Poco::NObserver<ConnectionHandler,
+					Poco::Net::ErrorNotification>(*this, &ConnectionHandler::onSocketError));
+		_reactor.removeEventHandler(_socket, Poco::NObserver<ConnectionHandler,
+					Poco::Net::IdleNotification>(*this, &ConnectionHandler::onSocketIdle));
+		_reactor.removeEventHandler(_socket, Poco::NObserver<ConnectionHandler,
+					Poco::Net::TimeoutNotification>(*this, &ConnectionHandler::onSocketTimeout));
+
 
 		_fifoOut.readable -= Poco::delegate(this, &ConnectionHandler::onFIFOOutReadable);
 		_fifoIn.writable -= Poco::delegate(this, &ConnectionHandler::onFIFOInWritable);
 
 	} catch (Poco::SystemException &e){
 		throw MarketPlaceException( e.message());
+	}catch(Poco::Exception &e){
+		throw MarketPlaceException("ERROR IN CLOSING CONNECTION");
 	}
+
 }
 
 void ConnectionHandler::onFIFOOutReadable(bool& b)
@@ -147,45 +152,62 @@ void ConnectionHandler::onFIFOInWritable(bool& b)
 
 void ConnectionHandler::onSocketReadable(const Poco::AutoPtr<Poco::Net::ReadableNotification>& pNf)
 {
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("On socket readable");
+
 	if (_socket.available())
 	{
 		
 		int len = _socket.receiveBytes(_fifoIn.next(), _fifoIn.available() );
 		_fifoIn.advance(len);
 		
-		Poco::Util::Application& app = Poco::Util::Application::instance();
+		app.logger().debug(Poco::format("len read:%d", len));
+
 		MarketPlaceServer &server = dynamic_cast<MarketPlaceServer&>(app);
 		MarketPlaceSys *sys = server.getMarketPlaceSubsystem();
 
 		// Receive the message(s)
-		Message message;
+
 		if ((*sys).isAlreadyListener(_socket.peerAddress()))
 		{
-			(*sys).addStagedData(_socket.peerAddress(), _fifoIn, len);		
-			while ((*sys).getMessage(_socket.peerAddress(), message))
-			{
-				doProcessing(_socket.peerAddress(), message);
-			}
+			(*sys).addStagedData(_socket.peerAddress(), _fifoIn, len);
+			bool defined = true;
+			do {
+				Message message;
+				defined = (*sys).getMessage(_socket.peerAddress(), message);
+				if (defined == true){
+					app.logger().debug(Poco::format("message to process:%s", message.to_string()));
+					doProcessing(_socket.peerAddress(), message);
+				}
+			} while (defined == true);
 		}
 		else
 		{
-			std::cout << "the agent is not listening" <<  (_socket.peerAddress()).toString() << std::endl;
+			Message message;
+			app.logger().debug(Poco::format("new listener:%s", (_socket.peerAddress()).toString()));
 			std::string received;
-			(*sys).getMessage(_fifoIn, len, message);
-			// std::cout << message.to_string() << std::endl;
+			sys->getMessage(_fifoIn, len, message);
 			doProcessing(_socket.peerAddress(), message);
 		}
 	}	
 	else
 	{
-		// std::cout << "Socket is unavailable" << std::endl;
+		app.logger().debug(Poco::format("Socket is unavailable - removing listener: %s", _idListener));
+
+		// Disconnect the listener.
+		MarketPlaceServer &server = dynamic_cast<MarketPlaceServer&>(app);
+		MarketPlaceSys *sys = server.getMarketPlaceSubsystem();
+		sys->removeListener(_idListener);
+
+		delete this;
 	}
 }
 
 void ConnectionHandler::onSocketWritable(const Poco::AutoPtr<Poco::Net::WritableNotification>& pNf)
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().debug("On socket writable");
+	// app.logger().debug("On socket writable");
 	
 	int len = _socket.sendBytes((_fifoOut.buffer()).begin(), _fifoOut.used());
 	_fifoOut.drain(len);
@@ -202,23 +224,22 @@ void ConnectionHandler::onSocketTimeout(const Poco::AutoPtr<Poco::Net::TimeoutNo
 void ConnectionHandler::onSocketShutdown(const Poco::AutoPtr<Poco::Net::ShutdownNotification>& pNf)
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().debug("Socket shutdown");
+	app.logger().debug("Connection Handler on socket shutdown");
+
 	delete this;
+
 }
 
 void ConnectionHandler::onSocketError(const Poco::AutoPtr<Poco::Net::ErrorNotification>& pNf)
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().debug("Socket error");
-	std::cout << "Error occurs" << std::endl;
-	delete this;
+	app.logger().debug("Socket error: %s", (_socket.peerAddress()).toString().c_str() );
 }
 
 void ConnectionHandler::onSocketIdle(const Poco::AutoPtr<Poco::Net::IdleNotification>& pNf)
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().debug("On idle notification");
-	std::cout << "On idle notification" << std::endl;
 	sleep(0.00001);
 }
 
@@ -241,14 +262,14 @@ void ConnectionHandler::doProcessing(Poco::Net::SocketAddress socketAddress,
 				
 				// Verify the required parameters: provider
 				app.logger().debug("In Provider connect");
-				providerConnect( socketAddress, message, messageResponse );
+				Connect( socketAddress, message, messageResponse );
 				break;
 			 }	
 		   case send_port:
 			 {
 				// Verify the required parameters: port
 				app.logger().debug("In providerStartListening");
-				providerStartListening( socketAddress, message, messageResponse );
+				StartListening( socketAddress, message, messageResponse );
 				break;
 			 }
 		   case start_period:
@@ -347,21 +368,24 @@ void ConnectionHandler::doProcessing(Poco::Net::SocketAddress socketAddress,
 }
 
 
-void ConnectionHandler::providerConnect(Poco::Net::SocketAddress socketAddress, 
+void ConnectionHandler::Connect(Poco::Net::SocketAddress socketAddress,
 									    Message & messageRequest,
 									    Message & messageResponse)
 {
-	std::string providerId = messageRequest.getParameter("Provider");
 	Poco::Util::Application& app = Poco::Util::Application::instance();
+	std::string listenerId = messageRequest.getParameter("Agent");
+
+	app.logger().debug(Poco::format("Connect %s", listenerId));
+
 	MarketPlaceServer &server = dynamic_cast<MarketPlaceServer&>(app);
 	MarketPlaceSys *sys = server.getMarketPlaceSubsystem();
-	(*sys).insertListener(providerId, socketAddress, messageResponse);
-	// std::cout << "Added listener" << std::endl;
+	sys->insertListener(listenerId, socketAddress, messageResponse);
+	_idListener = listenerId;
 }
 
-void ConnectionHandler::providerStartListening(Poco::Net::SocketAddress socketAddress, 
-											   Message & messageRequest,
-											   Message & messageResponse)
+void ConnectionHandler::StartListening(Poco::Net::SocketAddress socketAddress,
+									   ChoiceNet::Eco::Message & messageRequest,
+									   ChoiceNet::Eco::Message & messageResponse)
 {
 	unsigned  Uport; 
 	std::string port = messageRequest.getParameter("Port");
@@ -456,12 +480,16 @@ void ConnectionHandler::addPurchase(Poco::Net::SocketAddress socketAddress,
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().debug("Adding purchase in the market place");
-	MarketPlaceServer &server = dynamic_cast<MarketPlaceServer&>(app);
-	MarketPlaceSys *sys = server.getMarketPlaceSubsystem();
-	Service * service = (*sys).getService(messageRequest.getParameter("Service"));
-	Purchase * purchasePtr = new Purchase(service, messageRequest);
-	(*sys).addPurchase(purchasePtr, messageResponse);
-	app.logger().debug("Purchase added in the market place");
+	try{
+		MarketPlaceServer &server = dynamic_cast<MarketPlaceServer&>(app);
+		MarketPlaceSys *sys = server.getMarketPlaceSubsystem();
+		Service * service = (*sys).getService(messageRequest.getParameter("Service"));
+		Purchase * purchasePtr = new Purchase(service, messageRequest);
+		(*sys).addPurchase(purchasePtr, messageResponse);
+		app.logger().debug("Purchase added in the market place");
+	} catch (FoundationException &e){
+		app.logger().error(e.message());
+	}
 }
 
 void ConnectionHandler::setProviderAvailability(Poco::Net::SocketAddress socketAddress,

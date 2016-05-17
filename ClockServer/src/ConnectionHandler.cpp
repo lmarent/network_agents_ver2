@@ -55,6 +55,7 @@
 #include "ConnectionHandler.h"
 #include "ClockSys.h"
 #include "ClockServer.h"
+#include "Message.h"
 
 namespace ChoiceNet
 {
@@ -102,24 +103,24 @@ ConnectionHandler::~ConnectionHandler()
 	{
 		std::cout << "Disconnecting" << _socket.peerAddress().toString();
 		app.logger().information("Disconnecting " + _socket.peerAddress().toString());
-	}
-	catch (...)
-	{
-	}
 
-	_reactor.removeEventHandler(_socket, Poco::NObserver<ConnectionHandler, 
-				Poco::Net::ReadableNotification>(*this, &ConnectionHandler::onSocketReadable));
-	_reactor.removeEventHandler(_socket, Poco::NObserver<ConnectionHandler, 
-				Poco::Net::WritableNotification>(*this, &ConnectionHandler::onSocketWritable));
-	_reactor.removeEventHandler(_socket, Poco::NObserver<ConnectionHandler, 
-				Poco::Net::ShutdownNotification>(*this, &ConnectionHandler::onSocketShutdown));
-	_reactor.removeEventHandler(_socket, Poco::NObserver<ConnectionHandler, 
-				Poco::Net::ErrorNotification>(*this, &ConnectionHandler::onSocketError));
-	_reactor.removeEventHandler(_socket, Poco::NObserver<ConnectionHandler, 
-				Poco::Net::IdleNotification>(*this, &ConnectionHandler::onSocketIdle));
+		_reactor.removeEventHandler(_socket, Poco::NObserver<ConnectionHandler,
+					Poco::Net::ReadableNotification>(*this, &ConnectionHandler::onSocketReadable));
+		_reactor.removeEventHandler(_socket, Poco::NObserver<ConnectionHandler,
+					Poco::Net::ShutdownNotification>(*this, &ConnectionHandler::onSocketShutdown));
+		_reactor.removeEventHandler(_socket, Poco::NObserver<ConnectionHandler,
+					Poco::Net::ErrorNotification>(*this, &ConnectionHandler::onSocketError));
+		_reactor.removeEventHandler(_socket, Poco::NObserver<ConnectionHandler,
+					Poco::Net::IdleNotification>(*this, &ConnectionHandler::onSocketIdle));
 
-	_fifoOut.readable -= Poco::delegate(this, &ConnectionHandler::onFIFOOutReadable);
-	_fifoIn.writable -= Poco::delegate(this, &ConnectionHandler::onFIFOInWritable);
+		_fifoOut.readable -= Poco::delegate(this, &ConnectionHandler::onFIFOOutReadable);
+		_fifoIn.writable -= Poco::delegate(this, &ConnectionHandler::onFIFOInWritable);
+
+	} catch (Poco::SystemException &e){
+		throw ClockServerException( e.message());
+	}catch(Poco::Exception &e){
+		throw ClockServerException("ERROR IN CLOSING CONNECTION");
+	}
 
 }
 
@@ -144,8 +145,8 @@ void ConnectionHandler::onFIFOInWritable(bool& b)
 }
 
 void ConnectionHandler::providerConnect(Poco::Net::SocketAddress socketAddress,
-									   Message & message,
-									   Message & messageResponse)
+									   ChoiceNet::Eco::Message & message,
+									   ChoiceNet::Eco::Message & messageResponse)
 {
 	std::string providerId = message.getParameter("Provider");
 	std::cout << "Adding listener 1" << std::endl;
@@ -158,8 +159,8 @@ void ConnectionHandler::providerConnect(Poco::Net::SocketAddress socketAddress,
 }
 
 void ConnectionHandler::providerStartListening(Poco::Net::SocketAddress socketAddress, 
-										       Message & message, 
-										       Message & messageResponse)
+										       ChoiceNet::Eco::Message & message, 
+										       ChoiceNet::Eco::Message & messageResponse)
 {
 	unsigned  Uport; 
 	std::string port = message.getParameter("Port");
@@ -181,8 +182,8 @@ void ConnectionHandler::providerStartListening(Poco::Net::SocketAddress socketAd
 }
 
 void ConnectionHandler::sendCurrentPeriod(Poco::Net::SocketAddress socketAddress, 
-										  Message & messageRequest,
-										  Message & messageResponse)
+										  ChoiceNet::Eco::Message & messageRequest,
+										  ChoiceNet::Eco::Message & messageResponse)
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	ClockServer &server = dynamic_cast<ClockServer&>(app);
@@ -191,8 +192,8 @@ void ConnectionHandler::sendCurrentPeriod(Poco::Net::SocketAddress socketAddress
 }
 
 void ConnectionHandler::disconnectListener(Poco::Net::SocketAddress socketAddress, 
-										   Message & messageRequest,
-										   Message & messageResponse)
+										   ChoiceNet::Eco::Message & messageRequest,
+										   ChoiceNet::Eco::Message & messageResponse)
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	ClockServer &server = dynamic_cast<ClockServer&>(app);
@@ -201,8 +202,8 @@ void ConnectionHandler::disconnectListener(Poco::Net::SocketAddress socketAddres
 }
 
 void ConnectionHandler::getServices(Poco::Net::SocketAddress ipAddress,  
-								    Message & messageRequest, 
-								    Message & messageResponse)
+								    ChoiceNet::Eco::Message & messageRequest, 
+								    ChoiceNet::Eco::Message & messageResponse)
 {
 
 	Poco::Util::Application& app = Poco::Util::Application::instance();
@@ -221,22 +222,22 @@ void ConnectionHandler::getServices(Poco::Net::SocketAddress ipAddress,
 	std::cout << "Ending get services" << std::endl;
 }
 
-void ConnectionHandler::errorProcedure(Message & messageResponse)
+void ConnectionHandler::errorProcedure(ChoiceNet::Eco::Message & messageResponse)
 {
 	messageResponse.setParameter("Status_Code", "300");
 	messageResponse.setParameter("Status_Description", "Invalid Method");
 }
 
 void ConnectionHandler::doProcessing(Poco::Net::SocketAddress socketAddress, 
-									 Message & message)
+									 ChoiceNet::Eco::Message & message)
 {
 
 	Method meth = message.getMethod();
 		
-	// std::cout << "Message:" << message.to_string() << std::endl;
+	// std::cout << "ChoiceNet::Eco::Message:" << ChoiceNet::Eco::Message.to_string() << std::endl;
 		
 	// This object will be the response for the calling application.
-	Message messageResponse;
+	ChoiceNet::Eco::Message messageResponse;
 	messageResponse.setMethod(meth);
 	try{
 		switch (meth)
@@ -288,7 +289,7 @@ void ConnectionHandler::doProcessing(Poco::Net::SocketAddress socketAddress,
 		std::string codeStr;
 		Poco::NumberFormatter::append(codeStr,e.code());
 		messageResponse.setParameter("Status_Code", codeStr);
-		messageResponse.setParameter("Status_Description", e.message());		
+		messageResponse.setParameter("Status_Description", e.message());
 	}
 	catch(ClockServerException &e)
 	{
@@ -315,38 +316,44 @@ void ConnectionHandler::onSocketReadable(const Poco::AutoPtr<Poco::Net::Readable
 	// some socket implementations (windows) report available
 	// bytes on client disconnect, so we double-check here
 	
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+
 	if (_socket.available())
 	{
 		
 		int len = _socket.receiveBytes(_fifoIn.next(), _fifoIn.available() );
-		
-		std::cout << "Number of characters received" << len << std::endl;
-		
+
 		_fifoIn.advance(len);
 		
-		Poco::Util::Application& app = Poco::Util::Application::instance();
-		app.logger().debug("Request for Services");
 		ClockServer &server = dynamic_cast<ClockServer&>(app);
 		ClockSys *sys = server.getClockSubsystem();
-		Message message;
+		ChoiceNet::Eco::Message message;
 
 		if ((*sys).isAlreadyListener(_socket.peerAddress()))
 		{
-			(*sys).addStagedData(_socket.peerAddress(), _fifoIn, len);		
-			while ((*sys).getMessage(_socket.peerAddress(), message))
-			{
-				doProcessing(_socket.peerAddress(), message);
-			}
+			(*sys).addStagedData(_socket.peerAddress(), _fifoIn, len);
+			bool defined = true;
+			do {
+				Message message;
+				defined = (*sys).getMessage(_socket.peerAddress(), message);
+				if (defined == true){
+					app.logger().debug("message to process:%s", message.to_string());
+					doProcessing(_socket.peerAddress(), message);
+				}
+			} while (defined == true);
 		}
 		else
 		{
+			Message message;
+			app.logger().debug("new listener:%s", (_socket.peerAddress()).toString().c_str());
 			std::string received;
 			(*sys).getMessage(_fifoIn, len, message);
 			doProcessing(_socket.peerAddress(), message);
-		}		
+		}
 	}	
 	else
 	{
+		delete this;
 		// std::cout << "Socket is unavailable" << std::endl;
 	}
 
@@ -372,7 +379,6 @@ void ConnectionHandler::onSocketError(const Poco::AutoPtr<Poco::Net::ErrorNotifi
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().debug("Socket Error occurs");
 	std::cout << "Socket Error occurs" << std::endl;
-	delete this;
 }
 
 void ConnectionHandler::onSocketIdle(const Poco::AutoPtr<Poco::Net::IdleNotification>& pNf)

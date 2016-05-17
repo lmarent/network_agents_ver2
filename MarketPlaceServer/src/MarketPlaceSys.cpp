@@ -309,8 +309,7 @@ void MarketPlaceSys::getMessage(Poco::FIFOBuffer & fifoIn,
 	message.setData(receiveString);
 }
 
-bool MarketPlaceSys::getMessage(Poco::Net::SocketAddress socketAddress, 
-				Message & message)
+bool MarketPlaceSys::getMessage(Poco::Net::SocketAddress socketAddress, Message & message)
 {
 	bool val_return = false;
 	Listeners::iterator it;
@@ -352,6 +351,10 @@ void MarketPlaceSys::insertListener(std::string idListener,
 							 Poco::Net::SocketAddress socketAddress,
 							 Message & messageResponse )
 {
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().information(Poco::format("insert listener id: %s", idListener));
+
 	if (isAlreadyListener(idListener))
 	{
 		throw MarketPlaceException("The agent is already a listener", 302);
@@ -364,6 +367,7 @@ void MarketPlaceSys::insertListener(std::string idListener,
 		_listeners_by_id.insert( std::pair<std::string, Listener *>(idListener,listener));
 		
 		messageResponse.setResponseOk();
+		app.logger().information(Poco::format("listener %s inserted", idListener));
 	}
 }
 
@@ -371,14 +375,22 @@ void MarketPlaceSys::startListening(Poco::Net::SocketAddress socketAddress,
 							 Poco::UInt16 port, std::string type,
 							 Message & messageResponse)
 {
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().information(Poco::format("port:%u, type:%s", port, type ));
+
 	
 	Listeners::iterator it;
 	it = _listeners.find(socketAddress);
 	if (it != _listeners.end())
 	{
+		app.logger().information("socket address");
+
 		Poco::Net::SocketAddress sa = (*(it->second)).getSocketAddress();
 		try
 		{
+			app.logger().information("socket address 1");
+
 			Poco::Net::SocketAddress sockadd(sa.host(), port);
 			(*(it->second)).Connect(sockadd);
 			(*(it->second)).setListeningPort(port);
@@ -386,8 +398,10 @@ void MarketPlaceSys::startListening(Poco::Net::SocketAddress socketAddress,
 			// If the listener is a provider, we added to the list of providers.
 			if (type.compare("provider") ==  0)
 			{
-				Provider * provider = new Provider((*(it->second)).getId());
-				_providers.insert(std::pair<std::string, Provider *>( (*(it->second)).getId(), provider));
+				app.logger().information("socket address 2");
+				std::string providerId = (it->second)->getId();
+				Provider * provider = new Provider(providerId);
+				_providers.insert(std::pair<std::string, Provider *>( providerId, provider));
 			}
 			insertListenerBytype(type, (*(it->second)).getId());
 			messageResponse.setResponseOk();
@@ -480,6 +494,8 @@ void MarketPlaceSys::broadCastInformation(Message & message, std::string type)
 						msg.append(it->first);
 						msg.append("is not listening anymore");
 						app.logger().error(msg);
+						
+						// Remove the listener from the list.
 					}
 				}
 			}	
@@ -614,9 +630,9 @@ void MarketPlaceSys::finalizePeriodSession(Message & messageResponse)
 	app.logger().information("Starting finalize period session");
 
 	saveBidInformation();
+	storeCurrentPurchaseInformation();
 	broadCastBidInformation();
 	sendProviderPurchaseInformation();	
-	storeCurrentPurchaseInformation();
 	activatePresenter();
 	messageResponse.setResponseOk();
 }
@@ -709,42 +725,45 @@ void MarketPlaceSys::deleteBid(Bid * bidPtr, Message & messageResponse)
 
 void MarketPlaceSys::addPurchase(Purchase * purchasePtr, Message & messageResponse)
 {
+	try {
+		Bid * bid = getBid(purchasePtr->getBid());
+		bool isActive = (*_current_bids).isBidActive(bid->getService(), bid->getProvider(), bid->getId());
 
-	Bid * bid = getBid(purchasePtr->getBid());
-	bool isActive = (*_current_bids).isBidActive(bid->getService(), bid->getProvider(), bid->getId());
-
-	if (isActive)
-	{
-		Service * service = getService(purchasePtr->getService());
-		Provider * provider = getProvider(bid->getProvider());
-			
-		if (provider->isAvailable(_period, service, purchasePtr, bid))
+		if (isActive)
 		{
-			// In any case inserts the purchase into the service container. 
-			(*_current_purchases).addPurchaseToService(purchasePtr);
-			// std::cout << "Purchase inserted in the market place" << std::endl;
-			_purchases.insert(std::pair<std::string, Purchase *>((*purchasePtr).getId(), purchasePtr) );
-			// Deducts from the availability
-			provider->deductAvailability(_period, service, purchasePtr, bid);
-			// Establishes the quantity purchased as a feedback to the agent.
-			
-			std::cout << "quantity purchased - P:" << bid->getProvider() << ",Q:" + purchasePtr->getQuantityStr() << "purchase Id:" << purchasePtr->getId() <<  std::endl;
-			messageResponse.setParameter("Quantity_Purchased", purchasePtr->getQuantityStr());
+			Service * service = getService(purchasePtr->getService());
+			Provider * provider = getProvider(bid->getProvider());
+
+			if (provider->isAvailable(_period, service, purchasePtr, bid))
+			{
+				// In any case inserts the purchase into the service container.
+				(*_current_purchases).addPurchaseToService(purchasePtr);
+				// std::cout << "Purchase inserted in the market place" << std::endl;
+				_purchases.insert(std::pair<std::string, Purchase *>((*purchasePtr).getId(), purchasePtr) );
+				// Deducts from the availability
+				provider->deductAvailability(_period, service, purchasePtr, bid);
+				// Establishes the quantity purchased as a feedback to the agent.
+
+				std::cout << "quantity purchased - P:" << bid->getProvider() << ",Q:" + purchasePtr->getQuantityStr() << "purchase Id:" << purchasePtr->getId() <<  std::endl;
+				messageResponse.setParameter("Quantity_Purchased", purchasePtr->getQuantityStr());
+			}
+			else
+			{
+				// std::cout << "Bid:" << bid->getId() << "is not available" << std::endl;
+				messageResponse.setParameter("Quantity_Purchased", "0");
+			}
+			// set the response as Ok
+			messageResponse.setResponseOk();
 		}
 		else
 		{
-			// std::cout << "Bid:" << bid->getId() << "is not available" << std::endl;
+			// The bid is not active, so you cannot sell anymore.
 			messageResponse.setParameter("Quantity_Purchased", "0");
+			// set the response as Ok
+			messageResponse.setResponseOk();
 		}
-		// set the response as Ok
-		messageResponse.setResponseOk();
-	}
-	else
-	{
-		// The bid is not active, so you cannot sell anymore.
-		messageResponse.setParameter("Quantity_Purchased", "0");
-		// set the response as Ok
-		messageResponse.setResponseOk();
+	} catch (MarketPlaceException &e) {
+		throw e;
 	}
 }
 
@@ -843,7 +862,7 @@ Provider * MarketPlaceSys::getProvider(std::string providerId)
 	else
 	{
 		Poco::Util::Application& app = Poco::Util::Application::instance();
-		app.logger().debug("Provider is not included in the container");
+		app.logger().debug("Provider is not included in the container %s", providerId);
 		throw MarketPlaceException("Provider is not included in the container");
 	}
 }
@@ -866,10 +885,71 @@ Bid * MarketPlaceSys::getBid(std::string bidId)
 
 void MarketPlaceSys::storeCurrentPurchaseInformation()
 {
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("Starting storeCurrentPurchaseInformation");
+
 	if (_current_purchases != NULL)
 	{
 		_current_purchases->toDatabase(_pool, (int) _period);
 	}
+
+	app.logger().debug("Ending storeCurrentPurchaseInformation");
+
+}
+
+void MarketPlaceSys::removeListener(std::string idListener)
+{
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("Starting removeListener");
+
+	Listener *list = NULL;
+    // remove the listener from the vector
+	std::map<Poco::Net::SocketAddress, Listener*>::iterator it;
+    for (it = _listeners.begin(); it != _listeners.end(); ++it ){
+    	if ((it->second)->getId().compare(idListener) == 0){
+    		list = it->second;
+    		_listeners.erase(it);
+    	}
+    }
+
+    if (list != NULL){
+    	// Delete the listener from the list of listeners by type.
+		std::string type = list->getTypeStr();
+		std::map<std::string, std::vector<std::string> >::iterator it2;
+		it2 = _listeners_by_type.find(type);
+		if (it2 != _listeners_by_type.end()){
+			std::vector<std::string>::iterator it3;
+			for (it3 = (it2->second).begin(); it3 != (it2->second).end(); ++it3 ){
+				if (it3->compare(idListener) == 0){
+					(it2->second).erase(it3);
+					break;
+				}
+			}
+		}
+
+		// These two containers act as indexes for the listeners container.
+		std::map<std::string, Listener *>::iterator it4;
+		it4 = _listeners_by_id.find(idListener);
+		if (it4 != _listeners_by_id.end()){
+			_listeners_by_id.erase(it4);
+		}
+
+		// Delete from  provider.
+		if ( list->getType() == PROVIDER){
+			std::map<std::string, Provider *>::iterator it5;
+			for (it5 = _providers.begin(); it5 != _providers.end(); ++it5){
+				delete (it5->second);
+				_providers.erase(it5);
+				break;
+			}
+		}
+
+		// Finally dispose the listener object
+		delete list;
+    }
+
+	app.logger().debug("Ending removeListener");
+
 }
 
 }  /// End Eco namespace

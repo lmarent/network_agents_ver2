@@ -21,6 +21,6 @@ endif
 
 
 # what flags you want to pass to the C compiler & linker
-AM_LDFLAGS = @poco_LDFLAGS@ @LIBNETAGENTSFDTION_LIBS@
+AM_LDFLAGS = @LIBNETAGENTSFDTION_LIBS@ @poco_LDFLAGS@ 
 
-LDADD = @poco_LIBS@ 
+LDADD = @LIBNETAGENTSFDTION_LIBS@ @poco_LIBS@ 

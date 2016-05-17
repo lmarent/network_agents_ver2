@@ -103,14 +103,14 @@ public:
 						   ChoiceNet::Eco::Message & messageResponse);
 	
 	void disconnectListener(Poco::Net::SocketAddress socketAddress, 
-							 Message & messageRequest,
-						     Message & messageResponse);
+							ChoiceNet::Eco::Message & messageRequest,
+							ChoiceNet::Eco::Message & messageResponse);
 	
-	void errorProcedure(Message & messageResponse);
+	void errorProcedure(ChoiceNet::Eco::Message & messageResponse);
 		
 	void getServices(Poco::Net::SocketAddress socketAddress, 
-					 Message & messageRequest,
-					 Message & messageResponse);
+					 ChoiceNet::Eco::Message & messageRequest,
+					 ChoiceNet::Eco::Message & messageResponse);
 
 private:
 	enum

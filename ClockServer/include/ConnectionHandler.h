@@ -90,9 +90,9 @@ public:
 	void doProcessing(Poco::Net::SocketAddress socketAddress, 
 					  ChoiceNet::Eco::Message & message);
 		
-	void providerConnect(Poco::Net::SocketAddress socketAddress, 
-						 ChoiceNet::Eco::Message & messageRequest,
-						 ChoiceNet::Eco::Message & messageResponse);
+	void Connect(Poco::Net::SocketAddress socketAddress,
+				 ChoiceNet::Eco::Message & messageRequest,
+				 ChoiceNet::Eco::Message & messageResponse);
 	
 	void providerStartListening(Poco::Net::SocketAddress socketAddress, 
 								ChoiceNet::Eco::Message & messageRequest,

@@ -210,7 +210,7 @@ void MarketPlaceSys::initialize(Poco::Util::Application &app)
 		Message response;
 		Method method = connect;
 		connect_msg.setMethod(method);
-		connect_msg.setParameter("Provider", p_cName);
+		connect_msg.setParameter("Agent", p_cName);
 		sendMessageToClock(connect_msg, response);
 
 		// If the message is not ok, show the message description and raise an exception

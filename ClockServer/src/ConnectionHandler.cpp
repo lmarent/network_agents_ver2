@@ -144,18 +144,16 @@ void ConnectionHandler::onFIFOInWritable(bool& b)
 				Poco::Net::ReadableNotification>(*this, &ConnectionHandler::onSocketReadable));
 }
 
-void ConnectionHandler::providerConnect(Poco::Net::SocketAddress socketAddress,
+void ConnectionHandler::Connect(Poco::Net::SocketAddress socketAddress,
 									   ChoiceNet::Eco::Message & message,
 									   ChoiceNet::Eco::Message & messageResponse)
 {
-	std::string providerId = message.getParameter("Provider");
-	std::cout << "Adding listener 1" << std::endl;
+	std::string listenerId = message.getParameter("Agent");
+
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	ClockServer &server = dynamic_cast<ClockServer&>(app);
 	ClockSys *clocksys = server.getClockSubsystem();
-	std::cout << "Adding listener 2" << std::endl;
-	(*clocksys).insertListener(providerId, socketAddress, messageResponse);
-	std::cout << "Added listener" << std::endl;
+	(*clocksys).insertListener(listenerId, socketAddress, messageResponse);
 }
 
 void ConnectionHandler::providerStartListening(Poco::Net::SocketAddress socketAddress, 
@@ -246,7 +244,7 @@ void ConnectionHandler::doProcessing(Poco::Net::SocketAddress socketAddress,
 			  {
 	 			// Verify the required paramters option provider
 	 			// std::cout << "In Connect" << std::endl;
-				providerConnect( socketAddress, message, messageResponse );
+				Connect( socketAddress, message, messageResponse );
 				break;
 			  }	
 		   case send_port:

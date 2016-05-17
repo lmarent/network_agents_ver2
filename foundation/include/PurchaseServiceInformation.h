@@ -22,6 +22,7 @@ struct PurchaseServiceBidStruct
 	std::string _serviceId;
 	std::string _bidId;
 	double 		_quantity;
+	int 		_execution_count;
 };
 
 class PurchaseServiceInformation
@@ -46,7 +47,7 @@ public:
 					   std::string id, double quantity);
 
     // Store purchases for the service in the database pool.
-    void toDatabase(Poco::Data::SessionPool * _pool, int period, std::string serviceId);
+    void toDatabase(Poco::Data::SessionPool * _pool, int execution_count, int period, std::string serviceId);
 
 private:
     

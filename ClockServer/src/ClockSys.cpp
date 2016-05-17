@@ -19,6 +19,7 @@
 
 
 
+#include "FoundationSys.h"
 #include "ClockSys.h"
 #include "ClockServerException.h"
 #include "FoundationException.h"
@@ -36,10 +37,11 @@ namespace ChoiceNet
 namespace Eco
 {
 
-ClockSys::ClockSys(void): 
-FoundationSys(),
+ClockSys::ClockSys(void): FoundationSys(CLOCK_SERVER),
 _period(1),
-_interval(0)
+_interval(0),
+p_cName('C'),
+_executionNumber(0)
 {
 }
 

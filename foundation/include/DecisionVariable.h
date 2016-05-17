@@ -20,6 +20,7 @@ struct DecisionVariableStruct
 	std::string _parentId;
 	std::string _name;
 	double _value;
+	int _execution_count;
 };
 
 enum OptimizationObjective

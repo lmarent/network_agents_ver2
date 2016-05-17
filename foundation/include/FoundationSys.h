@@ -18,12 +18,18 @@ namespace ChoiceNet
 namespace Eco
 {
 
+enum AgentType{
+	CLOCK_SERVER = 0,
+	MARKET_SERVER = 1
+};
+
+
 class FoundationSys
 {
 
 public:
 
-    FoundationSys(void);
+    FoundationSys(AgentType type);
     ~FoundationSys(void);
     
     void initialize(Poco::Util::Application &app, int bid_periods, int pareto_fronts);
@@ -51,10 +57,16 @@ public:
     Resource * getResource(std::string resourceId);
     SimplestTrafficConverter * loadTrafficConverter(std::string serviceId);
     
+    AgentType getType();
+
+    int getExecutionCount();
+
 protected:
 	
     int _bid_periods;
     int _pareto_fronts_to_exchange;
+    int _execution_count;
+    AgentType _type;
 	
     typedef std::map<std::string, Resource *> ResourceContainer;
 	typedef std::map<std::string, Service *> ServiceContainer;

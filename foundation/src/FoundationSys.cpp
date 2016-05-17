@@ -16,10 +16,12 @@ namespace ChoiceNet
 namespace Eco
 {
 
-FoundationSys::FoundationSys(void):
+FoundationSys::FoundationSys(AgentType type):
 _pool(NULL),
 _bid_periods(0),
-_pareto_fronts_to_exchange(0)
+_pareto_fronts_to_exchange(0),
+_execution_count(0),
+_type(type)
 {
 	Poco::Data::MySQL::Connector::registerConnector();
 }
@@ -139,25 +141,39 @@ void FoundationSys::initialize(Poco::Util::Application &app, int bid_periods, in
 
 void FoundationSys::readGeneralParametersFromDataBase(void)
 {
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().information("read general parameters from database");
+
 	// Obtain a session from the pool
 	Poco::Data::Session session(_pool->get());
 	int bid_periods = 0;
 	int pareto_fronts_to_exchange = 0;
+	int execution_count = 0;
 	
+	if (getType() == CLOCK_SERVER){
+		Poco::Data::Statement insert(session);
+		insert << "update simulation_generalparameters set execution_count = execution_count + 1 limit 1";
+		insert.execute();
+	}
+
 	Poco::Data::Statement select(session);
-	select << "select bid_periods, pareto_fronts_to_exchange from simulation_generalparameters limit 1",
+	select << "select bid_periods, pareto_fronts_to_exchange, execution_count from simulation_generalparameters limit 1",
 	          into(bid_periods),
 	          into(pareto_fronts_to_exchange),
+			  into(execution_count),
 	          range(0, 1); //  iterate over result set one row at a time
 	 while (!select.done())
 	 {
 		 select.execute();
 		 _bid_periods = bid_periods;
 		 _pareto_fronts_to_exchange = pareto_fronts_to_exchange;
+		 _execution_count = execution_count;
 		 
 		 std::cout << "In readGeneralParametersFromDataBase " << _bid_periods << std::endl;
 	 }
 
+	 session.commit();
+	 app.logger().information(Poco::format("read general parameters from database Periods:%d execution count:%d", _bid_periods, _execution_count));
 }
 
 void FoundationSys::readDiscreteProbabilityDistributionsFromDataBase( int probabilityId, 
@@ -561,6 +577,16 @@ SimplestTrafficConverter * FoundationSys::loadTrafficConverter(std::string servi
 	return NULL;		
 }
 
-}  /// End Eco namespace
+AgentType FoundationSys::getType()
+{
+	return _type;
+}
+
+int FoundationSys::getExecutionCount()
+{
+	return _execution_count;
+}
+
+}/// End Eco namespace
 
 }  /// End ChoiceNet namespace

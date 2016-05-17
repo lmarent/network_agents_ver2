@@ -33,7 +33,7 @@ namespace Eco
 {
 
 MarketPlaceSys::MarketPlaceSys(void): 
-FoundationSys(),
+FoundationSys(MARKET_SERVER),
 _clockSocket(NULL),
 _current_bids(NULL),
 _current_purchases(NULL),
@@ -516,7 +516,7 @@ void MarketPlaceSys::saveBidInformation(void)
 		app.logger().information("saving Bid information");
 
 		Bid * bid = (it->second);
-		bid->to_Database(_pool,(int) _period);
+		bid->toDatabase(_pool, FoundationSys::getExecutionCount(), (int) _period);
 	}
 
 	app.logger().information("Ending saveBidInformation");
@@ -787,8 +787,10 @@ void MarketPlaceSys::getBestBids(std::string providerId, std::string serviceId,
 {
 
 	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("Entering getBestBids");
+
 	int fronts = getParetoFrontsToExchange();
-	// std::cout << "Begin getBestBid - Pareto fronts to send" << fronts << std::endl;
+
 	messageResponse.setResponseOk();
 	// Constructs a message with header and body, 
 	// the header is composed of the service and the number of pareto fronts 
@@ -797,15 +799,18 @@ void MarketPlaceSys::getBestBids(std::string providerId, std::string serviceId,
 	messageResponse.setParameter("Service", serviceId);
 	messageResponse.setParameter("Fronts", fronts);
     messageResponse.setBody(xml);
-	// std::cout << messageResponse.to_string() << std::endl;
-	// std::cout << "Market Place Sys - getBestBid Ended" << std::endl;
+
+	app.logger().debug("Ending getBestBids");
+
 }
 
 void MarketPlaceSys::getBestBids(std::string providerId, std::string serviceId, 
 								 int fronts, Message & messageResponse)
 {
 
-	// std::cout << "Begin getBestBid" << std::endl;
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug(Poco::format("Entering getBestBids - fronts: %d", fronts));
+
 	messageResponse.setResponseOk();
 	
 	// Constructs a message with header and body, 
@@ -815,7 +820,9 @@ void MarketPlaceSys::getBestBids(std::string providerId, std::string serviceId,
 	messageResponse.setParameter("Service", serviceId);
 	messageResponse.setParameter("Fronts", fronts);
     messageResponse.setBody(xml);
-	// std::cout << "getBestBid Ended" << std::endl;
+
+    app.logger().debug("Ending getBestBids");
+
 }
 
 void MarketPlaceSys::sendBid(std::string bidId, Message & messageResponse)
@@ -890,7 +897,7 @@ void MarketPlaceSys::storeCurrentPurchaseInformation()
 
 	if (_current_purchases != NULL)
 	{
-		_current_purchases->toDatabase(_pool, (int) _period);
+		_current_purchases->toDatabase(_pool, FoundationSys::getExecutionCount() , (int) _period);
 	}
 
 	app.logger().debug("Ending storeCurrentPurchaseInformation");

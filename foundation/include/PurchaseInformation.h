@@ -26,7 +26,7 @@ public:
 										 std::map<std::string, std::vector<std::string> > &bids);
 
     // Store purchases in the database pool.
-    void toDatabase(Poco::Data::SessionPool * _pool, int period);
+    void toDatabase(Poco::Data::SessionPool * _pool, int execution_count, int period);
 
 private:
 

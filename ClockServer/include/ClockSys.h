@@ -95,7 +95,7 @@ public:
     
 protected:
 
-    virtual const char* name() const;
+    const char* name() const;
         
 private:
     char p_cName;
@@ -113,13 +113,15 @@ private:
     std::map<std::string, std::vector<std::string> > _listeners_by_type;
     std::map<std::string, ServiceActivation> _services_activation;
     int _interval;
-    int _period; 
+    int _period;
+    int _executionNumber;
     
 };
 
 
-}  /// End Eco namespace
+} /// End Eco namespace
 
 }  /// End ChoiceNet namespace
+
 
 #endif // ClockSys_INCLUDED

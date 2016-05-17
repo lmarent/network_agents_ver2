@@ -179,7 +179,7 @@ void PurchaseServiceInformation::getPurchases(Poco::XML::AutoPtr<Poco::XML::Docu
 	// std::cout << "Finish getPurchases:" << std::endl;
 }	
 
-void PurchaseServiceInformation::toDatabase(Poco::Data::SessionPool * _pool, int period, std::string serviceId)
+void PurchaseServiceInformation::toDatabase(Poco::Data::SessionPool * _pool, int execution_count, int period, std::string serviceId)
 {
 
 	Poco::Data::Session session(_pool->get());
@@ -195,6 +195,7 @@ void PurchaseServiceInformation::toDatabase(Poco::Data::SessionPool * _pool, int
 		PurchaseServiceBidS._serviceId =  serviceId;
 		PurchaseServiceBidS._bidId =  it_purchase->first;
 		PurchaseServiceBidS._quantity =  (double) it_purchase->second;
+		PurchaseServiceBidS._execution_count = execution_count;
 
 		if (firstTime == true){
 

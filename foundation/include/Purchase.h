@@ -24,7 +24,8 @@ struct PurchaseStruct
 	std::string _id;
     std::string _bid;
     std::string _service;
-    double _quantity;
+    double 		_quantity;
+    int     	_execution_count;
 };
 
 class Purchase : public Datapoint

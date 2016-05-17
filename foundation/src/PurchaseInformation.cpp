@@ -94,14 +94,14 @@ void PurchaseInformation::getPurchasesForProvider( Poco::XML::AutoPtr<Poco::XML:
 
 }
 
-void PurchaseInformation::toDatabase(Poco::Data::SessionPool * _pool, int period)
+void PurchaseInformation::toDatabase(Poco::Data::SessionPool * _pool, int execution_count, int period)
 {
 	PurchaseServiceInformationContainer::iterator it;
 	it = _service_information.begin();
 	while (it != _service_information.end())
 	{
 		 // std::cout << "Inside the while in getPurchasesForProvider" << std::endl;
-		(it->second)->toDatabase(_pool,period, it->first);
+		(it->second)->toDatabase(_pool, execution_count, period, it->first);
 		++it;
 	}
 }

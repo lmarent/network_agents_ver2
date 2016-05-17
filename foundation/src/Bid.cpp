@@ -100,7 +100,7 @@ Datapoint()
 	}
 }
 		
-Bid::~Bid()
+ Bid::~Bid()
 {
 	// std::cout << "Number of neigborhood bids" << _neighbors.size() << std::endl;
 	std::cout << "Deleting the bid" << std::endl;
@@ -276,7 +276,7 @@ void Bid::to_XML(Poco::XML::AutoPtr<Poco::XML::Document> pDoc,
 	pParent->appendChild(proot);
 }
 
-void Bid::to_Database(Poco::Data::SessionPool * _pool, int period)
+void Bid::toDatabase(Poco::Data::SessionPool * _pool, int execute_count, int period)
 {
 	// std::cout << "putting the information of the bid:" << getId() <<  std::endl;
 
@@ -288,16 +288,18 @@ void Bid::to_Database(Poco::Data::SessionPool * _pool, int period)
 					   getService(),
 					   (int) _status,
 					   getParetoStatus(),
-					   numDominated() };
+					   numDominated(),
+					   execute_count };
 
 	Poco::Data::Statement insert(session);
-	insert << "insert into simulation_bid (period, bidId, providerId, status, paretoStatus, dominatedCount) values(?,?,?,?,?,?)",
+	insert << "insert into simulation_bid (period, bidId, providerId, status, paretoStatus, dominatedCount, execution_count) values(?,?,?,?,?,?,?)",
 				use(BidS._period),
 				use(BidS._id),
 				use(BidS._provider),
 				use(BidS._status),
 				use(BidS._paretoStatus),
-				use(BidS._dominatedCount);
+				use(BidS._dominatedCount),
+				use(BidS._execution_count);
 
 	insert.execute();
 
@@ -309,14 +311,16 @@ void Bid::to_Database(Poco::Data::SessionPool * _pool, int period)
 		{
 			getId(),
 			it->first,
-			getDecisionVariable(it->first)
+			getDecisionVariable(it->first),
+			execute_count
 		};
 
 		Poco::Data::Statement insertDecisionVariable(session);
-		insertDecisionVariable << "insert into simulation_bid_decision_variable (parentId, decisionVariableName, value) values(?,?,?)",
+		insertDecisionVariable << "insert into simulation_bid_decision_variable (parentId, decisionVariableName, value) values(?,?,?,?)",
 					use(DecisionVariableS._parentId),
 					use(DecisionVariableS._name),
-					use(DecisionVariableS._value);
+					use(DecisionVariableS._value),
+					use(DecisionVariableS._execution_count);
 
 		insertDecisionVariable.execute();
 

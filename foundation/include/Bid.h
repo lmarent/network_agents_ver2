@@ -28,6 +28,7 @@ struct BidStruct
     int         _status;
     int 		_paretoStatus;
     size_t 		_dominatedCount;
+    int 		_execution_count;
 };
 
 class Bid: public Datapoint
@@ -65,13 +66,13 @@ public:
 	/// Sets the status of the bid. Valid values are: active and inactive.
 	
 	void setDecisionVariable(std::string decisionVariableId, size_t dimension, double value, OptimizationObjective &objetive);
-	/// Sets a decision variable associted with the bid. 
+	/// Sets a decision variable associated with the bid.
 	
 	double getDecisionVariable(std::string decisionVariableId);
-	/// Gets a decision variable associted with the bid. 
+	/// Gets a decision variable associated with the bid.
 
 	std::string getDecisionVariableStr(std::string decisionVariableId);
-	/// Gets a decision variable in string associted with the bid. 
+	/// Gets a decision variable in string associated with the bid.
 	
 	void addNeighbor(std::string bidId);
 	
@@ -89,7 +90,7 @@ public:
     void toMessage(Message & message);
 
     // Store the bid in the pool.
-    void to_Database(Poco::Data::SessionPool * _pool, int period);
+    void toDatabase(Poco::Data::SessionPool * _pool, int period, int execution_count);
 
 private:
     enum BidStatus

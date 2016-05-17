@@ -199,11 +199,12 @@ void PurchaseServiceInformation::toDatabase(Poco::Data::SessionPool * _pool, int
 
 		if (firstTime == true){
 
-			insert << "insert into simulation_bid_purchases(period, serviceId, bidId, quantity) values(?,?,?,?)",
+			insert << "insert into simulation_bid_purchases(period, serviceId, bidId, quantity, execution_count) values(?,?,?,?,?)",
 						use(PurchaseServiceBidS._period),
 						use(PurchaseServiceBidS._serviceId),
 						use(PurchaseServiceBidS._bidId),
-						use(PurchaseServiceBidS._quantity);
+						use(PurchaseServiceBidS._quantity),
+						use(PurchaseServiceBidS._execution_count);
 
 			insert.execute();
 			firstTime = false;

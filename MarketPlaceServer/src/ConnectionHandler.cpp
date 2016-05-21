@@ -216,7 +216,7 @@ void ConnectionHandler::onSocketWritable(const Poco::AutoPtr<Poco::Net::Writable
 void ConnectionHandler::onSocketTimeout(const Poco::AutoPtr<Poco::Net::TimeoutNotification >& pNf)
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().debug("On socket timeout");
+	//app.logger().debug("On socket timeout");
 
 }
 
@@ -303,6 +303,7 @@ void ConnectionHandler::doProcessing(Poco::Net::SocketAddress socketAddress,
 			 {
   				app.logger().debug("In addPurchase");
 				addPurchase( socketAddress, message, messageResponse );
+				app.logger().debug(Poco::format("response message: %s", messageResponse.to_string()));
 				break;
 		     }
 		   case send_availability:
@@ -363,7 +364,10 @@ void ConnectionHandler::doProcessing(Poco::Net::SocketAddress socketAddress,
 	{
 	   _fifoOut.resize(_fifoOut.used() + responseStr.length() + 1, true);
 	}
-    charactersWritten = _fifoOut.write(responseStr.c_str(), responseStr.length());		
+    charactersWritten = _fifoOut.write(responseStr.c_str(), responseStr.length());
+
+	app.logger().debug(Poco::format("end processing characters written: %d", (int) charactersWritten));
+    		
 
 }
 

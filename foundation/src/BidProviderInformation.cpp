@@ -78,6 +78,8 @@ void BidProviderInformation::deleteBid(Bid * bidPtr)
 	
 void BidProviderInformation::getBids(std::map<std::string, std::vector<std::string> > &bids_parameter)
 {
+    std::cout << "Number of bids for the provider:" << _bids.size() << std::endl;
+    
     // Iterate over the provider bids
     for(std::map<std::string, Bid *>::iterator it = _bids.begin(); it != _bids.end(); it++) 
     {

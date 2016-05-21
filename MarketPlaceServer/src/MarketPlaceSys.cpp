@@ -125,7 +125,6 @@ MarketPlaceSys::~MarketPlaceSys(void)
 void MarketPlaceSys::sendMessageToClock(Message & message, Message & response)
 {
 	std::string msgStr = message.to_string();
-	// std::cout << connectStr << std::endl;
 	char * message_char = new char [msgStr.length()];
 	strcpy (message_char, msgStr.c_str() );
 	(*_clockSocket).sendBytes(message_char, msgStr.length());
@@ -384,13 +383,9 @@ void MarketPlaceSys::startListening(Poco::Net::SocketAddress socketAddress,
 	it = _listeners.find(socketAddress);
 	if (it != _listeners.end())
 	{
-		app.logger().information("socket address");
-
 		Poco::Net::SocketAddress sa = (*(it->second)).getSocketAddress();
 		try
 		{
-			app.logger().information("socket address 1");
-
 			Poco::Net::SocketAddress sockadd(sa.host(), port);
 			(*(it->second)).Connect(sockadd);
 			(*(it->second)).setListeningPort(port);
@@ -435,7 +430,8 @@ void MarketPlaceSys::insertListenerBytype(std::string type, std::string listener
 
 void MarketPlaceSys::initializePeriodSession(unsigned period)
 {
-    std::cout << "initializing period:" << period << std::endl;
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().information(Poco::format("initialize period session -----------------  : %d", (int) period));
     
     if (_current_bids == NULL){
 	_current_bids = new BidInformation();
@@ -459,7 +455,9 @@ void MarketPlaceSys::initializePeriodSession(unsigned period)
 		_current_purchases->addService(it_services->first);
 		
 	_period = period;
-	std::cout << "End initializing period:" << _period << std::endl;
+
+	app.logger().information(Poco::format("Ending initialize period session: %d", (int) period));
+
 }
 
 void MarketPlaceSys::broadCastInformation(Message & message, std::string type)
@@ -615,7 +613,6 @@ void MarketPlaceSys::sendProviderPurchaseInformation(void)
 
 void MarketPlaceSys::activatePresenter(void)
 {
-	std::cout << "activate presenter" << std::endl;
 	Message message;
 	Method method = activate_presenter;
 	message.setMethod(method);
@@ -627,7 +624,7 @@ void MarketPlaceSys::finalizePeriodSession(Message & messageResponse)
 {
 
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().information("Starting finalize period session");
+	app.logger().information("finalize period session -----------------");
 
 	saveBidInformation();
 	storeCurrentPurchaseInformation();

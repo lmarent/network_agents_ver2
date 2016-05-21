@@ -895,10 +895,12 @@ void MarketPlaceSys::storeCurrentPurchaseInformation()
 	if (_current_purchases != NULL)
 	{
 		_current_purchases->toDatabase(_pool, FoundationSys::getExecutionCount() , (int) _period);
+	} 
+	else{
+		app.logger().debug(Poco::format("no current purchases to store - Period:%d", (int) _period) );
 	}
-
+	
 	app.logger().debug("Ending storeCurrentPurchaseInformation");
-
 }
 
 void MarketPlaceSys::removeListener(std::string idListener)

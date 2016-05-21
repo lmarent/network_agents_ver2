@@ -212,9 +212,9 @@ void PurchaseServiceInformation::toDatabase(Poco::Data::SessionPool * _pool, int
 		} else {
 			insert.execute();
 		}
-
-
 	}
+	
+	session.commit();
 }
 
 }  /// End Eco namespace

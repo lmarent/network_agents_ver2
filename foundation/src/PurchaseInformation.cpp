@@ -61,7 +61,7 @@ void PurchaseInformation::addPurchaseToService(Purchase * purchasePtr)
 	it = _service_information.find(serviceId);
 	if (it == _service_information.end())
 	{
-		// std::cout << "The service Id was not found:" << serviceId << std::endl;
+		std::cout << "The service Id was not found:" << serviceId << std::endl;
 		// If not it creates a new node for the service
 		PurchaseServiceInformation * purchaseInfoPtr = new PurchaseServiceInformation();
 		_service_information.insert(std::pair<std::string, PurchaseServiceInformation *> (serviceId,purchaseInfoPtr));

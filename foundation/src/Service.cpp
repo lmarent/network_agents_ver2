@@ -253,6 +253,21 @@ unsigned Service::getRequiredAgents(double demand)
 	}
 }
 
+bool Service::hasQualityVariables()
+{
+	std::map<std::string, DecisionVariable *>::iterator it;
+	for (it=_decision_variables.begin(); it!=_decision_variables.end(); ++it)
+	{
+ 	    DecisionVariable *variable = it->second;
+		if (variable->getModeling() == MODEL_QUALITY)
+		{
+			return true;
+		}
+	}
+	
+	return false;
+}
+
 }  /// End Eco namespace
 
 }  /// End ChoiceNet namespace

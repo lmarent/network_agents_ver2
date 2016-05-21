@@ -323,7 +323,7 @@ void FoundationSys::readDecisionVariablesFromDataBase(void)
     {
         select.execute();
         OptimizationObjective objetive;
-        if (optimizationStr.compare("C") == 0)
+        if (optimizationStr.compare("M") == 0)
 			objetive = MAXIME;
 		else
 			objetive = MINIMIZE;

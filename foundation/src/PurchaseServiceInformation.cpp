@@ -182,6 +182,8 @@ void PurchaseServiceInformation::getPurchases(Poco::XML::AutoPtr<Poco::XML::Docu
 void PurchaseServiceInformation::toDatabase(Poco::Data::SessionPool * _pool, int execution_count, int period, std::string serviceId)
 {
 
+	std::cout << "starting toDatabase:" << serviceId << std::endl;
+	
 	Poco::Data::Session session(_pool->get());
 	Poco::Data::Statement insert(session);
 	bool firstTime = true;
@@ -190,7 +192,9 @@ void PurchaseServiceInformation::toDatabase(Poco::Data::SessionPool * _pool, int
 	std::map<std::string, double>::iterator it_purchase;
 	for (it_purchase = _summaries_by_bid.begin(); it_purchase != _summaries_by_bid.end(); ++it_purchase)
 	{
-
+		
+		std::cout << "it is going to save:" << serviceId << std::endl;
+		
 		PurchaseServiceBidS._period =  period;
 		PurchaseServiceBidS._serviceId =  serviceId;
 		PurchaseServiceBidS._bidId =  it_purchase->first;
@@ -215,6 +219,8 @@ void PurchaseServiceInformation::toDatabase(Poco::Data::SessionPool * _pool, int
 	}
 	
 	session.commit();
+	
+	std::cout << "ending toDatabase:" << serviceId << std::endl;
 }
 
 }  /// End Eco namespace

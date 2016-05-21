@@ -66,7 +66,6 @@ Datapoint()
 		for (it=(service->_decision_variables.begin()); it!=(service->_decision_variables.end()); ++it)
 		{
 			std::string decision_variable = it->first;
-			std::cout << "reading decision variable: " << decision_variable << std::endl;
 			size_t dimension = service->getDecisionVariableDimension(decision_variable);
 			std::string valueStr =  message.getParameter(decision_variable);
 			double value = Poco::NumberParser::parseFloat(valueStr);

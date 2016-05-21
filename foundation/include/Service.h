@@ -41,6 +41,8 @@ public:
 	
 	std::string getId();
 	
+	bool hasQualityVariables();
+	
 	void addDecisionVariable(DecisionVariable *);
 	
 	DecisionVariable * getDecisionVariable(std::string id);

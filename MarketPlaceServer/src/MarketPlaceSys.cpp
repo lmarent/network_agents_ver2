@@ -722,6 +722,9 @@ void MarketPlaceSys::deleteBid(Bid * bidPtr, Message & messageResponse)
 
 void MarketPlaceSys::addPurchase(Purchase * purchasePtr, Message & messageResponse)
 {
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().information("add Purchase");
+
 	try {
 		Bid * bid = getBid(purchasePtr->getBid());
 		bool isActive = (*_current_bids).isBidActive(bid->getService(), bid->getProvider(), bid->getId());
@@ -754,13 +757,16 @@ void MarketPlaceSys::addPurchase(Purchase * purchasePtr, Message & messageRespon
 		}
 		else
 		{
+			app.logger().error("could not purchase - bid is not active");
 			// The bid is not active, so you cannot sell anymore.
 			messageResponse.setParameter("Quantity_Purchased", "0");
 			// set the response as Ok
 			messageResponse.setResponseOk();
 		}
 	} catch (MarketPlaceException &e) {
+		app.logger().error(Poco::format("could not purchase -raise exception error:%s", e.message()) );
 		throw e;
+		
 	}
 }
 

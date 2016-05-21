@@ -113,21 +113,45 @@ bool Provider::isAvailable(unsigned period, Service * service,
 	app.logger().debug("Entering provider isAvailable");
 	
 	bool available = true;
-	std::map<std::string, DecisionVariable *>::iterator it; 
-	for (it=(service->_decision_variables.begin()); it!=(service->_decision_variables.end()); ++it)
-	{
-		DecisionVariable *variable = it->second;
-		if (variable->getModeling() == MODEL_QUALITY)
+	
+	if (service->hasQualityVariables() == true)
+	{	
+		std::map<std::string, DecisionVariable *>::iterator it; 
+		for (it=(service->_decision_variables.begin()); it!=(service->_decision_variables.end()); ++it)
 		{
-			
-			app.logger().debug("Checking resource availability for resource" + variable->getResource());
-			available = available && checkResourceAvailability(period, 
-															   variable->getResource(), 
-															   variable, 
-															   bid->getDecisionVariable(variable->getId()),
-															   purchase->getQuantity() );
+			DecisionVariable *variable = it->second;
+			if (variable->getModeling() == MODEL_QUALITY)
+			{
+				
+				app.logger().debug("Checking resource availability for resource" + variable->getResource());
+				available = available && checkResourceAvailability(period, 
+																   variable->getResource(), 
+																   variable, 
+																   bid->getDecisionVariable(variable->getId()),
+																   purchase->getQuantity() );
+			}
 		}
 	}
+	else {
+
+		std::map<std::string, DecisionVariable *>::iterator it; 
+		for (it=(service->_decision_variables.begin()); it!=(service->_decision_variables.end()); ++it)
+		{
+			DecisionVariable *variable = it->second;
+			if (variable->getModeling() == MODEL_PRICE )
+			{
+				
+				app.logger().debug("Checking resource availability for resource" + variable->getResource());
+				available = available && checkResourceAvailability(period, 
+																   variable->getResource(), 
+																   variable, 
+																   bid->getDecisionVariable(variable->getId()),
+																   purchase->getQuantity() );
+			}
+		}
+		
+	}
+	
 	return available;
 }
 

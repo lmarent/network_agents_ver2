@@ -376,7 +376,7 @@ void MarketPlaceSys::startListening(Poco::Net::SocketAddress socketAddress,
 {
 
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().information(Poco::format("port:%u, type:%s", port, type ));
+	app.logger().information(Poco::format("Start Listening by port:%u, type:%s", port, type ));
 
 	
 	Listeners::iterator it;
@@ -393,8 +393,8 @@ void MarketPlaceSys::startListening(Poco::Net::SocketAddress socketAddress,
 			// If the listener is a provider, we added to the list of providers.
 			if (type.compare("provider") ==  0)
 			{
-				app.logger().information("socket address 2");
 				std::string providerId = (it->second)->getId();
+				app.logger().information(Poco::format("Connecting provider with Id: %s", providerId) );
 				Provider * provider = new Provider(providerId);
 				_providers.insert(std::pair<std::string, Provider *>( providerId, provider));
 			}
@@ -411,6 +411,8 @@ void MarketPlaceSys::startListening(Poco::Net::SocketAddress socketAddress,
     {
 		throw MarketPlaceException("The agent is not connected", 302);
 	}
+	
+	app.logger().information(Poco::format("Ending Start Listening by port:%u, type:%s", port, type ));
 }
 
 void MarketPlaceSys::insertListenerBytype(std::string type, std::string listenerId)

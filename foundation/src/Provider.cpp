@@ -151,7 +151,8 @@ bool Provider::isAvailable(unsigned period, Service * service,
 		}
 		
 	}
-	
+
+	app.logger().debug(Poco::format("Entering provider isAvailable %b", available ));
 	return available;
 }
 

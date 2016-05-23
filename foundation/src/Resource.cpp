@@ -49,12 +49,19 @@ double Resource::getConsumption(DecisionVariable *qualityParameter, double value
 	OptimizationObjective objetive = qualityParameter->getObjetive();
 	if (objetive == MAXIME)
 	{
-		percentage = percentage + (value - minValue) / minValue;
+		if (minValue == 0)
+			percentage = percentage + (value - minValue) / maxValue;
+		else
+			percentage = percentage + (value - minValue) / minValue;
+			
 	}
 	
 	if (objetive == MINIMIZE)
 	{
-		percentage = percentage + (maxValue - value) / maxValue;
+		if (maxValue == 0)
+			percentage = percentage + (maxValue - value) / minValue;
+		else
+            percentage = percentage + (maxValue - value) / maxValue;
 	}
 	
 	std::string percentageStr;

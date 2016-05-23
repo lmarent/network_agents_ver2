@@ -30,7 +30,6 @@ PurchaseServiceInformation::~PurchaseServiceInformation()
 	it = _summaries_by_bid.begin();
 	while (it != _summaries_by_bid.end())
 	{
-		// std::cout << "Bid:" << it->first << " Quantity:" << it->second;
 		++it;
 	}
 
@@ -39,21 +38,24 @@ PurchaseServiceInformation::~PurchaseServiceInformation()
 
 void PurchaseServiceInformation::addPurchase(Purchase * purchasePtr)
 {
-	// std::cout << "Starting add purchase" <<  std::endl;
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("Starting purchase service addPurchase");
+
 	std::map<std::string,double>::iterator it;
-	// std::cout << "Bid id:" <<  (*purchasePtr).getBid() << std::endl;
 	it = _summaries_by_bid.find((*purchasePtr).getBid());
 	if (it != _summaries_by_bid.end())
 	{
-		// std::cout << "Bid id found" << std::endl;
 		it->second += (*purchasePtr).getQuantity();
+		app.logger().debug("bid found, we are adding the purchase quantity");
 	}
 	else
 	{
-		 // std::cout << "Bid id inserted" << std::endl;
 		_summaries_by_bid.insert(std::pair<std::string,double>((*purchasePtr).getBid(), (*purchasePtr).getQuantity() ));
+		app.logger().debug("bid not found, inserting the bid into the summary");
 	}
 	_detail.push_back((*purchasePtr).getId());		
+
+	app.logger().debug(Poco::format("Ending purchase service addPurchase numBids: %d", (int) _summaries_by_bid.size()));
 }
 
 void PurchaseServiceInformation::createBidNode(Poco::XML::AutoPtr<Poco::XML::Document> pDoc, 
@@ -182,19 +184,23 @@ void PurchaseServiceInformation::getPurchases(Poco::XML::AutoPtr<Poco::XML::Docu
 void PurchaseServiceInformation::toDatabase(Poco::Data::SessionPool * _pool, int execution_count, int period, std::string serviceId)
 {
 
-	std::cout << "starting toDatabase:" << serviceId << std::endl;
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug(Poco::format("Starting purchase service information toDatabase - service Id: %s", serviceId) );
 	
 	Poco::Data::Session session(_pool->get());
 	Poco::Data::Statement insert(session);
 	bool firstTime = true;
 	PurchaseServiceBidStruct PurchaseServiceBidS;
 
+	app.logger().debug(Poco::format("number of bids in service: %d", (int) _summaries_by_bid.size()) );
+
+
 	std::map<std::string, double>::iterator it_purchase;
 	for (it_purchase = _summaries_by_bid.begin(); it_purchase != _summaries_by_bid.end(); ++it_purchase)
 	{
-		
-		std::cout << "it is going to save:" << serviceId << std::endl;
-		
+
+		app.logger().debug(Poco::format("saving purchase bid data %s", it_purchase->first));
+				
 		PurchaseServiceBidS._period =  period;
 		PurchaseServiceBidS._serviceId =  serviceId;
 		PurchaseServiceBidS._bidId =  it_purchase->first;
@@ -220,7 +226,7 @@ void PurchaseServiceInformation::toDatabase(Poco::Data::SessionPool * _pool, int
 	
 	session.commit();
 	
-	std::cout << "ending toDatabase:" << serviceId << std::endl;
+	app.logger().debug("Ending purchase service information toDatabase");
 }
 
 }  /// End Eco namespace

@@ -54,14 +54,19 @@ void PurchaseInformation::addService(std::string serviceId)
 	
 void PurchaseInformation::addPurchaseToService(Purchase * purchasePtr)
 {
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("Starting addPurchaseToService");
+
 	// Verifies if the service is in the container
 	std::string serviceId = (*purchasePtr).getService();
-	// std::cout << "The service Id to find is:" << serviceId << std::endl;
+
+	app.logger().debug(Poco::format("addPurchaseToService - service:%s", serviceId));
+
 	PurchaseServiceInformationContainer::iterator it; 
 	it = _service_information.find(serviceId);
 	if (it == _service_information.end())
 	{
-		std::cout << "The service Id was not found:" << serviceId << std::endl;
 		// If not it creates a new node for the service
 		PurchaseServiceInformation * purchaseInfoPtr = new PurchaseServiceInformation();
 		_service_information.insert(std::pair<std::string, PurchaseServiceInformation *> (serviceId,purchaseInfoPtr));
@@ -73,12 +78,17 @@ void PurchaseInformation::addPurchaseToService(Purchase * purchasePtr)
 	ptr = it->second;
 	(*ptr).addPurchase(purchasePtr);
 
+	app.logger().debug("Ending addPurchaseToService");
+
 }
 
 void PurchaseInformation::getPurchasesForProvider( Poco::XML::AutoPtr<Poco::XML::Document> pDoc, 
 												   Poco::XML::AutoPtr<Poco::XML::Element> pParent,
 												   std::map<std::string, std::vector<std::string> > &bids)
 {
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("Starting getPurchasesForprovider");
 	
 	PurchaseServiceInformationContainer::iterator it; 
 	it = _service_information.begin();
@@ -88,19 +98,22 @@ void PurchaseInformation::getPurchasesForProvider( Poco::XML::AutoPtr<Poco::XML:
 		(*(it->second)).getPurchases(pDoc, pParent, bids);
 		++it;
 	}
-	
-	
-	
+		
+	app.logger().debug("Ending getPurchasesForprovider");
 
 }
 
 void PurchaseInformation::toDatabase(Poco::Data::SessionPool * _pool, int execution_count, int period)
 {
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug(Poco::format("Starting purchase information toDatabase exec_count:%d period:%d", execution_count, period));
+
+
 	PurchaseServiceInformationContainer::iterator it;
 	it = _service_information.begin();
 	while (it != _service_information.end())
 	{
-		 // std::cout << "Inside the while in getPurchasesForProvider" << std::endl;
 		(it->second)->toDatabase(_pool, execution_count, period, it->first);
 		++it;
 	}

@@ -626,7 +626,7 @@ void MarketPlaceSys::finalizePeriodSession(Message & messageResponse)
 {
 
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().information("finalize period session -----------------");
+	app.logger().information(Poco::format("finalize period session ----------------- Period:%d", (int) _period));
 
 	saveBidInformation();
 	storeCurrentPurchaseInformation();

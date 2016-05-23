@@ -116,17 +116,14 @@ namespace Eco
         if (initialized()){
 			if (!_helpRequested)
 			{
-			   std::cout << "Server started" << std::endl;
 
 			   AutoPtr<FileChannel> fileChannel(new FileChannel("MarketPlaceServer.log"));
-			   //"%d-%m-%Y %H:%M:%S: %t"
 			   AutoPtr<PatternFormatter> formatter(new PatternFormatter("%d-%m-%Y %H:%M:%S %s: %t"));
 			   AutoPtr<FormattingChannel> formattingChannel(new FormattingChannel(formatter, fileChannel));
 
 			   fileChannel->setProperty("rotateOnOpen", "true");
-
 			   Poco::Logger& logger = Poco::Util::ServerApplication::logger();
-			   logger.setChannel(fileChannel);
+			   logger.setChannel(formattingChannel);
 			   logger.setLevel(Poco::Message::PRIO_TRACE);
 
 			   // Reads from the configuration the listening port

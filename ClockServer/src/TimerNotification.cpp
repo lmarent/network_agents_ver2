@@ -26,18 +26,21 @@ void TimerNotification::onEndPeriod(Poco::Timer& timer)
 	int interval_close = 0;
 	int current_period = 0;
 	int current_interval = 0;
-	std::cout << "Callback called after " << _sw.elapsed()/1000 << "      milliseconds." << std::endl;
+	Poco::Util::Application& app = Poco::Util::Application::instance();	
+	app.logger().information("Starting onEndPeriod");
 	
 	// Communicates to all listeners the change in period
-	Poco::Util::Application& app = Poco::Util::Application::instance();
 	ClockServer &server = dynamic_cast<ClockServer&>(app);
 	ClockSys * clocksys = server.getClockSubsystem();
     
     // Increments the current interval 
 	(*clocksys).incrementInterval();
 	current_interval = (*clocksys).getInterval();
-	
 	current_period = (*clocksys).getPeriod() ;
+
+	app.logger().information(Poco::format("onEndPeriod - Interval:%d Period:%d", current_interval, current_period));
+	
+	
 	interval_open = (current_period * _bid_intervals) + (current_period * _close_intervals);
 	interval_close = (current_period * _bid_intervals) + ((current_period - 1) * _close_intervals);
 	

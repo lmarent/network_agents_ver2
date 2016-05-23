@@ -111,15 +111,20 @@ namespace Eco
     {
         if (!_helpRequested)
         {
+			
+
 			AutoPtr<FileChannel> fileChannel(new FileChannel("ClockServer.log"));
-			//"%d-%m-%Y %H:%M:%S: %t"
-			AutoPtr<PatternFormatter> formatter(new PatternFormatter("%d-%m-%Y %H:%M:%S %s: %t"));
+			AutoPtr<PatternFormatter> formatter(new PatternFormatter("%d-%m-%Y %H:%M:%S %s: [%p] %t"));
 			AutoPtr<FormattingChannel> formattingChannel(new FormattingChannel(formatter, fileChannel));
 			fileChannel->setProperty("rotateOnOpen", "true");
-			Poco::Logger& logger = Poco::Util::ServerApplication::logger();
-			logger.setChannel(fileChannel);
-			logger.setLevel(Poco::Message::PRIO_TRACE);
+			
+			Poco::Util::ServerApplication::logger().setChannel(formattingChannel);
+			Poco::Util::ServerApplication::logger().setLevel("debug");
 
+			Poco::Logger& logger = Poco::Util::ServerApplication::logger();
+			
+			poco_warning(logger, "This is a warning");
+			
 
         	// Reads from the configuration the listening port
 		   unsigned short port = (unsigned short)
@@ -142,11 +147,11 @@ namespace Eco
 
 		   // Get the number of intervals for making a round of bids
 		   unsigned short bid_intervals = (unsigned short)
-					config().getInt("intervals_for_bid", 3000);
+					config().getInt("intervals_for_bid", 3);
 					
 		   // Get the number of intervals_for_service_completion
 		   unsigned short complete_intervals = (unsigned short)
-					config().getInt("intervals_for_service_completion", 3000);
+					config().getInt("intervals_for_service_completion", 1);
 		   
 					
 		   Poco::Timer timer(interval, interval);

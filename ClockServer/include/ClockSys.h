@@ -92,7 +92,7 @@ public:
     
     void initialize(Poco::Util::Application &app);
     
-	void activateCustomers();
+	void activateCustomers(int period);
     
 protected:
 

@@ -330,6 +330,7 @@ void ClockSys::activateCustomers(int period)
     // Send the messsage to consumer listeners.
     double new_demand = 0;
     unsigned num_agents = 0;
+    ListenerType type = CONSUMER;
     _services_activation.clear();
    
     // Forecast the demand for the new period
@@ -340,7 +341,7 @@ void ClockSys::activateCustomers(int period)
 		new_demand = service->getForecast(period);
 		num_agents = service->getRequiredAgents(new_demand);
 
-		app.logger().debug(Poco::format("Demand:%f Num Agents:%d", new_demand, (int) num_agents );
+		app.logger().debug(Poco::format("Demand:%f Num Agents:%d", new_demand, (int) num_agents) );
 				
 		if (num_agents > 0) 
 		{
@@ -359,6 +360,7 @@ void ClockSys::activateCustomers(int period)
 		}
 	}
 	
+	Listeners::iterator it;
 	unsigned num_initiated = 0;
 	it = _listeners.begin();
 	while( it != _listeners.end() )
@@ -397,7 +399,7 @@ void ClockSys::broadcastPeriodStart(void)
 	Listeners::iterator it;
 
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger(Poco::format("Start broadcastPeriodStart %d", (int) _period));
+	app.logger().debug(Poco::format("Start broadcastPeriodStart %d", (int) _period));
 
     
     ListenerType type = CONSUMER;
@@ -424,7 +426,7 @@ void ClockSys::broadcastPeriodStart(void)
 		activateCustomers(_period / _intervals_per_cycle);
 	}
   
-	app.logger(Poco::format("Ending broadcastPeriodStart %d", (int) _period));
+	app.logger().debug(Poco::format("Ending broadcastPeriodStart %d", (int) _period));
        
 }
 

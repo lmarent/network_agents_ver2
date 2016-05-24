@@ -158,6 +158,7 @@ void MarketPlaceSys::initialize(Poco::Util::Application &app)
 					app.config().getInt("send_information_on_interval", 1);
 
 	_send_interval = send_interval;
+	
 
 	// Get the number of intervals for making a round of bids
 	unsigned short intervals_per_cycle = (unsigned short)
@@ -1030,10 +1031,11 @@ bool MarketPlaceSys::sendInformation(unsigned interval)
 	app.logger().debug("Starting sendInformation");
 
 	bool val_return = false;
-	if ( (interval % _send_interval) == 0)
+	if ( (interval % _intervals_per_cycle) == _send_interval)
 		val_return = true;
 	
 	app.logger().debug(Poco::format("Ending sendInformation %b", val_return));
+	return val_return;
 	
 }
 

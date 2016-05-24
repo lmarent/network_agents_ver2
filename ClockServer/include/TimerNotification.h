@@ -16,14 +16,13 @@ namespace Eco
 class TimerNotification
 {
 public:
-    TimerNotification(int bid_intervals, int close_intervals);
+    TimerNotification(int intervals_per_cycle);
 
     void onEndPeriod(Poco::Timer& timer);
 
 private:
     Poco::Stopwatch _sw;
-    int _bid_intervals;
-    int _close_intervals;
+    int _intervals_per_cycle;
 };
 
 } /// End Eco namespace

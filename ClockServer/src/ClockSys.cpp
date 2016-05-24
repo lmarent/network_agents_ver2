@@ -80,6 +80,21 @@ void ClockSys::initialize(Poco::Util::Application &app)
     unsigned bid_periods = (unsigned)
                 app.config().getInt("bid_periods", 11);
 
+
+	// Get the interval to send information
+	unsigned short send_interval = (unsigned short)
+					app.config().getInt("interval_for_customer_activation", 0);
+
+	_interval_for_customer_activation = send_interval;
+	
+
+	// Get the number of intervals for making a round of bids
+	unsigned short intervals_per_cycle = (unsigned short)
+					app.config().getInt("intervals_per_cycle", 2);
+	
+	// initialize variable
+	_intervals_per_cycle = intervals_per_cycle;
+
 	FoundationSys::initialize(app, bid_periods, 0);
 	app.logger().debug("Event Discrete System initialized");
           
@@ -307,37 +322,11 @@ void ClockSys::broadcastPeriodEnd(void)
 	lstr << "Ending broadcastPeriodEnd" << _period << std::endl;
 }
 
-void ClockSys::broadcastPeriodStart(void)
-{
-	Listeners::iterator it;
+void ClockSys::activateCustomers(int period)
+{ 
 
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	LogStream lstr(app.logger());
-	lstr << "Start broadcastPeriodStart" << _period << std::endl;
 
-    
-    ListenerType type = CONSUMER;
-   
-    // Sends the message for the rest of the listeners.
-    // Send the messsage to all connected listeners.
-    // Builds the message with the current period
-    Message startPeriod;
-    Method method = start_period;
-    startPeriod.setMethod(method);
-    startPeriod.setParameter("Period", Poco::NumberFormatter::format(_period));
-    it = _listeners.begin();
-	while( it!=_listeners.end() )
-	{
-		if ( ( (*(it->second)).getStatus() == 1 ) and 
-		     ((*(it->second)).getType() != type )  ){ 
-			// the listener is connected and is consumer.
-			(*(it->second)).write (startPeriod.to_string());
-			
-			lstr << "Send Start period to " << (*(it->second)).getType() << std::endl;
-		}
-		++it;
-	}
-   
     // Send the messsage to consumer listeners.
     double new_demand = 0;
     unsigned num_agents = 0;
@@ -348,11 +337,11 @@ void ClockSys::broadcastPeriodStart(void)
     {	
 		new_demand = 0;
 		Service * service = getService(_services_to_execute[i]);
-		new_demand = service->getForecast(_period);
+		new_demand = service->getForecast(period);
 		num_agents = service->getRequiredAgents(new_demand);
 
-		std::cout << "Demand:" << new_demand << "Num Agents:"  << num_agents << std::endl;
-		
+		app.logger().debug(Poco::format("Demand:%f Num Agents:%d", new_demand, (int) num_agents );
+				
 		if (num_agents > 0) 
 		{
 			// Builds the message with the current period
@@ -360,7 +349,7 @@ void ClockSys::broadcastPeriodStart(void)
 			Method method_act = activate_consumer;
 			activate->setMethod(method_act);
 			activate->setParameter("Service", service->getId());
-			activate->setParameter("Period", (int) _period);    
+			activate->setParameter("Period", (int) period);    
 			activate->setParameter("Quantity", Poco::NumberFormatter::format(new_demand / num_agents));
 			// Creates the structure.
 			ServiceActivation activation;
@@ -400,10 +389,43 @@ void ClockSys::broadcastPeriodStart(void)
 		}
 		++it;
 	}
+
+}
+
+void ClockSys::broadcastPeriodStart(void)
+{
+	Listeners::iterator it;
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger(Poco::format("Start broadcastPeriodStart %d", (int) _period));
+
     
-	lstr << "Ending broadcastPeriodStart"  << std::endl;
+    ListenerType type = CONSUMER;
+   
+    // Sends the message for the rest of the listeners.
+    // Send the messsage to all connected listeners.
+    // Builds the message with the current period
+    Message startPeriod;
+    Method method = start_period;
+    startPeriod.setMethod(method);
+    startPeriod.setParameter("Period", Poco::NumberFormatter::format(_period));
+    it = _listeners.begin();
+	while( it!=_listeners.end() )
+	{
+		if ( ( (*(it->second)).getStatus() == 1 ) and 
+		     ((*(it->second)).getType() != type )  ){ 
+			// the listener is connected and it is not consumer.
+			(*(it->second)).write (startPeriod.to_string());			
+		}
+		++it;
+	}
+   
+	if ((_period % _intervals_per_cycle) == _interval_for_customer_activation){
+		activateCustomers(_period / _intervals_per_cycle);
+	}
+  
+	app.logger(Poco::format("Ending broadcastPeriodStart %d", (int) _period));
        
-	
 }
 
 Message * ClockSys::getActivationMessage(void)

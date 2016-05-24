@@ -1028,7 +1028,7 @@ bool MarketPlaceSys::sendInformation(unsigned interval)
 {
 
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().debug("Starting sendInformation");
+	app.logger().debug(Poco::format("Starting sendInformation, %d", (int) interval ));
 
 	bool val_return = false;
 	if ( (interval % _intervals_per_cycle) == _send_interval)

@@ -92,6 +92,7 @@ public:
     
     void initialize(Poco::Util::Application &app);
     
+	void activateCustomers();
     
 protected:
 
@@ -114,6 +115,8 @@ private:
     std::map<std::string, ServiceActivation> _services_activation;
     int _interval;
     int _period;
+    int _intervals_per_cycle;
+    int _interval_for_customer_activation;
     int _executionNumber;
     
 };

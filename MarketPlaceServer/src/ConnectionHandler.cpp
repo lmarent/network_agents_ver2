@@ -281,9 +281,9 @@ void ConnectionHandler::doProcessing(Poco::Net::SocketAddress socketAddress,
 			 }
 		   case end_period:
 			 {
-				// Verify the required parameters: Period
+				// Verify the required parameters: Period, no longer required.
 				app.logger().debug("In finalizePeriodSession");
-				finalizePeriodSession( socketAddress, message, messageResponse );
+				//finalizePeriodSession( socketAddress, message, messageResponse );
 				break;
 			 }
 		   case receive_bid:
@@ -424,12 +424,13 @@ void ConnectionHandler::initializePeriodSession(Poco::Net::SocketAddress socketA
 	
 	unsigned  period; 
 	std::string periodStr = messageRequest.getParameter("Period");
+	
 	bool v_result = Poco::NumberParser::tryParseUnsigned(periodStr, period);
 	if (v_result)
 	{
 		(*sys).initializePeriodSession((unsigned) period);
 		messageResponse.setResponseOk();
-		app.logger().information("Starting a new offering session" + periodStr);
+		app.logger().information("Starting a new offering for interval" + periodStr);
 	}	
 	else
 	{
@@ -443,11 +444,25 @@ void ConnectionHandler::finalizePeriodSession(Poco::Net::SocketAddress socketAdd
 { 
 
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().debug("Finalizing the session");
-	MarketPlaceServer &server = dynamic_cast<MarketPlaceServer&>(app);
-	MarketPlaceSys *sys = server.getMarketPlaceSubsystem();
-	(*sys).finalizePeriodSession(messageResponse);
-	app.logger().debug("Session Finalized");
+	app.logger().debug("Starting finalize period session");
+	
+	unsigned  period; 
+	std::string periodStr = messageRequest.getParameter("Period");
+	bool v_result = Poco::NumberParser::tryParseUnsigned(periodStr, period);
+
+	if (v_result)
+	{
+		MarketPlaceServer &server = dynamic_cast<MarketPlaceServer&>(app);
+		MarketPlaceSys *sys = server.getMarketPlaceSubsystem();
+		(*sys).finalizePeriodSession(period, messageResponse);
+		
+		app.logger().debug("Ending finalize period session");
+	}
+	else
+	{
+		throw MarketPlaceException("Invalid period", 305);
+	}    
+	
 }
 
 
@@ -457,6 +472,7 @@ void ConnectionHandler::receiveBid(Poco::Net::SocketAddress socketAddress,
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().debug("Adding bid in the market place");
+	
 	MarketPlaceServer &server = dynamic_cast<MarketPlaceServer&>(app);
 	MarketPlaceSys *sys = server.getMarketPlaceSubsystem();
 	std::string serviceId = messageRequest.getParameter("Service");

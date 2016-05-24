@@ -32,11 +32,15 @@ namespace ChoiceNet
 namespace Eco
 {
 
+using Poco::NumberFormatter;
+
 MarketPlaceSys::MarketPlaceSys(void): 
 FoundationSys(MARKET_SERVER),
 _clockSocket(NULL),
 _current_bids(NULL),
 _current_purchases(NULL),
+_intervals_per_cycle(0),
+_send_interval(0),
 _pool(NULL)
 {
 	Poco::Data::MySQL::Connector::registerConnector();
@@ -149,6 +153,19 @@ void MarketPlaceSys::initialize(Poco::Util::Application &app)
     
     Poco::UInt16 u16Port = (Poco::UInt16) port;
 
+	// Get the interval to send information
+	unsigned short send_interval = (unsigned short)
+					app.config().getInt("send_information_on_interval", 1);
+
+	_send_interval = send_interval;
+
+	// Get the number of intervals for making a round of bids
+	unsigned short intervals_per_cycle = (unsigned short)
+					app.config().getInt("intervals_per_cycle", 2);
+	
+	// initialize variable
+	_intervals_per_cycle = intervals_per_cycle;
+	
 	try{//
 		// Connection string to POCO
 		std::string db_host = (std::string)
@@ -172,6 +189,11 @@ void MarketPlaceSys::initialize(Poco::Util::Application &app)
 		std::cout << "connectionStr:" << connectionStr << std::endl;
 		app.logger().information("Connecting with the database");
 		_pool = new Poco::Data::SessionPool("MySQL", connectionStr);
+
+		if (_current_bids == NULL){
+			_current_bids = new BidInformation();
+		}
+
 
 	} catch (Poco::NotFoundException &e) {
     	throw MarketPlaceException("Database connection information not found");
@@ -429,19 +451,21 @@ void MarketPlaceSys::insertListenerBytype(std::string type, std::string listener
 	(it->second).push_back(listenerId);	
 }
 
-
-void MarketPlaceSys::initializePeriodSession(unsigned period)
+void MarketPlaceSys::reinitiateDataContainers(MARKET_HISTORY_PERIOD subperiod)
 {
-	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().information(Poco::format("initialize period session -----------------  : %d", (int) period));
-    
-    if (_current_bids == NULL){
-	_current_bids = new BidInformation();
-    }
 	
+	BidContainer::iterator it;
+	for (it = _bids_to_broadcast.begin(); it != _bids_to_broadcast.end() ; ++it)
+	{
+		_bids_to_broadcast.erase(it);
+	}
+		
     if (_current_purchases != NULL){
-	 	_purchase_history.insert( std::pair<unsigned, PurchaseInformation *>
-									   (period, _current_purchases) );
+		std::string periodStd = Poco::NumberFormatter::format((int) _period); 
+		std::string subPeriodStd = Poco::NumberFormatter::format((int) subperiod);
+		periodStd = periodStd + subPeriodStd;
+		
+	 	_purchase_history.insert( std::pair< std::string, PurchaseInformation *> (periodStd, _current_purchases) );
 		// Initialize again current purchases
 		_current_purchases = NULL;
 									   
@@ -456,9 +480,27 @@ void MarketPlaceSys::initializePeriodSession(unsigned period)
 	for (it_services = _services.begin(); it_services != _services.end(); ++it_services)
 		_current_purchases->addService(it_services->first);
 		
-	_period = period;
+}
 
-	app.logger().information(Poco::format("Ending initialize period session: %d", (int) period));
+
+void MarketPlaceSys::initializePeriodSession(unsigned interval)
+{
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().information(Poco::format("initialize interval session -----------------  : %d", (int) interval));
+
+	if (_intervals_per_cycle > 0)
+		_period = interval / _intervals_per_cycle;
+	else
+		_period = interval;
+
+
+	if (sendInformation(interval)) {
+		disseminateInformation();
+		saveInformation();
+		reinitiateDataContainers(START);
+	}
+		
+	app.logger().information(Poco::format("Ending initialize interval session: %d", (int) interval));
 
 }
 
@@ -539,7 +581,6 @@ void MarketPlaceSys::broadCastBidInformation(void)
 	{
 		Bid * bid = (it->second);
 		bid->to_XML(pDoc, pCompetitorBids);
-		_bids_to_broadcast.erase(it);
 	}
 	
 	pDoc->appendChild(pCompetitorBids);
@@ -622,16 +663,32 @@ void MarketPlaceSys::activatePresenter(void)
 	broadCastInformation(message, "presenter");
 }
 
-void MarketPlaceSys::finalizePeriodSession(Message & messageResponse)
+void MarketPlaceSys::saveInformation()
 {
-
-	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().information(Poco::format("finalize period session ----------------- Period:%d", (int) _period));
 
 	saveBidInformation();
 	storeCurrentPurchaseInformation();
+
+}
+
+void MarketPlaceSys::disseminateInformation()
+{
+
 	broadCastBidInformation();
 	sendProviderPurchaseInformation();	
+	
+}
+
+void MarketPlaceSys::finalizePeriodSession(unsigned  period,  Message & messageResponse)
+{
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().information(Poco::format("finalize period session ------------current_period:%d given_eriod:%d", (int) _period, (int) period));
+
+	disseminateInformation();
+	saveInformation();
+	reinitiateDataContainers(END);
+	
 	activatePresenter();
 	messageResponse.setResponseOk();
 }
@@ -964,6 +1021,20 @@ void MarketPlaceSys::removeListener(std::string idListener)
 
 	app.logger().debug("Ending removeListener");
 
+}
+
+bool MarketPlaceSys::sendInformation(unsigned interval)
+{
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("Starting sendInformation");
+
+	bool val_return = false;
+	if ( (interval % _send_interval) == 0)
+		val_return = true;
+	
+	app.logger().debug(Poco::format("Ending sendInformation %b", val_return));
+	
 }
 
 }  /// End Eco namespace

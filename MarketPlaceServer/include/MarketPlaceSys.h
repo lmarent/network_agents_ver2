@@ -28,6 +28,12 @@ namespace ChoiceNet
 namespace Eco
 {
 
+enum MARKET_HISTORY_PERIOD
+{ 
+    START = 0,
+    END = 1
+};
+
 class MarketPlaceSys : public FoundationSys
 {
 public:
@@ -67,7 +73,7 @@ public:
 	
 	void broadCastInformation(Message & message, std::string type);
 	 
-	void finalizePeriodSession(Message & messageResponse);
+	void finalizePeriodSession(unsigned  period, Message & messageResponse);
 	
 	void sendProviderPurchaseInformation(void);
 	
@@ -99,6 +105,15 @@ public:
     Provider * getProvider(std::string providerId);
        
     Bid * getBid(std::string bidId);
+
+	// Specificates if the information should be transmited to the provider.
+	bool sendInformation(unsigned interval);
+	
+	void saveInformation();
+	
+	void disseminateInformation();
+	
+	void reinitiateDataContainers(MARKET_HISTORY_PERIOD subperiod);
     
     void saveBidInformation(void);
 
@@ -135,10 +150,12 @@ private:
     BidContainer _bids; // This Holds all bids 
     BidContainer _bids_to_broadcast; // Bids received in the current period and need to be broadcasted
     
-    typedef std::map<unsigned, PurchaseInformation*> PurchaseHistory;
+    typedef std::map<std::string, PurchaseInformation*> PurchaseHistory;
     PurchaseHistory _purchase_history;
             
 	unsigned _period;
+	unsigned _intervals_per_cycle;
+	unsigned _send_interval;
 
 	Poco::Data::SessionPool * _pool;
 

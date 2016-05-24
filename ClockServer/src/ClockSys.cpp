@@ -326,6 +326,7 @@ void ClockSys::activateCustomers(int period)
 { 
 
 	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug(Poco::format("Starting activate Customers %d",period) );
 
     // Send the messsage to consumer listeners.
     double new_demand = 0;

@@ -143,19 +143,14 @@ namespace Eco
 		   // Starts timer events 
 		   // Get the time for each interval
 		   unsigned short interval = (unsigned short)
-					config().getInt("time_intervals", 3000);
+					config().getInt("time_intervals", 4000);
 
 		   // Get the number of intervals for making a round of bids
-		   unsigned short bid_intervals = (unsigned short)
-					config().getInt("intervals_for_bid", 3);
-					
-		   // Get the number of intervals_for_service_completion
-		   unsigned short complete_intervals = (unsigned short)
-					config().getInt("intervals_for_service_completion", 1);
-		   
-					
+		   unsigned short intervals_per_cycle = (unsigned short)
+					config().getInt("intervals_per_cycle", 2);
+							   
 		   Poco::Timer timer(interval, interval);
-		   TimerNotification notification(bid_intervals, complete_intervals);
+		   TimerNotification notification(intervals_per_cycle);
 		   Poco::TimerCallback<TimerNotification> callback(notification, &TimerNotification::onEndPeriod);
 		   timer.start(callback);
 		   
@@ -166,7 +161,7 @@ namespace Eco
 		   timer.stop();
 		   // Stop reactor
 		   reactor.stop();
-		   int sleptime = (interval * bid_intervals) / 1000;
+		   int sleptime = (interval * intervals_per_cycle) / 1000;
 		   std::cout << "sleeping for: " << sleptime <<  std::endl;
 		   sleep(sleptime);
 			

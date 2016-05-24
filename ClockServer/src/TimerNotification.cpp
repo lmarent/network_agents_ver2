@@ -13,9 +13,8 @@ namespace ChoiceNet
 namespace Eco
 {
 
-TimerNotification::TimerNotification(int bid_intervals, int close_intervals):
-_bid_intervals(bid_intervals),
-_close_intervals(close_intervals)
+TimerNotification::TimerNotification(int intervals_per_cycle):
+_intervals_per_cycle(intervals_per_cycle)
 {
 	_sw.start();
 }
@@ -35,35 +34,20 @@ void TimerNotification::onEndPeriod(Poco::Timer& timer)
     
     // Increments the current interval 
 	(*clocksys).incrementInterval();
+	(*clocksys).incrementPeriod();
 	current_interval = (*clocksys).getInterval();
 	current_period = (*clocksys).getPeriod() ;
 
 	app.logger().information(Poco::format("onEndPeriod - Interval:%d Period:%d", current_interval, current_period));
-	
-	
-	interval_open = (current_period * _bid_intervals) + (current_period * _close_intervals);
-	interval_close = (current_period * _bid_intervals) + ((current_period - 1) * _close_intervals);
-	
-	if ( current_interval % interval_open == 0 ){
-		// Increment the period and send the message to open a new bid session
-		(*clocksys).incrementPeriod();
-		if ((*clocksys).getPeriod() <= (*clocksys).getBidPeriods())
-		{
+		
+
+		if ( (current_interval * _intervals_per_cycle) <= (*clocksys).getBidPeriods())
 			(*clocksys).broadcastPeriodStart();
-		}
 		else
-		{
 			// As part of the termination process it is send to all listeners
 			// a termination message.
 			server.terminate();
-		}
-	}
-	
-	if ( current_interval % interval_close == 0 ){
-		// Send the message to close the current bid session
-		(*clocksys).broadcastPeriodEnd();
-	}
-	
+		
 }
 
 

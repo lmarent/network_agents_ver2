@@ -50,6 +50,8 @@ public:
 	
 	std::string getBid(); 
 
+	void setQuantity(double quantity);
+
 	void setDecisionVariable(std::string decisionVariableId, size_t dimension, double value);
 	/// Sets a decision variable associted with the purchase. 
 	

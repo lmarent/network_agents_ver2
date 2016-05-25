@@ -395,6 +395,7 @@ void MarketPlaceSys::insertListener(std::string idListener,
 
 void MarketPlaceSys::startListening(Poco::Net::SocketAddress socketAddress, 
 							 Poco::UInt16 port, std::string type,
+							 ProviderCapacityType capacity_type,
 							 Message & messageResponse)
 {
 
@@ -418,7 +419,7 @@ void MarketPlaceSys::startListening(Poco::Net::SocketAddress socketAddress,
 			{
 				std::string providerId = (it->second)->getId();
 				app.logger().information(Poco::format("Connecting provider with Id: %s", providerId) );
-				Provider * provider = new Provider(providerId);
+				Provider * provider = new Provider(providerId, capacity_type);
 				_providers.insert(std::pair<std::string, Provider *>( providerId, provider));
 			}
 			insertListenerBytype(type, (*(it->second)).getId());
@@ -780,6 +781,71 @@ void MarketPlaceSys::deleteBid(Bid * bidPtr, Message & messageResponse)
 	}
 }
 
+void MarketPlaceSys::addPurchaseBulkCapacity(Provider *provider, Service *service, Bid * bid, Purchase * purchasePtr, Message & messageResponse)
+{
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("Entering addPurchaseBulkCapacity");
+
+	if (provider->isBulkAvailable(_period, service, purchasePtr, bid))
+	{
+		// In any case inserts the purchase into the service container.
+		(*_current_purchases).addPurchaseToService(purchasePtr);
+		
+		// std::cout << "Purchase inserted in the market place" << std::endl;
+		_purchases.insert(std::pair<std::string, Purchase *>((*purchasePtr).getId(), purchasePtr) );
+		
+		// Deducts from the availability
+		provider->deductAvailability(_period, service, purchasePtr, bid);
+		
+		// Establishes the quantity purchased as a feedback to the agent.
+
+		std::cout << "quantity purchased - P:" << bid->getProvider() << ",Q:" + purchasePtr->getQuantityStr() << "purchase Id:" << purchasePtr->getId() <<  std::endl;
+		messageResponse.setParameter("Quantity_Purchased", purchasePtr->getQuantityStr());
+	}
+	else
+	{
+		// std::cout << "Bid:" << bid->getId() << "is not available" << std::endl;
+		messageResponse.setParameter("Quantity_Purchased", "0");
+	}
+
+}
+
+void MarketPlaceSys::addPurchaseByBidCapacity(Provider *provider, Service *service, Bid * bid, Purchase * purchasePtr, Message & messageResponse)
+{
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("Entering addPurchaseByBidCapacity");
+
+	if (bid->getCapacity() >= purchasePtr->getQuantity())
+	{
+		// In any case inserts the purchase into the service container.
+		(*_current_purchases).addPurchaseToService(purchasePtr);
+
+		// std::cout << "Purchase inserted in the market place" << std::endl;
+		_purchases.insert(std::pair<std::string, Purchase *>((*purchasePtr).getId(), purchasePtr) );
+
+		bid->setCapacity(bid->getCapacity() - purchasePtr->getQuantity());
+
+		messageResponse.setParameter("Quantity_Purchased", purchasePtr->getQuantityStr());
+
+	} else {
+
+		// It buys the quantity available.
+		purchasePtr->setQuantity(bid->getCapacity());
+
+		// In any case inserts the purchase into the service container.
+		(*_current_purchases).addPurchaseToService(purchasePtr);
+
+		// std::cout << "Purchase inserted in the market place" << std::endl;
+		_purchases.insert(std::pair<std::string, Purchase *>((*purchasePtr).getId(), purchasePtr) );
+
+		bid->setCapacity(bid->getCapacity() - purchasePtr->getQuantity());
+		messageResponse.setParameter("Quantity_Purchased", purchasePtr->getQuantityStr());
+
+	}
+}
+
 void MarketPlaceSys::addPurchase(Purchase * purchasePtr, Message & messageResponse)
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
@@ -793,25 +859,12 @@ void MarketPlaceSys::addPurchase(Purchase * purchasePtr, Message & messageRespon
 		{
 			Service * service = getService(purchasePtr->getService());
 			Provider * provider = getProvider(bid->getProvider());
-
-			if (provider->isAvailable(_period, service, purchasePtr, bid))
-			{
-				// In any case inserts the purchase into the service container.
-				(*_current_purchases).addPurchaseToService(purchasePtr);
-				// std::cout << "Purchase inserted in the market place" << std::endl;
-				_purchases.insert(std::pair<std::string, Purchase *>((*purchasePtr).getId(), purchasePtr) );
-				// Deducts from the availability
-				provider->deductAvailability(_period, service, purchasePtr, bid);
-				// Establishes the quantity purchased as a feedback to the agent.
-
-				std::cout << "quantity purchased - P:" << bid->getProvider() << ",Q:" + purchasePtr->getQuantityStr() << "purchase Id:" << purchasePtr->getId() <<  std::endl;
-				messageResponse.setParameter("Quantity_Purchased", purchasePtr->getQuantityStr());
-			}
+			
+			if (provider->getCapacityType() == BULK_CAPACITY)
+				addPurchaseBulkCapacity(provider, service, bid, purchasePtr, messageResponse);
 			else
-			{
-				// std::cout << "Bid:" << bid->getId() << "is not available" << std::endl;
-				messageResponse.setParameter("Quantity_Purchased", "0");
-			}
+				addPurchaseByBidCapacity(provider, service, bid, purchasePtr, messageResponse);
+				
 			// set the response as Ok
 			messageResponse.setResponseOk();
 		}

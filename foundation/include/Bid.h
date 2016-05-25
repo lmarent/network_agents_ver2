@@ -32,6 +32,7 @@ struct BidStruct
     double      _unitary_profit;
     double      _unitary_cost;
     std::string _parent_bid_id;
+    double 		_capacity;
 };
 
 class Bid: public Datapoint
@@ -76,7 +77,13 @@ public:
 	
 	/// Sets the parent Bid id
 	void setParentBidId(std::string parentBidId);
+
+	/// Sets the capacity from string
+	void setCapacity(std::string capacity);
 	
+	/// Sets the capacity from double
+	void setCapacity(double capacity);
+
 	/// Gets the unitary cost of the bid
 	double getUnitaryProfit(void);
 
@@ -85,6 +92,9 @@ public:
 	
 	/// Gets the parent Bid Id
 	std::string getParentBidId(void);
+	
+	/// Gets capacity
+	double getCapacity(void);
 	
 	/// Sets a decision variable associated with the bid.
 	void setDecisionVariable(std::string decisionVariableId, size_t dimension, double value, OptimizationObjective &objetive);
@@ -132,6 +142,7 @@ private:
     double    	_unitary_cost;
     double    	_unitary_profit;
     std::string _parent_bid_id;
+    double 		_capacity;
     // This map maintains the mapping between the variable and its value as a 
     // dimension (size_t) in a datapoint.
     std::map<std::string, size_t> _decision_variables;

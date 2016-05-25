@@ -50,6 +50,7 @@
 #include <Poco/NumberParser.h>
 #include <Poco/NumberFormatter.h>
 
+#include "Provider.h"
 #include "ConnectionHandler.h"
 #include "MarketPlaceServer.h"
 #include "MarketPlaceSys.h"
@@ -392,15 +393,33 @@ void ConnectionHandler::StartListening(Poco::Net::SocketAddress socketAddress,
 									   ChoiceNet::Eco::Message & messageResponse)
 {
 	unsigned  Uport; 
+	ProviderCapacityType capacityType;
+	
 	std::string port = messageRequest.getParameter("Port");
+	
 	bool v_result = Poco::NumberParser::tryParseUnsigned(port, Uport);
 	std::string type = messageRequest.getParameter("Type");
+	if (type.compare("provider") ==  0){
+		std::string capacity = messageRequest.getParameter("CapacityType");
+		if (capacity.compare("bid") == 0){ 
+			capacityType = BID_BY_BID;
+		}
+		else if (capacity.compare("bulk") == 0){
+			capacityType = BULK_CAPACITY;
+		}
+		else {
+			capacityType = UNDEFINED_CAPACITY_TYPE;
+		}
+	}
+	else{
+		capacityType = UNDEFINED_CAPACITY_TYPE;
+	}
 	if ( Uport <= 0xFFFF){
 		Poco::Util::Application& app = Poco::Util::Application::instance();
 		MarketPlaceServer &server = dynamic_cast<MarketPlaceServer&>(app);
 		MarketPlaceSys *sys = server.getMarketPlaceSubsystem();
 		Poco::UInt16 u16Port = (Poco::UInt16) Uport;
-		(*sys).startListening(socketAddress, u16Port, type, messageResponse);
+		(*sys).startListening(socketAddress, u16Port, type, capacityType, messageResponse);
 	}
 	else
 	{

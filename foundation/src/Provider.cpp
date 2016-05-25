@@ -8,8 +8,8 @@ namespace ChoiceNet
 namespace Eco
 {
 
-Provider::Provider(std::string id):
-_id(id)
+Provider::Provider(std::string id, ProviderCapacityType capacity_type):
+_id(id), _type(capacity_type)
 {
 }
     
@@ -106,8 +106,7 @@ bool Provider::checkResourceAvailability(unsigned period,
 	    return false;
 }
 
-bool Provider::isAvailable(unsigned period, Service * service, 
-						   Purchase * purchase, Bid * bid)
+bool Provider::isBulkAvailable(unsigned period, Service * service,  Purchase * purchase, Bid * bid)
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().debug("Entering provider isAvailable");
@@ -154,6 +153,11 @@ bool Provider::isAvailable(unsigned period, Service * service,
 
 	app.logger().debug(Poco::format("Entering provider isAvailable %b", available ));
 	return available;
+}
+
+ProviderCapacityType Provider::getCapacityType(void)
+{
+	return _type;
 }
 
 }  /// End Eco namespace

@@ -15,11 +15,19 @@ namespace ChoiceNet
 namespace Eco
 {
 
+enum ProviderCapacityType
+{
+	BID_BY_BID = 0,
+	BULK_CAPACITY =  1,
+	UNDEFINED_CAPACITY_TYPE = 2,
+	MAX_PROVIDER_CAPACITY_TYPE = 3,
+};
+
 class Provider
 {
 public:
 
-    Provider(std::string id);
+    Provider(std::string id, ProviderCapacityType capacity_type);
     /// Constructor provider
     
     ~Provider();
@@ -36,9 +44,10 @@ public:
 	/// It is assumed that always the user of the function checks the availability
 	/// and based on its value calls this function.
 
-	bool isAvailable(unsigned period, Service * service, Purchase * purchase, Bid * bid);
+	bool isBulkAvailable(unsigned period, Service * service, Purchase * purchase, Bid * bid);
 	/// Determines whether a provider is availability for a purchase.
 	
+	ProviderCapacityType getCapacityType(void);
 
 protected:
 
@@ -56,6 +65,7 @@ protected:
 
 private:
 	std::string _id;
+	ProviderCapacityType _type;
 	typedef std::map<std::string, ResourceAvailability *>  ResourceMap;
 	
 	ResourceMap _resources;

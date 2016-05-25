@@ -258,6 +258,10 @@ void Purchase::to_Database(Poco::Data::SessionPool * _pool, int period)
 
 }
 
+void Purchase::setQuantity(double quantity)
+{
+	_quantity = quantity;
+}
 
 }  /// End Eco namespace
 

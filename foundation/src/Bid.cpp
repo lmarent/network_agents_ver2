@@ -39,7 +39,8 @@ _service(serviceParam),
 _status(active),
 _unitary_profit(0),
 _unitary_cost(0),
-_parent_bid_id()
+_parent_bid_id(),
+_capacity(0)
 {
 	// Initializes all dimensions for decision variables in 0.
 	for (size_t i=0; i< numberDecisionVariables; ++i)
@@ -68,10 +69,12 @@ Datapoint()
 	    std::string unitaryProfit = message.getParameter("UnitaryProfit");
 	    std::string unitaryCost = message.getParameter("UnitaryCost");
 	    std::string parentBidId = message.getParameter("ParentBid");
+	    std::string capacity = message.getParameter("Capacity");
 	    
 	    setUnitaryProfit(unitaryProfit);
 	    setUnitaryCost(unitaryCost);
 	    setParentBidId(parentBidId);
+	    setCapacity(capacity);
 	    
 		std::map<std::string, DecisionVariable *>::iterator it; 
 		for (it=(service->_decision_variables.begin()); it!=(service->_decision_variables.end()); ++it)
@@ -329,10 +332,11 @@ void Bid::toDatabase(Poco::Data::SessionPool * _pool, int execute_count, int per
 					   execute_count,
 					   getUnitaryProfit(),
 					   getUnitaryCost(),
-					   getParentBidId() };
+					   getParentBidId(), 
+					   getCapacity() };
 
 	Poco::Data::Statement insert(session);
-	insert << "insert into simulation_bid (period, bidId, providerId, status, paretoStatus, dominatedCount, execution_count, unitary_profit, unitary_cost, parentBidId) values (?,?,?,?,?,?,?,?,?,?)",
+	insert << "insert into simulation_bid (period, bidId, providerId, status, paretoStatus, dominatedCount, execution_count, unitary_profit, unitary_cost, parentBidId, capacity) values (?,?,?,?,?,?,?,?,?,?,?)",
 				use(BidS._period),
 				use(BidS._id),
 				use(BidS._provider),
@@ -342,7 +346,8 @@ void Bid::toDatabase(Poco::Data::SessionPool * _pool, int execute_count, int per
 				use(BidS._execution_count),
 				use(BidS._unitary_profit),
 				use(BidS._unitary_cost),
-				use(BidS._parent_bid_id);
+				use(BidS._parent_bid_id),
+				use(BidS._capacity);
 
 	insert.execute();
 
@@ -423,6 +428,21 @@ void Bid::setUnitaryProfit(std::string unitaryProfit)
 void Bid::setUnitaryCost(std::string unitaryCost)
 {
 	_unitary_cost = Poco::NumberParser::parseFloat(unitaryCost);
+}
+
+void Bid::setCapacity(std::string capacity)
+{
+	_capacity = Poco::NumberParser::parseFloat(capacity);
+}
+
+void Bid::setCapacity(double capacity)
+{
+	_capacity = capacity;
+}
+
+double Bid::getCapacity(void)
+{
+	return _capacity;
 }
 
 }  /// End Eco namespace

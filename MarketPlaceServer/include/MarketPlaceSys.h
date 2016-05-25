@@ -63,6 +63,7 @@ public:
 
     void startListening(Poco::Net::SocketAddress socketAddress, 
 					   Poco::UInt16 port, std::string type,
+					   ProviderCapacityType capacity_type,
 					   Message & messageResponse );
 					   
 	void insertListenerBytype(std::string type, std::string listenerId);
@@ -105,7 +106,11 @@ public:
     Provider * getProvider(std::string providerId);
        
     Bid * getBid(std::string bidId);
-
+	
+	void addPurchaseBulkCapacity(Provider *provider, Service *service, Bid * bid, Purchase * purchasePtr, Message & messageResponse);
+	
+	void addPurchaseByBidCapacity(Provider *provider, Service *service, Bid * bid, Purchase * purchasePtr, Message & messageResponse);
+	
 	// Specificates if the information should be transmited to the provider.
 	bool sendInformation(unsigned interval);
 	

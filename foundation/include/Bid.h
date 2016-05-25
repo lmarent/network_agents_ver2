@@ -31,6 +31,7 @@ struct BidStruct
     int 		_execution_count;
     double      _unitary_profit;
     double      _unitary_cost;
+    std::string _parent_bid_id;
 };
 
 class Bid: public Datapoint
@@ -72,13 +73,19 @@ public:
 
 	/// Sets the unitary cost for the bid
 	void setUnitaryCost(std::string unitaryCost);
-
+	
+	/// Sets the parent Bid id
+	void setParentBidId(std::string parentBidId);
+	
 	/// Gets the unitary cost of the bid
 	double getUnitaryProfit(void);
 
 	/// Gets the unitary cost of the bid
 	double getUnitaryCost(void);
-
+	
+	/// Gets the parent Bid Id
+	std::string getParentBidId(void);
+	
 	/// Sets a decision variable associated with the bid.
 	void setDecisionVariable(std::string decisionVariableId, size_t dimension, double value, OptimizationObjective &objetive);
 	
@@ -122,8 +129,9 @@ private:
     BidStatus _status;
 
     // These values are just for reporting
-    double    _unitary_cost;
-    double    _unitary_profit;
+    double    	_unitary_cost;
+    double    	_unitary_profit;
+    std::string _parent_bid_id;
     // This map maintains the mapping between the variable and its value as a 
     // dimension (size_t) in a datapoint.
     std::map<std::string, size_t> _decision_variables;

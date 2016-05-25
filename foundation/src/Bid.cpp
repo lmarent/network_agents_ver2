@@ -36,7 +36,10 @@ Bid::Bid(std::string idParam,
 Datapoint(idParam),
 _provider(providerParam),
 _service(serviceParam),
-_status(active)
+_status(active),
+_unitary_profit(0),
+_unitary_cost(0),
+_parent_bid_id()
 {
 	// Initializes all dimensions for decision variables in 0.
 	for (size_t i=0; i< numberDecisionVariables; ++i)
@@ -61,8 +64,14 @@ Datapoint()
 	    _provider = message.getParameter("Provider");
 	    _service = message.getParameter("Service");
 	    setStatus(message.getParameter("Status"));
-	    setUnitaryProfit(message.getParameter("UnitaryProfit"));
-	    setUnitaryCost(message.getParameter("UnitaryCost"));
+
+	    std::string unitaryProfit = message.getParameter("UnitaryProfit");
+	    std::string unitaryCost = message.getParameter("UnitaryCost");
+	    std::string parentBidId = message.getParameter("ParentBid");
+	    
+	    setUnitaryProfit(unitaryProfit);
+	    setUnitaryCost(unitaryCost);
+	    setParentBidId(parentBidId);
 	    
 		std::map<std::string, DecisionVariable *>::iterator it; 
 		for (it=(service->_decision_variables.begin()); it!=(service->_decision_variables.end()); ++it)
@@ -141,6 +150,10 @@ double Bid::getUnitaryProfit(void)
 	return _unitary_profit;
 }
 
+std::string Bid::getParentBidId(void)
+{
+	return _parent_bid_id;
+}
 
 bool Bid::isActive(void)
 {
@@ -161,6 +174,11 @@ void Bid::setStatus(std::string status)
 	{
 		_status = active;
 	}
+}
+
+void Bid::setParentBidId(std::string parentBidId)
+{
+	_parent_bid_id = parentBidId;
 }
 
 void Bid::setDecisionVariable(std::string decisionVariableId, size_t dimension, double value, OptimizationObjective &objetive)
@@ -253,12 +271,19 @@ void Bid::to_XML(Poco::XML::AutoPtr<Poco::XML::Document> pDoc,
 	Poco::XML::AutoPtr<Poco::XML::Text> pText6 = 
 							pDoc->createTextNode(getStatus());
 	pStatus->appendChild(pText6);	
+
+	Poco::XML::AutoPtr<Poco::XML::Element> pParentBid = 
+											pDoc->createElement("ParentBid");
+	Poco::XML::AutoPtr<Poco::XML::Text> pText7 = 
+							pDoc->createTextNode(getParentBidId());
+	pParentBid->appendChild(pText7);	
 	
 									
 	proot->appendChild(pId);
 	proot->appendChild(pProvider);
 	proot->appendChild(pService);
 	proot->appendChild(pStatus);
+	proot->appendChild(pParentBid);
 	
 
 	std::map<std::string, size_t>::iterator it;
@@ -290,7 +315,7 @@ void Bid::to_XML(Poco::XML::AutoPtr<Poco::XML::Document> pDoc,
 
 void Bid::toDatabase(Poco::Data::SessionPool * _pool, int execute_count, int period)
 {
-	// std::cout << "putting the information of the bid:" << getId() <<  std::endl;
+	std::cout << "putting the information of the bid:" << getId() <<  std::endl;
 
 	Poco::Data::Session session(_pool->get());
 
@@ -303,19 +328,21 @@ void Bid::toDatabase(Poco::Data::SessionPool * _pool, int execute_count, int per
 					   numDominated(),
 					   execute_count,
 					   getUnitaryProfit(),
-					   getUnitaryCost() };
+					   getUnitaryCost(),
+					   getParentBidId() };
 
 	Poco::Data::Statement insert(session);
-	insert << "insert into simulation_bid (period, bidId, providerId, status, paretoStatus, dominatedCount, execution_count, unitary_profit, unitary_cost) values(?,?,?,?,?,?,?,?,?)",
+	insert << "insert into simulation_bid (period, bidId, providerId, status, paretoStatus, dominatedCount, execution_count, unitary_profit, unitary_cost, parentBidId) values (?,?,?,?,?,?,?,?,?,?)",
 				use(BidS._period),
 				use(BidS._id),
 				use(BidS._provider),
 				use(BidS._status),
 				use(BidS._paretoStatus),
 				use(BidS._dominatedCount),
-				use(BidS._execution_count);
-				use(BidS._unitary_profit);
-				use(BidS._unitary_cost);
+				use(BidS._execution_count),
+				use(BidS._unitary_profit),
+				use(BidS._unitary_cost),
+				use(BidS._parent_bid_id);
 
 	insert.execute();
 

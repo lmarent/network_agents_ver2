@@ -61,6 +61,8 @@ Datapoint()
 	    _provider = message.getParameter("Provider");
 	    _service = message.getParameter("Service");
 	    setStatus(message.getParameter("Status"));
+	    setUnitaryProfit(message.getParameter("UnitaryProfit"));
+	    setUnitaryCost(message.getParameter("UnitaryCost"));
 	    
 		std::map<std::string, DecisionVariable *>::iterator it; 
 		for (it=(service->_decision_variables.begin()); it!=(service->_decision_variables.end()); ++it)
@@ -288,10 +290,12 @@ void Bid::toDatabase(Poco::Data::SessionPool * _pool, int execute_count, int per
 					   (int) _status,
 					   getParetoStatus(),
 					   numDominated(),
-					   execute_count };
+					   execute_count,
+					   getUnitaryProfit(),
+					   getUnitaryCost() };
 
 	Poco::Data::Statement insert(session);
-	insert << "insert into simulation_bid (period, bidId, providerId, status, paretoStatus, dominatedCount, execution_count) values(?,?,?,?,?,?,?)",
+	insert << "insert into simulation_bid (period, bidId, providerId, status, paretoStatus, dominatedCount, execution_count, unitary_profit, unitary_cost) values(?,?,?,?,?,?,?,?,?)",
 				use(BidS._period),
 				use(BidS._id),
 				use(BidS._provider),
@@ -299,6 +303,8 @@ void Bid::toDatabase(Poco::Data::SessionPool * _pool, int execute_count, int per
 				use(BidS._paretoStatus),
 				use(BidS._dominatedCount),
 				use(BidS._execution_count);
+				use(BidS._unitary_profit);
+				use(BidS._unitary_cost);
 
 	insert.execute();
 
@@ -369,6 +375,16 @@ void Bid::toMessage(Message & message)
 	{
 		message.setParameter(it->first, getDecisionVariableStr(it->first));
 	}
+}
+
+void Bid::setUnitaryProfit(std::string unitaryProfit)
+{
+	_unitary_profit = Poco::NumberParser::parseFloat(unitaryProfit);
+}
+
+void Bid::setUnitaryCost(std::string unitaryCost)
+{
+	_unitary_cost = Poco::NumberParser::parseFloat(unitaryCost);
 }
 
 }  /// End Eco namespace

@@ -131,6 +131,17 @@ std::string Bid::getStatus(void)
 		return "active";
 }
 
+double Bid::getUnitaryCost(void)
+{
+	return _unitary_cost;
+}
+
+double Bid::getUnitaryProfit(void)
+{
+	return _unitary_profit;
+}
+
+
 bool Bid::isActive(void)
 {
 	if (_status == active)

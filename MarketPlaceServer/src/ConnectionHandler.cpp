@@ -524,6 +524,7 @@ void ConnectionHandler::addPurchase(Poco::Net::SocketAddress socketAddress,
 		MarketPlaceSys *sys = server.getMarketPlaceSubsystem();
 		Service * service = (*sys).getService(messageRequest.getParameter("Service"));
 		Purchase * purchasePtr = new Purchase(service, messageRequest);
+		purchasePtr->setQuantityBacklog(0);
 		(*sys).addPurchase(purchasePtr, messageResponse);
 		app.logger().debug("Purchase added in the market place");
 	} catch (FoundationException &e){

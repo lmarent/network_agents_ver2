@@ -151,7 +151,7 @@ bool Provider::isBulkAvailable(unsigned period, Service * service,  Purchase * p
 		
 	}
 
-	app.logger().debug(Poco::format("Entering provider isAvailable %b", available ));
+	app.logger().debug(Poco::format("Ending provider isAvailable %b", available ));
 	return available;
 }
 

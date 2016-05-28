@@ -41,12 +41,23 @@ void PurchaseServiceInformation::addPurchase(Purchase * purchasePtr)
 		(it->second)._quantity += (*purchasePtr).getQuantity();
 		(it->second)._quantity_backlog += (*purchasePtr).getQuantityBacklog();
 		app.logger().debug("bid found, we are adding the purchase quantity");
+		
+		if ((it->second)._quantity_backlog > 99999){
+			app.logger().debug(Poco::format("Qty added: %f", (*purchasePtr).getQuantityBacklog()));
+		}
+		
 	}
 	else
 	{
 		PurchaseQuantities quant;
 		quant._quantity = (*purchasePtr).getQuantity();
 		quant._quantity_backlog = (*purchasePtr).getQuantityBacklog();
+
+		if ((it->second)._quantity_backlog > 99999){
+			app.logger().debug(Poco::format("Qty added: %f", (*purchasePtr).getQuantityBacklog()));
+		}
+		
+		
 		_summaries_by_bid.insert(std::pair<std::string,PurchaseQuantities>((*purchasePtr).getBid(), quant ));
 		app.logger().debug("bid not found, inserting the bid into the summary");
 	}

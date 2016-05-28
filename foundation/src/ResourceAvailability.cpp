@@ -55,6 +55,11 @@ double ResourceAvailability::deductAvailability(unsigned period,
 											    double level,
 											    double quantity)
 {
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("Entering deductAvailability");
+	
+	
 	if ( _resource != NULL )
 	{
 		double rate =_resource->getConsumption(variable,level);
@@ -66,7 +71,9 @@ double ResourceAvailability::deductAvailability(unsigned period,
 		}
 		it = _time_availability.find(period);			
 		it->second -= quantityRequired;
-		std::cout << "Availability:" << it->second << std::endl;
+
+		app.logger().debug(Poco::format("Ending deductAvailability - final availability: %f", it->second) );
+
 	}
 }
 

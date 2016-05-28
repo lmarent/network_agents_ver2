@@ -22,7 +22,14 @@ struct PurchaseServiceBidStruct
 	std::string _serviceId;
 	std::string _bidId;
 	double 		_quantity;
+	double 		_quantity_backlog;
 	int 		_execution_count;
+};
+
+struct PurchaseQuantities
+{
+	double 		_quantity;
+	double 		_quantity_backlog;
 };
 
 class PurchaseServiceInformation
@@ -51,7 +58,8 @@ public:
 
 private:
     
-    std::map<std::string, double> _summaries_by_bid;
+    std::map<std::string, PurchaseQuantities> _summaries_by_bid;
+    
     std::vector<std::string> _detail;
 };
 

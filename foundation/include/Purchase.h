@@ -25,6 +25,7 @@ struct PurchaseStruct
     std::string _bid;
     std::string _service;
     double 		_quantity;
+    double		_quantity_backlog;
     int     	_execution_count;
 };
 
@@ -62,6 +63,10 @@ public:
 	/// Gets a decision variable in string associted with the purchase. 
 
     double getQuantity(void);
+	
+	double getQuantityBacklog(void);
+	
+	void setQuantityBacklog(double quantity);
 
     std::string getQuantityStr(void);
 			
@@ -79,6 +84,7 @@ private:
     std::string _bid;
     std::string _service;
     double _quantity;
+    double _quantity_backlog;
     std::map<std::string, size_t> _decision_variables;
 };
 

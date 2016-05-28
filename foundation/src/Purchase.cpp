@@ -32,7 +32,8 @@ Purchase::Purchase(std::string idParam,
 Datapoint(idParam),
 _bid(bidParam),
 _service(serviceParam),
-_quantity(quantityParam)
+_quantity(quantityParam),
+_quantity_backlog(0)
 {
 	// Initializes all dimensions for decision variables in 0.
 	for (size_t i=0; i< numberDecisionVariables; ++i)
@@ -143,6 +144,11 @@ std::string Purchase::getDecisionVariableStr(std::string decisionVariableId)
 double Purchase::getQuantity(void)
 {
 	return _quantity;
+}
+
+double Purchase::getQuantityBacklog(void)
+{
+	return _quantity_backlog;
 }
 
 std::string Purchase::getQuantityStr(void)
@@ -261,6 +267,11 @@ void Purchase::to_Database(Poco::Data::SessionPool * _pool, int period)
 void Purchase::setQuantity(double quantity)
 {
 	_quantity = quantity;
+}
+
+void Purchase::setQuantityBacklog(double quantity)
+{
+	_quantity_backlog = quantity;
 }
 
 }  /// End Eco namespace

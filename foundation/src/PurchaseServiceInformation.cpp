@@ -26,13 +26,6 @@ PurchaseServiceInformation::PurchaseServiceInformation()
 PurchaseServiceInformation::~PurchaseServiceInformation()
 {		
 	
-	std::map<std::string,double>::iterator it;
-	it = _summaries_by_bid.begin();
-	while (it != _summaries_by_bid.end())
-	{
-		++it;
-	}
-
 }
 
 
@@ -41,16 +34,20 @@ void PurchaseServiceInformation::addPurchase(Purchase * purchasePtr)
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().debug("Starting purchase service addPurchase");
 
-	std::map<std::string,double>::iterator it;
+	std::map<std::string, PurchaseQuantities>::iterator it;
 	it = _summaries_by_bid.find((*purchasePtr).getBid());
 	if (it != _summaries_by_bid.end())
 	{
-		it->second += (*purchasePtr).getQuantity();
+		(it->second)._quantity += (*purchasePtr).getQuantity();
+		(it->second)._quantity_backlog += (*purchasePtr).getQuantityBacklog();
 		app.logger().debug("bid found, we are adding the purchase quantity");
 	}
 	else
 	{
-		_summaries_by_bid.insert(std::pair<std::string,double>((*purchasePtr).getBid(), (*purchasePtr).getQuantity() ));
+		PurchaseQuantities quant;
+		quant._quantity = (*purchasePtr).getQuantity();
+		quant._quantity_backlog = (*purchasePtr).getQuantityBacklog();
+		_summaries_by_bid.insert(std::pair<std::string,PurchaseQuantities>((*purchasePtr).getBid(), quant ));
 		app.logger().debug("bid not found, inserting the bid into the summary");
 	}
 	_detail.push_back((*purchasePtr).getId());		
@@ -120,7 +117,7 @@ void PurchaseServiceInformation::getPurchases(Poco::XML::AutoPtr<Poco::XML::Docu
 	{
 		 // std::cout << "Bid to send purchase:" << it->first << std::endl;
 		 
-		 std::map<std::string, double>::iterator it_purchase;
+		 std::map<std::string, PurchaseQuantities>::iterator it_purchase;
 		 it_purchase = _summaries_by_bid.find(it->first);
 		 if (it_purchase != _summaries_by_bid.end())
 		 {
@@ -128,7 +125,7 @@ void PurchaseServiceInformation::getPurchases(Poco::XML::AutoPtr<Poco::XML::Docu
 								pDoc->createElement("Bid");
 
 				// std::cout << "Bid Node information to send" << it_purchase->first << " Quantity:" << it_purchase->second;
-				createBidNode( pDoc, proot, it_purchase->first, it_purchase->second );
+				createBidNode( pDoc, proot, it_purchase->first, (it_purchase->second)._quantity );
 				
 				// Iterate over the Bid of competitors
 				std::vector<std::string>::iterator it_bid_competitors;
@@ -139,7 +136,7 @@ void PurchaseServiceInformation::getPurchases(Poco::XML::AutoPtr<Poco::XML::Docu
 					it_purchase = _summaries_by_bid.find(*it_bid_competitors);
 					if (it_purchase != _summaries_by_bid.end())
 					{
-						createCompetitorBidNode(pDoc, proot, it_purchase->first, it_purchase->second);
+						createCompetitorBidNode(pDoc, proot, it_purchase->first, (it_purchase->second)._quantity);
 					}
 					else
 					{
@@ -165,7 +162,7 @@ void PurchaseServiceInformation::getPurchases(Poco::XML::AutoPtr<Poco::XML::Docu
 					it_purchase = _summaries_by_bid.find(*it_bid_competitors);
 					if (it_purchase != _summaries_by_bid.end())
 					{
-						createCompetitorBidNode(pDoc, proot, it_purchase->first, it_purchase->second);
+						createCompetitorBidNode(pDoc, proot, it_purchase->first, (it_purchase->second)._quantity);
 					}
 					else
 					{
@@ -195,7 +192,7 @@ void PurchaseServiceInformation::toDatabase(Poco::Data::SessionPool * _pool, int
 	app.logger().debug(Poco::format("number of bids in service: %d", (int) _summaries_by_bid.size()) );
 
 
-	std::map<std::string, double>::iterator it_purchase;
+	std::map<std::string, PurchaseQuantities>::iterator it_purchase;
 	for (it_purchase = _summaries_by_bid.begin(); it_purchase != _summaries_by_bid.end(); ++it_purchase)
 	{
 
@@ -204,17 +201,19 @@ void PurchaseServiceInformation::toDatabase(Poco::Data::SessionPool * _pool, int
 		PurchaseServiceBidS._period =  period;
 		PurchaseServiceBidS._serviceId =  serviceId;
 		PurchaseServiceBidS._bidId =  it_purchase->first;
-		PurchaseServiceBidS._quantity =  (double) it_purchase->second;
+		PurchaseServiceBidS._quantity = (double) (it_purchase->second)._quantity;
 		PurchaseServiceBidS._execution_count = execution_count;
+		PurchaseServiceBidS._quantity_backlog = (double) (it_purchase->second)._quantity_backlog;
 
 		if (firstTime == true){
 
-			insert << "insert into simulation_bid_purchases(period, serviceId, bidId, quantity, execution_count) values(?,?,?,?,?)",
+			insert << "insert into simulation_bid_purchases(period, serviceId, bidId, quantity, execution_count, qty_backlog) values(?,?,?,?,?,?)",
 						use(PurchaseServiceBidS._period),
 						use(PurchaseServiceBidS._serviceId),
 						use(PurchaseServiceBidS._bidId),
 						use(PurchaseServiceBidS._quantity),
-						use(PurchaseServiceBidS._execution_count);
+						use(PurchaseServiceBidS._execution_count),
+						use(PurchaseServiceBidS._quantity_backlog);
 
 			insert.execute();
 			firstTime = false;

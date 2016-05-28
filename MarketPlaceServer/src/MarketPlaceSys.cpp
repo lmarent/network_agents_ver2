@@ -830,7 +830,10 @@ void MarketPlaceSys::addPurchaseByBidCapacity(Provider *provider, Service *servi
 		messageResponse.setParameter("Quantity_Purchased", purchasePtr->getQuantityStr());
 
 	} else {
-
+		
+		// It establish the backlog for that bid.
+		purchasePtr->setQuantityBacklog(purchasePtr->getQuantity() - bid->getCapacity());
+		
 		// It buys the quantity available.
 		purchasePtr->setQuantity(bid->getCapacity());
 

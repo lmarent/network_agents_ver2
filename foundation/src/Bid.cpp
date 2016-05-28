@@ -40,7 +40,8 @@ _status(active),
 _unitary_profit(0),
 _unitary_cost(0),
 _parent_bid_id(),
-_capacity(0)
+_capacity(0),
+_creation_period(0)
 {
 	// Initializes all dimensions for decision variables in 0.
 	for (size_t i=0; i< numberDecisionVariables; ++i)
@@ -70,11 +71,13 @@ Datapoint()
 	    std::string unitaryCost = message.getParameter("UnitaryCost");
 	    std::string parentBidId = message.getParameter("ParentBid");
 	    std::string capacity = message.getParameter("Capacity");
+	    std::string period = message.getParameter("CreationPeriod");
 	    
 	    setUnitaryProfit(unitaryProfit);
 	    setUnitaryCost(unitaryCost);
 	    setParentBidId(parentBidId);
 	    setCapacity(capacity);
+	    setCreationPeriod(period);
 	    
 		std::map<std::string, DecisionVariable *>::iterator it; 
 		for (it=(service->_decision_variables.begin()); it!=(service->_decision_variables.end()); ++it)
@@ -333,10 +336,11 @@ void Bid::toDatabase(Poco::Data::SessionPool * _pool, int execute_count, int per
 					   getUnitaryProfit(),
 					   getUnitaryCost(),
 					   getParentBidId(), 
-					   getCapacity() };
+					   getCapacity(),
+					   getCreationPeriod() };
 
 	Poco::Data::Statement insert(session);
-	insert << "insert into simulation_bid (period, bidId, providerId, status, paretoStatus, dominatedCount, execution_count, unitary_profit, unitary_cost, parentBidId, capacity) values (?,?,?,?,?,?,?,?,?,?,?)",
+	insert << "insert into simulation_bid (period, bidId, providerId, status, paretoStatus, dominatedCount, execution_count, unitary_profit, unitary_cost, parentBidId, capacity, creation_period) values (?,?,?,?,?,?,?,?,?,?,?,?)",
 				use(BidS._period),
 				use(BidS._id),
 				use(BidS._provider),
@@ -347,7 +351,8 @@ void Bid::toDatabase(Poco::Data::SessionPool * _pool, int execute_count, int per
 				use(BidS._unitary_profit),
 				use(BidS._unitary_cost),
 				use(BidS._parent_bid_id),
-				use(BidS._capacity);
+				use(BidS._capacity),
+				use(BidS._creation_period);
 
 	insert.execute();
 
@@ -377,6 +382,10 @@ void Bid::toDatabase(Poco::Data::SessionPool * _pool, int execute_count, int per
 	session.commit();
 }
 
+void Bid::setCreationPeriod(std::string period)
+{
+	_creation_period = Poco::NumberParser::parse(period);
+}
 
 void Bid::addNeighbor(std::string bidId)
 {
@@ -443,6 +452,11 @@ void Bid::setCapacity(double capacity)
 double Bid::getCapacity(void)
 {
 	return _capacity;
+}
+
+int Bid::getCreationPeriod(void)
+{
+	return _creation_period;
 }
 
 }  /// End Eco namespace

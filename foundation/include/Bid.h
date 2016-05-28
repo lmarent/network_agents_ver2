@@ -33,6 +33,7 @@ struct BidStruct
     double      _unitary_cost;
     std::string _parent_bid_id;
     double 		_capacity;
+    int 		_creation_period;
 };
 
 class Bid: public Datapoint
@@ -123,6 +124,10 @@ public:
     // Store the bid in the pool.
     void toDatabase(Poco::Data::SessionPool * _pool, int period, int execution_count);
 
+	int getCreationPeriod(void);
+	
+	void setCreationPeriod(std::string period);
+
 private:
     enum BidStatus
     {
@@ -143,6 +148,9 @@ private:
     double    	_unitary_profit;
     std::string _parent_bid_id;
     double 		_capacity;
+   
+    int 		_creation_period;
+    
     // This map maintains the mapping between the variable and its value as a 
     // dimension (size_t) in a datapoint.
     std::map<std::string, size_t> _decision_variables;

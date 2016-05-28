@@ -552,17 +552,23 @@ void MarketPlaceSys::saveBidInformation(void)
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().information("Starting saveBidInformation");
+	
+	if (_period > 0){
+	
+		BidContainer::iterator it;
+		for (it = _bids_to_broadcast.begin(); it != _bids_to_broadcast.end() ; ++it)
+		{
 
-	BidContainer::iterator it;
-	for (it = _bids_to_broadcast.begin(); it != _bids_to_broadcast.end() ; ++it)
-	{
+			app.logger().information("saving Bid information");
 
-		app.logger().information("saving Bid information");
-
-		Bid * bid = (it->second);
-		bid->toDatabase(_pool, FoundationSys::getExecutionCount(), (int) _period);
+			Bid * bid = (it->second);
+			// It saves the information at the start of the following period.
+			bid->toDatabase(_pool, FoundationSys::getExecutionCount(), (int) _period - 1);
+		}
 	}
-
+	else {
+		app.logger().debug("Invalid period during saveBidInformation - period 0");
+	}
 	app.logger().information("Ending saveBidInformation");
 
 }
@@ -1014,14 +1020,18 @@ void MarketPlaceSys::storeCurrentPurchaseInformation()
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().debug("Starting storeCurrentPurchaseInformation");
 
-	if (_current_purchases != NULL)
-	{
-		_current_purchases->toDatabase(_pool, FoundationSys::getExecutionCount() , (int) _period);
+	if (_period > 0){
+		if (_current_purchases != NULL)
+		{
+			_current_purchases->toDatabase(_pool, FoundationSys::getExecutionCount() , (int) _period -1 );
+		} 
+		else{
+			app.logger().debug(Poco::format("no current purchases to store - Period:%d", (int) _period) );
+		}
 	} 
-	else{
-		app.logger().debug(Poco::format("no current purchases to store - Period:%d", (int) _period) );
+	else {
+		app.logger().debug(Poco::format("invalid period - Period:%d", (int) _period) );
 	}
-	
 	app.logger().debug("Ending storeCurrentPurchaseInformation");
 }
 

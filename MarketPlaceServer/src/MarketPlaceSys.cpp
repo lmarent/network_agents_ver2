@@ -423,6 +423,7 @@ void MarketPlaceSys::startListening(Poco::Net::SocketAddress socketAddress,
 				_providers.insert(std::pair<std::string, Provider *>( providerId, provider));
 			}
 			insertListenerBytype(type, (*(it->second)).getId());
+			messageResponse.setParameter("Period", (int) _period);
 			messageResponse.setResponseOk();
 			
 		} catch(const Poco::InvalidArgumentException &ex) {

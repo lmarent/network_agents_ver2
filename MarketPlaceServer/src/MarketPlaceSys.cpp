@@ -498,8 +498,8 @@ void MarketPlaceSys::initializePeriodSession(unsigned interval)
 
 
 	if (sendInformation(interval)) {
-		disseminateInformation();
 		saveInformation();
+		disseminateInformation();
 		reinitiateDataContainers(START);
 	}
 		
@@ -694,8 +694,8 @@ void MarketPlaceSys::finalizePeriodSession(unsigned  period,  Message & messageR
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().information(Poco::format("finalize period session ------------current_period:%d given_eriod:%d", (int) _period, (int) period));
 
-	disseminateInformation();
 	saveInformation();
+	disseminateInformation();
 	reinitiateDataContainers(END);
 	
 	activatePresenter();

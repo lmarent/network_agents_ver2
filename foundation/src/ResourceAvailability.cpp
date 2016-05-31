@@ -91,20 +91,19 @@ bool ResourceAvailability::checkAvailability(unsigned period,
 		double rate =_resource->getConsumption(variable,level);
 		double quantityRequired = quantity * rate;
 		double available = getAvailability(period);
+		app.logger().debug(Poco::format("checkAvailability period:%d qtyAvailable:%f qtyRequired:%f", period, available, quantityRequired));
 		if (available >= quantityRequired) 
 		{   
 			val_return = true;
-			std::cout << "in Check availability 1" << std::endl;
 		}
 		else
 		{
-			std::cout << "in Check availability 2" << "available:" << available << "quantityRequired" << quantityRequired << std::endl;
 			val_return= false;
 		}
 	}
 	else 
 	{   
-		std::cout << "in Check availability 3" << std::endl;
+		app.logger().debug("checkAvailability - undefined resource");
 		val_return = false;
 	}
 	app.logger().debug("Ending ResourceAvailability - checkAvailability" + val_return);

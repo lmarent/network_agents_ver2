@@ -42,6 +42,11 @@ void Provider::addResourceAvailability(std::string resourceId)
     
 void Provider::setInitialAvailability(Resource *resource, double quantity)
 {
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("Entering provider setInitialAvailability");
+
+
     std::map<std::string, ResourceAvailability *>::iterator it;
 	it = _resources.find(resource->getId());
 	if (it != _resources.end())
@@ -55,6 +60,9 @@ void Provider::setInitialAvailability(Resource *resource, double quantity)
 		(*(it->second)).setResource(resource);
 		(*(it->second)).setInitialAvailability(quantity);
 	}	
+
+	app.logger().debug("Ending provider setInitialAvailability");
+
 }
 
 void Provider::deductResourceAvailability(unsigned period, 

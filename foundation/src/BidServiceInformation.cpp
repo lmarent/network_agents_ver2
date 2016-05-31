@@ -73,7 +73,7 @@ void BidServiceInformation::organizeByParetoFrontiers(void)
 	{
 		status = (*(*it)).getParetoStatus();
 		std::string statusStr = Poco::NumberFormatter::format(status);	
-		app.logger().debug("Bid:" + (*it)->getId() + "Status:" + statusStr); 
+		app.logger().debug("Bid:" + (*it)->getId() + ":Pareto_Status:" + statusStr); 
 
 		// The pareto status is a number that indicates as greater the value
 		// teh point is less dominated. We mutiply by minus one so the will be ordered

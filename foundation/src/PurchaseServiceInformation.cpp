@@ -32,7 +32,7 @@ PurchaseServiceInformation::~PurchaseServiceInformation()
 void PurchaseServiceInformation::addPurchase(Purchase * purchasePtr, bool purchaseFound)
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().debug("Starting purchase service addPurchase");
+	app.logger().debug(Poco::format("Starting purchase service addPurchase quantity: %f backlog:%f", purchasePtr->getQuantity(), purchasePtr->getQuantityBacklog() ));
 
 	std::map<std::string, PurchaseQuantities>::iterator it;
 	it = _summaries_by_bid.find((*purchasePtr).getBid());

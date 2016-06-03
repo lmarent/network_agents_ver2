@@ -56,7 +56,7 @@ void PurchaseInformation::addPurchaseToService(Purchase * purchasePtr, bool purc
 {
 
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().debug("Starting addPurchaseToService");
+	app.logger().debug(Poco::format("Starting addPurchaseToService:%b", purchaseFound));
 
 	// Verifies if the service is in the container
 	std::string serviceId = (*purchasePtr).getService();

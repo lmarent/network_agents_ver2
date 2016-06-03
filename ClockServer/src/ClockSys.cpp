@@ -38,7 +38,7 @@ namespace Eco
 {
 
 ClockSys::ClockSys(void): FoundationSys(CLOCK_SERVER),
-_period(1),
+_period(0),
 _interval(0),
 p_cName('C'),
 _executionNumber(0)
@@ -392,7 +392,8 @@ void ClockSys::activateCustomers(int period)
 		}
 		++it;
 	}
-
+	
+	app.logger().debug(Poco::format("Ending activate Customers %d", period) );
 }
 
 void ClockSys::broadcastPeriodStart(void)
@@ -422,6 +423,8 @@ void ClockSys::broadcastPeriodStart(void)
 		}
 		++it;
 	}
+   
+    app.logger().debug(Poco::format("Period %d intervals per cycle:%d intervals for cust act:%d", (int) _period, (int) _intervals_per_cycle, (int) _interval_for_customer_activation ));
    
 	if ((_period % _intervals_per_cycle) == _interval_for_customer_activation){
 		activateCustomers(_period / _intervals_per_cycle);

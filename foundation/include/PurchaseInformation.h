@@ -18,7 +18,7 @@ public:
 	PurchaseInformation();
 	~PurchaseInformation();
 	
-	void addPurchaseToService(Purchase * purchasePtr);
+	void addPurchaseToService(Purchase * purchasePtr, bool purchaseFound);
 	void addService(std::string serviceId);
 	bool existService(std::string serviceId);
 	void getPurchasesForProvider( Poco::XML::AutoPtr<Poco::XML::Document> pDoc, 

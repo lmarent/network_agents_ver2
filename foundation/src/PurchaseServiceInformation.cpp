@@ -29,7 +29,7 @@ PurchaseServiceInformation::~PurchaseServiceInformation()
 }
 
 
-void PurchaseServiceInformation::addPurchase(Purchase * purchasePtr)
+void PurchaseServiceInformation::addPurchase(Purchase * purchasePtr, bool purchaseFound)
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().debug("Starting purchase service addPurchase");
@@ -39,7 +39,12 @@ void PurchaseServiceInformation::addPurchase(Purchase * purchasePtr)
 	if (it != _summaries_by_bid.end())
 	{
 		(it->second)._quantity += (*purchasePtr).getQuantity();
-		(it->second)._quantity_backlog += (*purchasePtr).getQuantityBacklog();
+		
+		// Establish the backlog quantity for the purchase. 
+		if (purchaseFound == false) {
+			(it->second)._quantity_backlog += (*purchasePtr).getQuantityBacklog();
+		}
+		
 		app.logger().debug("bid found, we are adding the purchase quantity");
 		
 		if ((it->second)._quantity_backlog > 99999){
@@ -51,7 +56,11 @@ void PurchaseServiceInformation::addPurchase(Purchase * purchasePtr)
 	{
 		PurchaseQuantities quant;
 		quant._quantity = (*purchasePtr).getQuantity();
-		quant._quantity_backlog = (*purchasePtr).getQuantityBacklog();
+		
+		// Establish the backlog quantity for the purchase. 
+		if (purchaseFound == false) {
+			quant._quantity_backlog = (*purchasePtr).getQuantityBacklog();
+		}
 
 		if ((it->second)._quantity_backlog > 99999){
 			app.logger().debug(Poco::format("Qty added: %f", (*purchasePtr).getQuantityBacklog()));

@@ -788,7 +788,7 @@ void MarketPlaceSys::deleteBid(Bid * bidPtr, Message & messageResponse)
 	}
 }
 
-void MarketPlaceSys::addPurchaseBulkCapacity(Provider *provider, Service *service, Bid * bid, Purchase * purchasePtr, Message & messageResponse)
+void MarketPlaceSys::addPurchaseBulkCapacity(Provider *provider, Service *service, Bid * bid, Purchase * purchasePtr, bool purchaseFound, Message & messageResponse)
 {
 
 	Poco::Util::Application& app = Poco::Util::Application::instance();
@@ -797,7 +797,7 @@ void MarketPlaceSys::addPurchaseBulkCapacity(Provider *provider, Service *servic
 	if (provider->isBulkAvailable(_period, service, purchasePtr, bid))
 	{
 		// In any case inserts the purchase into the service container.
-		(*_current_purchases).addPurchaseToService(purchasePtr);
+		(*_current_purchases).addPurchaseToService(purchasePtr, purchaseFound);
 		
 		// std::cout << "Purchase inserted in the market place" << std::endl;
 		_purchases.insert(std::pair<std::string, Purchase *>((*purchasePtr).getId(), purchasePtr) );
@@ -806,19 +806,16 @@ void MarketPlaceSys::addPurchaseBulkCapacity(Provider *provider, Service *servic
 		provider->deductAvailability(_period, service, purchasePtr, bid);
 		
 		// Establishes the quantity purchased as a feedback to the agent.
-
-		std::cout << "quantity purchased - P:" << bid->getProvider() << ",Q:" + purchasePtr->getQuantityStr() << "purchase Id:" << purchasePtr->getId() <<  std::endl;
 		messageResponse.setParameter("Quantity_Purchased", purchasePtr->getQuantityStr());
 	}
 	else
 	{
-		// std::cout << "Bid:" << bid->getId() << "is not available" << std::endl;
 		messageResponse.setParameter("Quantity_Purchased", "0");
 	}
 
 }
 
-void MarketPlaceSys::addPurchaseByBidCapacity(Provider *provider, Service *service, Bid * bid, Purchase * purchasePtr, Message & messageResponse)
+void MarketPlaceSys::addPurchaseByBidCapacity(Provider *provider, Service *service, Bid * bid, Purchase * purchasePtr, bool purchaseFound,  Message & messageResponse)
 {
 
 	Poco::Util::Application& app = Poco::Util::Application::instance();
@@ -827,9 +824,8 @@ void MarketPlaceSys::addPurchaseByBidCapacity(Provider *provider, Service *servi
 	if (bid->getCapacity() >= purchasePtr->getQuantity())
 	{
 		// In any case inserts the purchase into the service container.
-		(*_current_purchases).addPurchaseToService(purchasePtr);
+		(*_current_purchases).addPurchaseToService(purchasePtr, purchaseFound);
 
-		// std::cout << "Purchase inserted in the market place" << std::endl;
 		_purchases.insert(std::pair<std::string, Purchase *>((*purchasePtr).getId(), purchasePtr) );
 
 		bid->setCapacity(bid->getCapacity() - purchasePtr->getQuantity());
@@ -839,13 +835,15 @@ void MarketPlaceSys::addPurchaseByBidCapacity(Provider *provider, Service *servi
 	} else {
 		
 		// It establish the backlog for that bid.
-		purchasePtr->setQuantityBacklog(purchasePtr->getQuantity() - bid->getCapacity());
+		if (purchaseFound == false) {
+			purchasePtr->setQuantityBacklog(purchasePtr->getQuantity() - bid->getCapacity());
+		}
 		
 		// It buys the quantity available.
 		purchasePtr->setQuantity(bid->getCapacity());
 
 		// In any case inserts the purchase into the service container.
-		(*_current_purchases).addPurchaseToService(purchasePtr);
+		(*_current_purchases).addPurchaseToService(purchasePtr, purchaseFound);
 
 		// std::cout << "Purchase inserted in the market place" << std::endl;
 		_purchases.insert(std::pair<std::string, Purchase *>((*purchasePtr).getId(), purchasePtr) );
@@ -860,8 +858,22 @@ void MarketPlaceSys::addPurchase(Purchase * purchasePtr, Message & messageRespon
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().information("add Purchase");
+	
 
 	try {
+
+		// Search if the purchased has already sent for another bid.
+		bool purchaseFound = false;
+		
+		std::map<std::string, int >::iterator it;
+		it = request_purchases.find(purchasePtr->getId()); 
+		if ( it !=  request_purchases.end()){
+			it->second = it->second + 1;
+			purchaseFound = true;
+		} else {
+			request_purchases.insert(std::pair<std::string,int>(purchasePtr->getId(),1));
+		}
+
 		Bid * bid = getBid(purchasePtr->getBid());
 		bool isActive = (*_current_bids).isBidActive(bid->getService(), bid->getProvider(), bid->getId());
 
@@ -871,9 +883,9 @@ void MarketPlaceSys::addPurchase(Purchase * purchasePtr, Message & messageRespon
 			Provider * provider = getProvider(bid->getProvider());
 			
 			if (provider->getCapacityType() == BULK_CAPACITY)
-				addPurchaseBulkCapacity(provider, service, bid, purchasePtr, messageResponse);
+				addPurchaseBulkCapacity(provider, service, bid, purchasePtr, purchaseFound, messageResponse);
 			else
-				addPurchaseByBidCapacity(provider, service, bid, purchasePtr, messageResponse);
+				addPurchaseByBidCapacity(provider, service, bid, purchasePtr, purchaseFound, messageResponse);
 				
 			// set the response as Ok
 			messageResponse.setResponseOk();

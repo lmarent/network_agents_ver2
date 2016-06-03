@@ -107,9 +107,9 @@ public:
        
     Bid * getBid(std::string bidId);
 	
-	void addPurchaseBulkCapacity(Provider *provider, Service *service, Bid * bid, Purchase * purchasePtr, Message & messageResponse);
+	void addPurchaseBulkCapacity(Provider *provider, Service *service, Bid * bid, Purchase * purchasePtr, bool purchaseFound, Message & messageResponse);
 	
-	void addPurchaseByBidCapacity(Provider *provider, Service *service, Bid * bid, Purchase * purchasePtr, Message & messageResponse);
+	void addPurchaseByBidCapacity(Provider *provider, Service *service, Bid * bid, Purchase * purchasePtr, bool purchaseFound, Message & messageResponse);
 	
 	// Specificates if the information should be transmited to the provider.
 	bool sendInformation(unsigned interval);
@@ -148,6 +148,12 @@ private:
     PurchaseInformation *_current_purchases;
     
     typedef std::map<std::string, Purchase *> PurchaseContainer;
+
+	// This map contains all purchases requested by users, 
+	// with the number of trials to purchase. Every time that a new purchase arrive 
+	// the system look for its id in this map, if already exists an entry,
+	// the system updates the number of request. Otherwise creates a new entry.
+	std::map<std::string, int> request_purchases;
     
     PurchaseContainer _purchases;
     

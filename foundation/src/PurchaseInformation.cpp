@@ -52,7 +52,7 @@ void PurchaseInformation::addService(std::string serviceId)
 	
 }
 	
-void PurchaseInformation::addPurchaseToService(Purchase * purchasePtr)
+void PurchaseInformation::addPurchaseToService(Purchase * purchasePtr, bool purchaseFound)
 {
 
 	Poco::Util::Application& app = Poco::Util::Application::instance();
@@ -76,7 +76,7 @@ void PurchaseInformation::addPurchaseToService(Purchase * purchasePtr)
 	it = _service_information.find(serviceId);
 	PurchaseServiceInformation *ptr;
 	ptr = it->second;
-	(*ptr).addPurchase(purchasePtr);
+	(*ptr).addPurchase(purchasePtr, purchaseFound);
 
 	app.logger().debug("Ending addPurchaseToService");
 

@@ -40,7 +40,8 @@ public:
     PurchaseServiceInformation();
     ~PurchaseServiceInformation();
 
-	void addPurchase(Purchase *purchasePtr);
+	void addPurchase(Purchase *purchasePtr, bool purchaseFound);
+
 	void getPurchases(Poco::XML::AutoPtr<Poco::XML::Document> pDoc, 
 					  Poco::XML::AutoPtr<Poco::XML::Element> pParent, 
 					  std::map<std::string, std::vector<std::string> > & bids);

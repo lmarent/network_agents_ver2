@@ -811,6 +811,7 @@ void MarketPlaceSys::addPurchaseBulkCapacity(Provider *provider, Service *servic
 	else
 	{
 		// Set the quantity to purchase equal to zero as it is not going to purchase anything.
+		purchasePtr->setQuantityBacklog(purchasePtr->getQuantity());
 		purchasePtr->setQuantity(0);
 		
 		// In any case inserts the purchase into the service container.

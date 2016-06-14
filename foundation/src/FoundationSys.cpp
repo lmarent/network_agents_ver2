@@ -70,6 +70,16 @@ FoundationSys::~FoundationSys(void)
 		_probability_distributions.erase(it_probabilities);
 		++it_probabilities;
 	}
+
+	app.logger().debug("Eliminating Cost Functions registered");
+	CostFunctionContainer::iterator it_cost_functions;
+	it_cost_functions = _cost_functions.begin();
+	while( (it_cost_functions != _cost_functions.end())  )
+	{
+		delete it_cost_functions->second;
+		_cost_functions.erase(it_cost_functions);
+		++it_cost_functions;
+	}
 		
 	app.logger().debug("Disconnecting from the database");
 	if (_pool != NULL)
@@ -104,6 +114,7 @@ void FoundationSys::initialize(Poco::Util::Application &app, int bid_periods, in
 		std::cout << "connectionStr:" << connectionStr << std::endl;
 		app.logger().information("Connecting with the database");
 		_pool = new Poco::Data::SessionPool("MySQL", connectionStr);
+		
 	} catch (Poco::NotFoundException &e) {
     	throw FoundationException("Foundation information not found");
 	} catch (Poco::InvalidArgumentException &e) {
@@ -126,6 +137,9 @@ void FoundationSys::initialize(Poco::Util::Application &app, int bid_periods, in
 
 	app.logger().debug("Read the probability distributions");
 	readProbabilityDistributionsFromDataBase();
+
+	app.logger().debug("Read the cost functions");
+	readCostFunctionsFromDataBase();
 
 	app.logger().debug("Read the decision variables");
 	readDecisionVariablesFromDataBase();
@@ -265,6 +279,68 @@ void FoundationSys::readProbabilityDistributionsFromDataBase(void)
     }
 }
 
+
+void FoundationSys::readContinuousCostFunctionsFromDataBase(int costFunctionId, CostFunction * cost_function)
+{
+	// Obtain a session from the pool
+	Poco::Data::Session session(_pool->get());
+		
+	std::string parameter;
+	double value;
+	Poco::Data::Statement select(session);
+	select << "SELECT parameter, value FROM simulation_continuouscostfunction where costfunction_id = ?",
+			into(parameter),
+			into(value),
+			use(costFunctionId),
+			range(0, 1); //  iterate over result set one row at a time
+	
+	while (!select.done())
+    {
+        select.execute();
+        cost_function->addParameter(parameter, value);
+    }	
+
+}
+
+
+void FoundationSys::readCostFunctionsFromDataBase(void)
+{
+	 // Obtain a session from the pool
+	Poco::Data::Session session(_pool->get());
+	
+	int id;
+	std::string name;
+	std::string rangeStr;
+	std::string class_name;
+	
+	Poco::Data::Statement select(session);
+	select << "SELECT id, name, range_function, class_name FROM simulation_costfunction",
+			into(id),
+			into(name),
+			into(rangeStr),
+			into(class_name),
+			range(0, 1); //  iterate over result set one row at a time
+	
+	while (!select.done())
+    {
+        select.execute();
+        Range range;
+        if (rangeStr.compare("C") == 0)
+			range = RANGE_CONTINUOUS;
+		else
+			range = RANGE_DISCRETE;
+		
+		std::string cstFunctionId;
+		Poco::NumberFormatter::append(cstFunctionId, id);
+		CostFunction * cstFunction = new CostFunction(cstFunctionId, class_name, range);
+		if (range == RANGE_CONTINUOUS)
+		{
+			readContinuousCostFunctionsFromDataBase(id, cstFunction);
+		}
+		insertCostFunction(cstFunction);
+    }
+}
+
 void FoundationSys::readResourcesFromDataBase(void)
 {
 
@@ -305,9 +381,10 @@ void FoundationSys::readDecisionVariablesFromDataBase(void)
 	std::string modelingStr;
 	int sensDistribId;
 	int valDistribId;
+	int cstFunctionId;
 	
 	Poco::Data::Statement select(session);
-	select << "SELECT id, name, optimization, min_value, max_value, resource_id, modeling, sensitivity_distribution_id, value_distribution_id FROM simulation_decisionvariable",
+	select << "SELECT id, name, optimization, min_value, max_value, resource_id, modeling, sensitivity_distribution_id, value_distribution_id, cost_function_id FROM simulation_decisionvariable",
 			into(id),
 			into(name),
 			into(optimizationStr),
@@ -317,6 +394,7 @@ void FoundationSys::readDecisionVariablesFromDataBase(void)
 			into(modelingStr),
 			into(sensDistribId),
 			into(valDistribId),
+			into(cstFunctionId),
 			range(0, 1); //  iterate over result set one row at a time
 	
 	while (!select.done())
@@ -334,11 +412,13 @@ void FoundationSys::readDecisionVariablesFromDataBase(void)
 		else
 			modeling = MODEL_PRICE;
 		
-		std::string decId, resourceId, sensitivityDistrId,valueDistrId;
+		std::string decId, resourceId, sensitivityDistrId,valueDistrId, costFunctionId;
 		Poco::NumberFormatter::append(decId, id);
 		Poco::NumberFormatter::append(resourceId, resId);
 		Poco::NumberFormatter::append(sensitivityDistrId, sensDistribId);
 		Poco::NumberFormatter::append(valueDistrId, valDistribId);	
+		Poco::NumberFormatter::append(costFunctionId, cstFunctionId);	
+		
 		DecisionVariable * decisionVar = new DecisionVariable(decId);
 		decisionVar->setName(name);
 		decisionVar->setModelling(modeling);
@@ -347,6 +427,9 @@ void FoundationSys::readDecisionVariablesFromDataBase(void)
 		decisionVar->setResource(resourceId);
 		decisionVar->setProbabilityDistribution( SENSITIVITY, getProbabilityDistribution(sensitivityDistrId));
 		decisionVar->setProbabilityDistribution( VALUE, getProbabilityDistribution(valueDistrId));
+		if (cstFunctionId > 0) 
+			decisionVar->setCostFunction(getCostFunction(costFunctionId));
+		
 		insertDecisionVariable(decisionVar);
     }
 }
@@ -448,6 +531,20 @@ void FoundationSys::insertProbabilityDistribution(ProbabilityDistribution * prob
 	}
 }
 
+void FoundationSys::insertCostFunction(CostFunction * cost_function)
+{
+	CostFunctionContainer::iterator it;
+	it = _cost_functions.find(cost_function->getId());
+	
+	if(it == _cost_functions.end()) {
+		_cost_functions.insert ( std::pair<std::string, CostFunction *> (cost_function->getId(),cost_function) );
+	}
+	else
+	{
+		throw FoundationException("Cost Function is already included in the container", 325);
+	}
+}
+
 void FoundationSys::insertDecisionVariable(DecisionVariable *quality_parameter)
 {
 	DecisionVariableContainer::iterator it;
@@ -477,6 +574,21 @@ void FoundationSys::insertService(Service *service_parameter)
 	}
 }
 
+CostFunction * FoundationSys::getCostFunction(std::string id)
+{
+	CostFunctionContainer::iterator it;
+	it = _cost_functions.find(id);
+	if(it != _cost_functions.end()) 
+	{
+		return it->second;
+	}
+	else
+	{
+		throw FoundationException("The Cost function:" + id + " is not part of the container",326);
+	}
+}
+
+
 ProbabilityDistribution * FoundationSys::getProbabilityDistribution(std::string id)
 {
 	ProbabilityDistributionContainer::iterator it;
@@ -490,6 +602,7 @@ ProbabilityDistribution * FoundationSys::getProbabilityDistribution(std::string 
 		throw FoundationException("The probability distribution is not part of the container",324);
 	}
 }
+
 
 int FoundationSys::getBidPeriods()
 {

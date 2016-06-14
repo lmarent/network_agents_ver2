@@ -19,6 +19,7 @@ pkginclude_HEADERS = $(INC_DIR)/Bid.h \
 					 $(INC_DIR)/ParetoAlgo.h \
 					 $(INC_DIR)/PointSetDemandForecaster.h \
 					 $(INC_DIR)/ProbabilityDistribution.h \
+					 $(INC_DIR)/CostFunction.h \
 					 $(INC_DIR)/Provider.h \
 					 $(INC_DIR)/Purchase.h \
 					 $(INC_DIR)/PurchaseInformation.h \
@@ -53,6 +54,7 @@ libnetagentsfdtion_la_SOURCES =  Bid.cpp \
 								 NondominatedsortAlgo.cpp \
 								 PointSetDemandForecaster.cpp \
 								 ProbabilityDistribution.cpp \
+								 CostFunction.cpp \
 								 Provider.cpp \
 								 Purchase.cpp \
 								 PurchaseInformation.cpp \

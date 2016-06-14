@@ -12,12 +12,14 @@ namespace Eco
 DecisionVariable::DecisionVariable(std::string id):
 _id(id),
 _opt_objetive(OO_UNDEFINED),
-_is_modeling(MODEL_UNDEFINED)
+_is_modeling(MODEL_UNDEFINED),
+_cost_function(NULL)
 {
 }
     
 DecisionVariable::~DecisionVariable()
 {
+		
 }
 
 std::string DecisionVariable::getId()
@@ -50,6 +52,19 @@ void DecisionVariable::setProbabilityDistribution( Purpose purpose,
 	}
 	
 }	
+
+void DecisionVariable::setCostFunction(CostFunction * cost_function)
+{
+	
+	if(_cost_function == NULL) {
+		_cost_function = cost_function;
+	}
+	else {
+		throw FoundationException("The Cost Function has been already assigned");
+	}
+	
+}	
+
     
 void DecisionVariable::setObjetive(OptimizationObjective objetive)
 {
@@ -68,6 +83,11 @@ ProbabilityDistribution * DecisionVariable::getProbabilityDistribution(Purpose p
 		throw FoundationException("The probability distribution for the given purpose is not part of the Quality Parameter");
 	}
 	
+}
+
+CostFunction * DecisionVariable::getCostFunction()
+{
+	return _cost_function;
 }
 
 void DecisionVariable::setModelling(Modeling modeling)
@@ -245,6 +265,21 @@ void DecisionVariable::to_XML(Poco::XML::AutoPtr<Poco::XML::Document> pDoc,
 		(it->second)->to_XML(pDoc,pProbDist);
 	    proot->appendChild(pProbDist);
 	}  
+	
+	// Add the cost function.
+	if (_cost_function != NULL){
+		Poco::XML::AutoPtr<Poco::XML::Element> cFunc = pDoc->createElement("Cst_Function");
+
+		// Define the class Name
+		Poco::XML::AutoPtr<Poco::XML::Element> cClassName = 
+							pDoc->createElement("Class_Name");
+		Poco::XML::AutoPtr<Poco::XML::Text> pText7 = pDoc->createTextNode((_cost_function)->getClassName());
+		cClassName->appendChild(pText7);		
+		cFunc->appendChild(cClassName);
+		(_cost_function)->to_XML(pDoc, cFunc);
+		proot->appendChild(cFunc);
+	}
+	
 	pParent->appendChild(proot);
 }
 

@@ -8,6 +8,7 @@
 #include <Poco/DOM/AutoPtr.h>
 
 #include "ProbabilityDistribution.h"
+#include "CostFunction.h"
 
 
 namespace ChoiceNet
@@ -88,6 +89,10 @@ public:
     void setProbabilityDistribution(Purpose  purpose, ProbabilityDistribution * probability_distribution);
     
     ProbabilityDistribution * getProbabilityDistribution(Purpose purpose);
+
+	void setCostFunction(CostFunction *cost_function);
+	
+	CostFunction * getCostFunction();
     
     void to_XML(Poco::XML::AutoPtr<Poco::XML::Document> pDoc,
 					Poco::XML::AutoPtr<Poco::XML::Element> pParent);
@@ -110,6 +115,9 @@ private:
 	
 	Modeling _is_modeling;
 	std::map< std::string, ProbabilityDistribution *> _probability_distributions;
+	
+	/// The cost function is owned by this object, so at the destroy method it delete it.
+	CostFunction *_cost_function;
 };
 
 }  /// End Eco namespace

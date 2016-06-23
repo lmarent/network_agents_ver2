@@ -297,7 +297,10 @@ void FoundationSys::readContinuousCostFunctionsFromDataBase(int costFunctionId, 
 	while (!select.done())
     {
         select.execute();
-        cost_function->addParameter(parameter, value);
+        // Only add the parameter if not empty.
+        if (!parameter.empty()){
+			cost_function->addParameter(parameter, value);
+		}
     }	
 
 }

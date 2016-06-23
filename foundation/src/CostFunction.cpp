@@ -84,7 +84,7 @@ void CostFunction::to_XML(Poco::XML::AutoPtr<Poco::XML::Document> pDoc,
 
 	Poco::XML::AutoPtr<Poco::XML::Element> pId = 
 							pDoc->createElement("Name");
-	Poco::XML::AutoPtr<Poco::XML::Text> pText1 = pDoc->createTextNode(getId());
+	Poco::XML::AutoPtr<Poco::XML::Text> pText1 = pDoc->createTextNode(getClassName());
 	pId->appendChild(pText1);		
 	proot->appendChild(pId);
 

@@ -279,6 +279,10 @@ void DecisionVariable::to_XML(Poco::XML::AutoPtr<Poco::XML::Document> pDoc,
 		(_cost_function)->to_XML(pDoc, cFunc);
 		proot->appendChild(cFunc);
 	}
+	else {
+		Poco::XML::AutoPtr<Poco::XML::Element> cFunc = pDoc->createElement("Cst_Function");
+		proot->appendChild(cFunc);	
+	}
 	
 	pParent->appendChild(proot);
 }

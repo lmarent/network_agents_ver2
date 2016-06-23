@@ -340,7 +340,7 @@ void Bid::toDatabase(Poco::Data::SessionPool * _pool, int execute_count, int per
 					   getCreationPeriod() };
 
 	Poco::Data::Statement insert(session);
-	insert << "insert into simulation_bid (period, bidId, providerId, status, paretoStatus, dominatedCount, execution_count, unitary_profit, unitary_cost, parentBidId, capacity, creation_period) values (?,?,?,?,?,?,?,?,?,?,?,?)",
+	insert << "insert into simulation_bid (period, bidId, providerId, status, paretoStatus, dominatedCount, execution_count, unitary_profit, unitary_cost, parentBidId, capacity, init_capacity, creation_period) values (?,?,?,?,?,?,?,?,?,?,?,?,?)",
 				use(BidS._period),
 				use(BidS._id),
 				use(BidS._provider),
@@ -351,6 +351,7 @@ void Bid::toDatabase(Poco::Data::SessionPool * _pool, int execute_count, int per
 				use(BidS._unitary_profit),
 				use(BidS._unitary_cost),
 				use(BidS._parent_bid_id),
+				use(BidS._capacity),
 				use(BidS._capacity),
 				use(BidS._creation_period);
 

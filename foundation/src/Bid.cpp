@@ -41,6 +41,7 @@ _unitary_profit(0),
 _unitary_cost(0),
 _parent_bid_id(),
 _capacity(0),
+_init_capacity(0),
 _creation_period(0)
 {
 	// Initializes all dimensions for decision variables in 0.
@@ -77,6 +78,7 @@ Datapoint()
 	    setUnitaryCost(unitaryCost);
 	    setParentBidId(parentBidId);
 	    setCapacity(capacity);
+	    setInitCapacity(capacity);
 	    setCreationPeriod(period);
 	    
 		std::map<std::string, DecisionVariable *>::iterator it; 
@@ -336,7 +338,7 @@ void Bid::toDatabase(Poco::Data::SessionPool * _pool, int execute_count, int per
 					   getUnitaryProfit(),
 					   getUnitaryCost(),
 					   getParentBidId(), 
-					   getCapacity(),
+					   getInitCapacity(),
 					   getCreationPeriod() };
 
 	Poco::Data::Statement insert(session);
@@ -352,7 +354,7 @@ void Bid::toDatabase(Poco::Data::SessionPool * _pool, int execute_count, int per
 				use(BidS._unitary_cost),
 				use(BidS._parent_bid_id),
 				use(BidS._capacity),
-				use(BidS._capacity),
+				use(BidS._init_capacity),
 				use(BidS._creation_period);
 
 	insert.execute();
@@ -450,10 +452,27 @@ void Bid::setCapacity(double capacity)
 	_capacity = capacity;
 }
 
+void Bid::setInitCapacity(std::string capacity)
+{
+	_init_capacity = Poco::NumberParser::parseFloat(capacity);
+}
+
+
+void Bid::setInitCapacity(double capacity)
+{
+	_init_capacity = capacity;
+}
+
 double Bid::getCapacity(void)
 {
 	return _capacity;
 }
+
+double Bid::getInitCapacity(void)
+{
+	return _init_capacity;
+}
+
 
 int Bid::getCreationPeriod(void)
 {

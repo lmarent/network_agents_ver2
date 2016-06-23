@@ -33,6 +33,7 @@ struct BidStruct
     double      _unitary_cost;
     std::string _parent_bid_id;
     double 		_capacity;
+    double		_init_capacity;
     int 		_creation_period;
 };
 
@@ -85,6 +86,12 @@ public:
 	/// Sets the capacity from double
 	void setCapacity(double capacity);
 
+	/// Sets the initial capacity from string
+	void setInitCapacity(std::string capacity);
+
+	/// Sets the init capacity from double
+	void setInitCapacity(double capacity);
+
 	/// Gets the unitary cost of the bid
 	double getUnitaryProfit(void);
 
@@ -96,6 +103,8 @@ public:
 	
 	/// Gets capacity
 	double getCapacity(void);
+	
+	double getInitCapacity(void);
 	
 	/// Sets a decision variable associated with the bid.
 	void setDecisionVariable(std::string decisionVariableId, size_t dimension, double value, OptimizationObjective &objetive);
@@ -148,6 +157,7 @@ private:
     double    	_unitary_profit;
     std::string _parent_bid_id;
     double 		_capacity;
+    double 		_init_capacity;
    
     int 		_creation_period;
     

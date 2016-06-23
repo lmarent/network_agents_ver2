@@ -338,6 +338,7 @@ void Bid::toDatabase(Poco::Data::SessionPool * _pool, int execute_count, int per
 					   getUnitaryProfit(),
 					   getUnitaryCost(),
 					   getParentBidId(), 
+					   getCapacity(),
 					   getInitCapacity(),
 					   getCreationPeriod() };
 

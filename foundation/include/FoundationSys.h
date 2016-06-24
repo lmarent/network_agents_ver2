@@ -72,6 +72,11 @@ public:
 
     int getExecutionCount();
 
+    string getConfigGroup() {
+        return "FoundationSys";
+    }
+
+
 protected:
 	
     int _bid_periods;
@@ -94,6 +99,11 @@ protected:
     std::vector<std::string> _services_to_execute;
 
 	Poco::Data::SessionPool * _pool;
+
+    //! associated module loader 
+    //! these are the algorithms to create bids for the user.
+    ModuleLoader *loader;
+
 	
 };
 

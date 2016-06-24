@@ -138,8 +138,15 @@ void FoundationSys::initialize(Poco::Util::Application &app, int bid_periods, in
 	app.logger().debug("Read the probability distributions");
 	readProbabilityDistributionsFromDataBase();
 
+	std::string moduleDir = (std::string)
+					app.config().getString("module_dir","/usr/local/lib/choicenet/cost");
+
+    loader = new ModuleLoader( moduleDir.c_str() /*module (lib) basedir*/,
+                               getConfigGroup() /* Configuration group */);
+
 	app.logger().debug("Read the cost functions");
 	readCostFunctionsFromDataBase();
+
 
 	app.logger().debug("Read the decision variables");
 	readDecisionVariablesFromDataBase();

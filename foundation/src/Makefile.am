@@ -4,7 +4,14 @@ lib_LTLIBRARIES = libnetagentsfdtion.la
 
 INC_DIR 	= $(top_srcdir)/include
 
-pkginclude_HEADERS = $(INC_DIR)/Bid.h \
+pkginclude_HEADERS = $(INC_DIR)/ProcError.h \
+				     $(INC_DIR)/stdinc.h \
+				     $(INC_DIR)/stdincpp.h \
+				     $(INC_DIR)/Module.h \
+				     $(INC_DIR)/CostModuleInterface.h \
+				     $(INC_DIR)/CostModule.h \
+				     $(INC_DIR)/ModuleLoader.h \
+					 $(INC_DIR)/Bid.h \
 					 $(INC_DIR)/BidInformation.h  \
 					 $(INC_DIR)/BidProviderInformation.h \
 					 $(INC_DIR)/BidServiceInformation.h \
@@ -40,7 +47,10 @@ endif
 libnetagentsfdtion_la_CPPFLAGS = -I$(top_srcdir) \
 							   -I$(top_srcdir)/include
 
-libnetagentsfdtion_la_SOURCES =  Bid.cpp \
+libnetagentsfdtion_la_SOURCES =  Module.cpp \
+								 CostModule.cpp \
+								 ModuleLoader.cpp \
+								 Bid.cpp \
 								 BidInformation.cpp \
 								 BidProviderInformation.cpp \
 								 BidServiceInformation.cpp \

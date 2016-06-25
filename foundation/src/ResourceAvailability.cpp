@@ -18,7 +18,6 @@ _resource(NULL)
 ResourceAvailability::~ResourceAvailability()
 {
 	_resource = NULL;
-	std::cout << "deting reference to resource"<< std::endl;
 }
 
 std::string ResourceAvailability::getId()
@@ -56,14 +55,23 @@ double ResourceAvailability::deductAvailability(unsigned period,
 											    double quantity)
 {
 
+#ifndef TEST_ENABLED
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().debug("Entering deductAvailability");
+#endif	
 	
 	
 	if ( _resource != NULL )
 	{
+		double rateAdj = 0;
 		double rate =_resource->getConsumption(variable,level);
-		double quantityRequired = quantity * rate;
+		CostFunction *cost_function = variable->getCostFunction();
+		if (cost_function != NULL)
+			rateAdj = cost_function->getEvaluation(rate);
+		else
+			rateAdj = rate;
+				
+		double quantityRequired = quantity * rateAdj;
 		std::map<unsigned, double>::iterator it;
 		it = _time_availability.find(period);
 		if (it == _time_availability.end()){
@@ -72,7 +80,9 @@ double ResourceAvailability::deductAvailability(unsigned period,
 		it = _time_availability.find(period);			
 		it->second -= quantityRequired;
 
+#ifndef TEST_ENABLED
 		app.logger().debug(Poco::format("Ending deductAvailability - final availability: %f", it->second) );
+#endif	
 
 	}
 }
@@ -83,15 +93,30 @@ bool ResourceAvailability::checkAvailability(unsigned period,
 											 double quantity)
 {
 	bool val_return;
+
+#ifndef TEST_ENABLED
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().debug("Entering ResourceAvailability - checkAvailability");
-	
+#endif
+		
 	if ( _resource != NULL )
 	{
+		
+		double rateAdj = 0;
 		double rate =_resource->getConsumption(variable,level);
-		double quantityRequired = quantity * rate;
+		CostFunction *cost_function = variable->getCostFunction();
+		if (cost_function != NULL)
+			rateAdj = cost_function->getEvaluation(rate);
+		else
+			rateAdj = rate;
+		
+		double quantityRequired = quantity * rateAdj;
 		double available = getAvailability(period);
+
+#ifndef TEST_ENABLED	
 		app.logger().debug(Poco::format("checkAvailability period:%d qtyAvailable:%f qtyRequired:%f", period, available, quantityRequired));
+#endif
+		
 		if (available >= quantityRequired) 
 		{   
 			val_return = true;
@@ -103,10 +128,17 @@ bool ResourceAvailability::checkAvailability(unsigned period,
 	}
 	else 
 	{   
+#ifndef TEST_ENABLED	
 		app.logger().debug("checkAvailability - undefined resource");
+#endif
+		
 		val_return = false;
 	}
+
+#ifndef TEST_ENABLED		
 	app.logger().debug("Ending ResourceAvailability - checkAvailability" + val_return);
+#endif
+	
 	return val_return;
 }
 

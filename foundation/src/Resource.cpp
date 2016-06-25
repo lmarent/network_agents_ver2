@@ -39,10 +39,12 @@ void Resource::setName(std::string name)
 double Resource::getConsumption(DecisionVariable *qualityParameter, double value)
 {
 	
+#ifndef TEST_ENABLED	
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().debug("Entering Resource - get Consumption");
+#endif
 	
-	double percentage = 1; // 100% 
+	double percentage = 0;
 	double minValue = qualityParameter->getMinValue();
 	double maxValue = qualityParameter->getMaxValue();
 	
@@ -64,9 +66,12 @@ double Resource::getConsumption(DecisionVariable *qualityParameter, double value
             percentage = percentage + (maxValue - value) / maxValue;
 	}
 	
+#ifndef TEST_ENABLED
 	std::string percentageStr;
 	Poco::NumberFormatter::append(percentageStr, percentage);
 	app.logger().debug("Ending Resource - get Consumption" + percentageStr);
+#endif
+	
 	return percentage;
 }
 

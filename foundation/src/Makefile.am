@@ -50,6 +50,7 @@ libnetagentsfdtion_la_CPPFLAGS = -I$(top_srcdir) \
 libnetagentsfdtion_la_SOURCES =  Module.cpp \
 								 CostModule.cpp \
 								 ModuleLoader.cpp \
+								 ProcError.cpp \
 								 Bid.cpp \
 								 BidInformation.cpp \
 								 BidProviderInformation.cpp \

@@ -29,12 +29,15 @@
 #ifndef __COSTMODULEINTERFACE_H
 #define __COSTMODULEINTERFACE_H
 
-#include "stdinc.h"
+#include "stdincpp.h"
 
 namespace ChoiceNet
 {
 namespace Eco
 {
+
+typedef std::map<std::string, std::string> defParams_t;
+typedef std::map<std::string, std::string>::iterator defParamsIter_t;
 
 typedef std::map<std::string, double> configParam_t;
 typedef std::map<std::string, double>::iterator configParamIter_t;
@@ -76,7 +79,7 @@ double getEvaluation( double variable );
 /*! \short   get all parameters needed to evaluate the cost function.
 
 */
-configParam_t * getParameters( void );
+defParams_t * getParameters( void );
 
 
 /*! \short   get the name of the cost function.
@@ -87,7 +90,7 @@ std::string getName( void );
 /*! \short   set a parameter for the cost function.
 
 */
-std::string setParameter( std::string name, double value );
+void setParameter( std::string name, double value );
 
 
 /*! \short   dismantle the module
@@ -97,14 +100,6 @@ std::string setParameter( std::string name, double value );
     \returns 0 - on success, <0 - else
 */
 void destroy( configParam_t *params );
-
-
-/*! \short   return error message for last failed function
-
-    \arg \c    - error number (return value from failed function)
-    \returns 0 - textual description of error for logging purposes
-*/
-std::string getErrorMsg( int code );
 
 
 
@@ -126,7 +121,7 @@ typedef struct {
 
     double (*getEvaluation)( double variable );
     
-    configParam_t * (*getParameters)(void);
+    defParams_t * (*getParameters)(void);
 
 	std::string (*getName)(void);
 	
@@ -134,8 +129,6 @@ typedef struct {
 					 
     void (*destroy)( configParam_t *params );
     
-    std::string (*getErrorMsg)( int code );
-
 } CostModuleInterface_t;
 
 }  // namespace Eco 

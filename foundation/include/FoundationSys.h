@@ -12,6 +12,8 @@
 #include "ProbabilityDistribution.h"
 #include "CostFunction.h"
 #include "Resource.h"
+#include "ModuleLoader.h"
+
 
 
 namespace ChoiceNet
@@ -102,7 +104,7 @@ protected:
 
     //! associated module loader 
     //! these are the algorithms to create bids for the user.
-    ModuleLoader *loader;
+    ModuleLoader *_loader;
 
 	
 };

@@ -6,8 +6,10 @@
 #include <Poco/Exception.h>
 #include <Poco/Net/NetException.h>
 
+#include "config.h"
 #include "FoundationSys.h"
 #include "FoundationException.h"
+#include "ProcError.h"
 
 using namespace Poco::Data::Keywords;
 
@@ -21,7 +23,8 @@ _pool(NULL),
 _bid_periods(0),
 _pareto_fronts_to_exchange(0),
 _execution_count(0),
-_type(type)
+_type(type),
+_loader(NULL)
 {
 	Poco::Data::MySQL::Connector::registerConnector();
 }
@@ -86,6 +89,13 @@ FoundationSys::~FoundationSys(void)
 		delete _pool;
 		
 	Poco::Data::MySQL::Connector::unregisterConnector();
+
+	app.logger().debug("Eliminating modules");
+	if (_loader != NULL){
+		delete (_loader);
+	}	
+
+
 }
 
 void FoundationSys::initialize(Poco::Util::Application &app, int bid_periods, int pareto_fronts)
@@ -139,14 +149,13 @@ void FoundationSys::initialize(Poco::Util::Application &app, int bid_periods, in
 	readProbabilityDistributionsFromDataBase();
 
 	std::string moduleDir = (std::string)
-					app.config().getString("module_dir","/usr/local/lib/choicenet/cost");
+					app.config().getString("module_dir", DEF_LIBDIR);
 
-    loader = new ModuleLoader( moduleDir.c_str() /*module (lib) basedir*/,
+    _loader = new ModuleLoader( moduleDir.c_str() /*module (lib) basedir*/,
                                getConfigGroup() /* Configuration group */);
 
 	app.logger().debug("Read the cost functions");
 	readCostFunctionsFromDataBase();
-
 
 	app.logger().debug("Read the decision variables");
 	readDecisionVariablesFromDataBase();
@@ -291,27 +300,41 @@ void FoundationSys::readContinuousCostFunctionsFromDataBase(int costFunctionId, 
 {
 	// Obtain a session from the pool
 	Poco::Data::Session session(_pool->get());
+
+	try
+	{
+		// Load the class from modules.
+		Module *module = _loader->loadModule( cost_function->getClassName() , 0, NULL );
+		CostModule *costmod = dynamic_cast<CostModule*>(module);
 		
-	std::string parameter;
-	double value;
-	Poco::Data::Statement select(session);
-	select << "SELECT parameter, value FROM simulation_continuouscostfunction where costfunction_id = ?",
-			into(parameter),
-			into(value),
-			use(costFunctionId),
-			range(0, 1); //  iterate over result set one row at a time
+		if (costmod != NULL){
+
+			cost_function->setModule(costmod);
+			std::string parameter;
+			double value;
+			Poco::Data::Statement select(session);
+			select << "SELECT parameter, value FROM simulation_continuouscostfunction where costfunction_id = ?",
+					into(parameter),
+					into(value),
+					use(costFunctionId),
+					range(0, 1); //  iterate over result set one row at a time
 	
-	while (!select.done())
-    {
-        select.execute();
-        // Only add the parameter if not empty.
-        if (!parameter.empty()){
-			cost_function->addParameter(parameter, value);
+			while (!select.done())
+			{
+				select.execute();
+				// Only add the parameter if not empty.
+				if (!parameter.empty()){
+					cost_function->addParameter(parameter, value);
+				}
+			}
 		}
-    }	
+	    
+	} catch (ProcError &e){
+		throw FoundationException(e.getError());
+	}
+    
 
 }
-
 
 void FoundationSys::readCostFunctionsFromDataBase(void)
 {
@@ -342,7 +365,7 @@ void FoundationSys::readCostFunctionsFromDataBase(void)
 		
 		std::string cstFunctionId;
 		Poco::NumberFormatter::append(cstFunctionId, id);
-		CostFunction * cstFunction = new CostFunction(cstFunctionId, class_name, range);
+		CostFunction * cstFunction = new CostFunction(cstFunctionId, class_name, range, _loader);
 		if (range == RANGE_CONTINUOUS)
 		{
 			readContinuousCostFunctionsFromDataBase(id, cstFunction);

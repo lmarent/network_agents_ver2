@@ -8,6 +8,8 @@
 #include <Poco/DOM/AutoPtr.h>
 
 #include "CostFunction.h"
+#include "CostModule.h"
+#include "ModuleLoader.h"
 
 
 namespace ChoiceNet
@@ -27,7 +29,7 @@ class CostFunction
 
 public:
 	
-	CostFunction(std::string id, std::string class_name, Range range);
+	CostFunction(std::string id, std::string class_name, Range range, ModuleLoader *loader);
 	
 	~CostFunction();
 	
@@ -39,16 +41,24 @@ public:
 	
 	std::string getRangeStr();
 	
+	void setModule(CostModule *function);
+	
+	CostModule * getModule(void);
+	
 	void addParameter(std::string name, double value);
 		
 	void to_XML(Poco::XML::AutoPtr<Poco::XML::Document> pDoc,
 					Poco::XML::AutoPtr<Poco::XML::Element> pParent);
+					
+	double getEvaluation(double variable);
 	
 private: 
 	std::string _id;
 	std::string _class_name;
 	Range _range;
 	std::map<std::string, double> _parameters;
+	ModuleLoader *_loader;
+	CostModule *_function;
 	
 };	
 

@@ -129,7 +129,7 @@ double Purchase::getDecisionVariable(std::string decisionVariableId)
 	}
 	else
 	{
-		throw FoundationException("The decision variable is not part of the bid");
+		throw FoundationException("The decision variable is not part of the purchase");
 	}
 }
 

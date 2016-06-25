@@ -116,7 +116,7 @@ private:
 	Modeling _is_modeling;
 	std::map< std::string, ProbabilityDistribution *> _probability_distributions;
 	
-	/// The cost function is owned by this object, so at the destroy method it delete it.
+	/// The cost function is not owned by this object, so at the destroy method nothing happen
 	CostFunction *_cost_function;
 };
 

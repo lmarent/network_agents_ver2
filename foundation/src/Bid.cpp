@@ -189,7 +189,7 @@ void Bid::setParentBidId(std::string parentBidId)
 	_parent_bid_id = parentBidId;
 }
 
-void Bid::setDecisionVariable(std::string decisionVariableId, size_t dimension, double value, OptimizationObjective &objetive)
+void Bid::setDecisionVariable(std::string decisionVariableId, size_t dimension, double value, OptimizationObjective objetive)
 {
 	std::map<std::string, size_t>::iterator it;
 	it = _decision_variables.find(decisionVariableId);

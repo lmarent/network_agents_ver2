@@ -47,7 +47,11 @@ public:
 	bool isBulkAvailable(unsigned period, Service * service, Purchase * purchase, Bid * bid);
 	/// Determines whether a provider is availability for a purchase.
 	
+	double getResourceAvailability(unsigned period, std::string resourceId);
+	
 	ProviderCapacityType getCapacityType(void);
+
+	std::string getId();
 
 protected:
 

@@ -5,7 +5,7 @@ AC_PREREQ([2.69])
 AC_INIT([ChoicenetCost],[0.1],[la.marentes455@uniandes.edu.co])
 AM_INIT_AUTOMAKE([subdir-objects])
 LT_INIT
-AC_CONFIG_SRCDIR([/src/TwoAuctionMechanism.cpp])
+AC_CONFIG_SRCDIR([/src/NonApplicableCost.cpp])
 
 
 ## ------------------------Begin instantiation part 
@@ -111,8 +111,6 @@ dnl # check size
 
 AC_CHECK_SIZEOF(off_t)
 
-AC_CHECK_LIB([cppunit], [main])
-
 # Checks for header files.
 AC_HEADER_DIRENT
 AC_HEADER_STDC
@@ -123,9 +121,33 @@ AC_CHECK_HEADERS([stdlib.h string.h sys/socket.h sys/time.h termios.h unistd.h f
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
 
-# Checks for library functions.
-AC_CHECK_FUNCS([alarm bzero floor getaddrinfo inet_ntoa gettimeofday memmove memset select socket strdup strchr strerror strstr atoll strtof getopt_long])
+AC_CHECK_LIB([cppunit], [main])
 
+
+# check for Poco Foundation library
+# Checks for libraries.
+AC_LANG(C++)
+SAVED_LDFLAGS=$LDFLAGS
+SAVED_CPPFLAGS=$CPPFLAGS
+SAVED_LIBS=$LIBS
+CPPFLAGS="$CPPFLAGS -I/usr/local/include/Poco"
+LDFLAGS="$LDFLAGS -L/usr/local/lib/"
+LIBS="$LIBS -lPocoFoundation -lPocoUtil -lPocoNet -lPocoXML -lPocoData -lPocoDataMySQL"
+AC_LINK_IFELSE(
+    [AC_LANG_PROGRAM([#include <DateTime.h>],
+    [Poco::DateTime now])],
+    [poco_LIBS="-lPocoFoundation -lPocoUtil -lPocoNet -lPocoXML -lPocoData -lPocoDataMySQL"] 
+    [poco_CFLAGS="-DHAVE_PCAP -I/usr/local/include/Poco"] 
+    [poco_LDFLAGS]="-L/usr/local/lib/"]
+    [HAVE_POCO=1],
+    [AC_MSG_WARN([libPoco is not installed.])])
+CPPFLAGS=$SAVED_CPPFLAGS 
+LDFLAGS=$SAVED_LDFLAGS
+LIBS= $SAVED_LIBS
+
+AC_SUBST(poco_CFLAGS)
+AC_SUBST(poco_LIBS)
+AC_SUBST(poco_LDFLAGS)
 
 PKG_CHECK_MODULES([LIBNETAGENTSFDTION], [libnetagentsfdtion-0.0])
 AC_SUBST([LIBNETAGENTSFDTION_CFLAGS])
@@ -158,7 +180,7 @@ AC_DEFINE_UNQUOTED(DEF_SYSCONFDIR, "$DEF_SYSCONFDIR", "sysconfig dir")
 DEF_STATEDIR=`eval echo ${localstatedir}`
 AC_DEFINE_UNQUOTED(DEF_STATEDIR, "$DEF_STATEDIR", "state dir")
 
-libdir="${libdir}/auctionmanager"
+libdir="${libdir}/choicenet"
 if test "${exec_prefix}" = "NONE" ; then
   exec_prefix=${prefix}
 fi

@@ -7,22 +7,30 @@
 
 #include "CostFunction.h"
 #include "FoundationException.h"
+#include "ProcError.h"
+
 
 namespace ChoiceNet
 {
 namespace Eco
 {
 
-CostFunction::CostFunction(std::string id, std::string class_name, Range range):
+CostFunction::CostFunction(std::string id, std::string class_name, Range range, ModuleLoader *loader):
 _id(id),
 _class_name(class_name),
-_range(range)
+_range(range),
+_loader(loader),
+_function(NULL)
 {
-
+   // TODO implement MULTI THREAD 
 }
 	
 CostFunction::~CostFunction()
 {
+
+    if (_loader != NULL)
+		// release modules loaded for this rule
+		_loader->releaseModule(getModule());
 	
 }
 
@@ -61,6 +69,16 @@ std::string CostFunction::getRangeStr()
 	return result;
 }
 
+void CostFunction::setModule(CostModule *function)
+{
+	_function = function;
+}
+
+CostModule * CostFunction::getModule(void)
+{
+	return _function;
+}
+
 void CostFunction::addParameter(std::string name, double value)
 {
 	std::map<std::string, double>::iterator it;
@@ -71,6 +89,25 @@ void CostFunction::addParameter(std::string name, double value)
 	else
 	{
 		throw FoundationException("Cost Function Parameter is already included");
+	}
+}
+
+double CostFunction::getEvaluation(double variable)
+{
+	try{
+		if (_function != NULL){
+			std::map<std::string, double>::iterator it;
+			for (it = _parameters.begin(); it != _parameters.end(); it++){
+				_function->getAPI()->setParameter(it->first,it->second);
+			}
+			return _function->getAPI()->getEvaluation( variable );
+		} 
+		else {
+			throw FoundationException(string("Module not initialized:") + getClassName() );
+		}
+	} catch (ProcError &e) {
+		std::cout << "Error" + e.getError() << std::endl;
+		throw FoundationException(e.getError());
 	}
 }
 		

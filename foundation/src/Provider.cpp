@@ -43,8 +43,10 @@ void Provider::addResourceAvailability(std::string resourceId)
 void Provider::setInitialAvailability(Resource *resource, double quantity)
 {
 
+#ifndef TEST_ENABLED
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().debug("Entering provider setInitialAvailability");
+#endif	
 
 
     std::map<std::string, ResourceAvailability *>::iterator it;
@@ -61,7 +63,9 @@ void Provider::setInitialAvailability(Resource *resource, double quantity)
 		(*(it->second)).setInitialAvailability(quantity);
 	}	
 
+#ifndef TEST_ENABLED
 	app.logger().debug("Ending provider setInitialAvailability");
+#endif	
 
 }
 
@@ -99,25 +103,50 @@ void Provider::deductAvailability(unsigned period,
 	}
 }
 
+double Provider::getResourceAvailability(unsigned period, 
+										 std::string resourceId)
+{
+
+	ResourceMap::iterator it;
+	it = _resources.find(resourceId);
+	
+	// When the resourceId is not found the system, it assumes not capacity
+	if (it != _resources.end()){
+		return (it->second)->getAvailability(period);
+	}
+	else{
+	    return false;
+	}
+	
+	
+	
+}
+
 bool Provider::checkResourceAvailability(unsigned period, 
 										 std::string resourceId, 
 										 DecisionVariable *variable, 
 										 double level,
 										 double quantity )
 {
+	
 	ResourceMap::iterator it;
 	it = _resources.find(resourceId);
+	
 	// When the resourceId is not found the system, it assumes not capacity
-	if (it != _resources.end())
+	if (it != _resources.end()){
 		return (it->second)->checkAvailability(period, variable, level,quantity);
-	else 
+	}
+	else{
 	    return false;
+	}
 }
 
 bool Provider::isBulkAvailable(unsigned period, Service * service,  Purchase * purchase, Bid * bid)
 {
+#ifndef TEST_ENABLED
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().debug("Entering provider isAvailable");
+#endif	
 	
 	bool available = true;
 	
@@ -130,7 +159,11 @@ bool Provider::isBulkAvailable(unsigned period, Service * service,  Purchase * p
 			if (variable->getModeling() == MODEL_QUALITY)
 			{
 				
+				
+#ifndef TEST_ENABLED
 				app.logger().debug("Checking resource availability for resource" + variable->getResource());
+#endif			
+		
 				available = available && checkResourceAvailability(period, 
 																   variable->getResource(), 
 																   variable, 
@@ -148,7 +181,10 @@ bool Provider::isBulkAvailable(unsigned period, Service * service,  Purchase * p
 			if (variable->getModeling() == MODEL_PRICE )
 			{
 				
+#ifndef TEST_ENABLED
 				app.logger().debug("Checking resource availability for resource" + variable->getResource());
+#endif			
+	
 				available = available && checkResourceAvailability(period, 
 																   variable->getResource(), 
 																   variable, 
@@ -159,13 +195,21 @@ bool Provider::isBulkAvailable(unsigned period, Service * service,  Purchase * p
 		
 	}
 
+#ifndef TEST_ENABLED
 	app.logger().debug(Poco::format("Ending provider isAvailable %b", available ));
+#endif
+
 	return available;
 }
 
 ProviderCapacityType Provider::getCapacityType(void)
 {
 	return _type;
+}
+
+std::string Provider::getId()
+{
+	return _id;
 }
 
 }  /// End Eco namespace

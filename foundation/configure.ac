@@ -3,7 +3,7 @@
 
 AC_PREREQ([2.68])
 AC_INIT([libnetagentsfdtion], [0.1], [tteixeira@umass.edu])
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([subdir-objects])
 LT_INIT
 AC_CONFIG_SRCDIR([src/Bid.cpp])
 
@@ -53,6 +53,7 @@ if test $tst = true ; then
   AC_DEFINE(ENABLE_TEST, 1, [enable test applications])
 fi
 
+AC_CHECK_LIB([cppunit], [main])
 
 # Checks for header files.
 
@@ -73,7 +74,7 @@ LIBS="$LIBS -lPocoFoundation -lPocoUtil -lPocoNet -lPocoXML -lPocoData -lPocoDat
 AC_LINK_IFELSE(
     [AC_LANG_PROGRAM([#include <DateTime.h>],
     [Poco::DateTime now])],
-    [poco_LIBS="-lPocoFoundation -lPocoUtil -lPocoNet -lPocoXML -lPocoData -lPocoMySQL"] 
+    [poco_LIBS="-lPocoFoundation -lPocoUtil -lPocoNet -lPocoXML -lPocoData -lPocoDataMySQL"] 
     [poco_CFLAGS="-DHAVE_PCAP -I/usr/local/include/Poco -I/usr/local/include/Poco"] 
     [poco_LDFLAGS]="-L/usr/local/lib/ -L/usr/lib/"]
     [HAVE_POCO=1],
@@ -96,8 +97,35 @@ AC_SUBST(poco_LIBS)
 AC_SUBST(poco_LDFLAGS)
 AC_SUBST(pkgconfigdir)
 
+dnl # set default directories
+
+if test "${prefix}" = "NONE" ; then
+  prefix=${ac_default_prefix}
+fi
+
+dnl # set default config directory for testing
+sysconfdir="${sysconfdir}"
+
+DEF_SYSCONFDIR=`eval echo ${sysconfdir}`
+AC_DEFINE_UNQUOTED(DEF_SYSCONFDIR, "$DEF_SYSCONFDIR", "sysconfig dir")
+
+DEF_STATEDIR=`eval echo ${localstatedir}`
+AC_DEFINE_UNQUOTED(DEF_STATEDIR, "$DEF_STATEDIR", "state dir")
+
+libdir="${libdir}/choicenet"
+if test "${exec_prefix}" = "NONE" ; then
+  exec_prefix=${prefix}
+fi
+DEF_LIBDIR=`eval echo ${libdir}`
+AC_DEFINE_UNQUOTED(DEF_LIBDIR, "$DEF_LIBDIR", "lib dir")
+
+DEF_BINDIR=`eval echo ${bindir}`
+AC_DEFINE_UNQUOTED(DEF_BINDIR, "$DEF_BINDIR", "bin dir")
+
+
 AC_CONFIG_FILES([Makefile \
 				 libnetagentsfdtion-0.0.pc \
-                 src/Makefile])
+                 src/Makefile \
+                 test/Makefile ])
 
 AC_OUTPUT

@@ -107,7 +107,7 @@ public:
 	double getInitCapacity(void);
 	
 	/// Sets a decision variable associated with the bid.
-	void setDecisionVariable(std::string decisionVariableId, size_t dimension, double value, OptimizationObjective &objetive);
+	void setDecisionVariable(std::string decisionVariableId, size_t dimension, double value, OptimizationObjective objetive);
 	
 	/// Gets a decision variable associated with the bid.
 	double getDecisionVariable(std::string decisionVariableId);

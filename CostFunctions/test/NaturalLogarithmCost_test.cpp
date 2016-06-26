@@ -83,6 +83,8 @@ void NaturalLogarithmCost_Test::general_test()
 		double val = costmod->getAPI()->getEvaluation( 3.0 );
 		val = round(val * 10000) / 10000; 
 		CPPUNIT_ASSERT(val == 5.7726);
+		
+		loader->releaseModule(costmod);
 	}
 	else {
 		// Unable to load the cost module

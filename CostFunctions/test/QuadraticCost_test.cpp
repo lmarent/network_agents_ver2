@@ -85,6 +85,8 @@ void QuadraticCost_Test::general_test()
 		double val = costmod->getAPI()->getEvaluation( 3.0 );
 		std::cout << "value:" << val << endl;
 		CPPUNIT_ASSERT(val == 31.0);
+		
+		loader->releaseModule(costmod);
 	}
 	else {
 		// Unable to load the cost module

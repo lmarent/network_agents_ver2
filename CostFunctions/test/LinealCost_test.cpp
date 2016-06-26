@@ -82,10 +82,14 @@ void LinealCost_Test::general_test()
 		costmod->getAPI()->setParameter("intercept",3.0);
 		double val = costmod->getAPI()->getEvaluation( 3.0 );
 		CPPUNIT_ASSERT(val == 9.0);
+		
+		loader->releaseModule(costmod);
 	} 
 	else {
 		// Unable to load the cost module
 		double val = 0;
 		CPPUNIT_ASSERT(val == 1);
 	}
+	
+	
 }

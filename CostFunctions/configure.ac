@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.69])
+AC_PREREQ([2.68])
 AC_INIT([ChoicenetCost],[0.1],[la.marentes455@uniandes.edu.co])
 AM_INIT_AUTOMAKE([subdir-objects])
 LT_INIT

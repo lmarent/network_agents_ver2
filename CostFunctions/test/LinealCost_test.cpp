@@ -73,7 +73,7 @@ void LinealCost_Test::tearDown()
 
 void LinealCost_Test::general_test() 
 {
-	string moduleName("libLinealCost");
+	string moduleName("LinealCost");
 	Module *module = loader->loadModule( moduleName, 0, NULL );
 	CostModule *costmod = dynamic_cast<CostModule*>(module);
 

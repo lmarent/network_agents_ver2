@@ -74,7 +74,7 @@ void QuadraticCost_Test::tearDown()
 
 void QuadraticCost_Test::general_test() 
 {
-	string moduleName = "libQuadraticCost";
+	string moduleName = "QuadraticCost";
 	Module *module = loader->loadModule( moduleName, 0, NULL );
 	CostModule *costmod = dynamic_cast<CostModule*>(module);
 

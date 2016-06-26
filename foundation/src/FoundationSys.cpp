@@ -150,9 +150,17 @@ void FoundationSys::initialize(Poco::Util::Application &app, int bid_periods, in
 
 	std::string moduleDir = (std::string)
 					app.config().getString("module_dir", DEF_LIBDIR);
-
-    _loader = new ModuleLoader( moduleDir.c_str() /*module (lib) basedir*/,
+	
+	std::cout << "module_dir:" << moduleDir << std::endl;
+	
+	try
+	{
+		_loader = new ModuleLoader( moduleDir.c_str() /*module (lib) basedir*/,
                                getConfigGroup() /* Configuration group */);
+    } catch (ProcError &e){
+		throw FoundationException(e.getError());
+	}
+	std::cout << "could create the loader:" << std::endl;
 
 	app.logger().debug("Read the cost functions");
 	readCostFunctionsFromDataBase();

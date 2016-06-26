@@ -133,7 +133,7 @@ Module *ModuleLoader::getModule( string modname )
 Module *ModuleLoader::loadModule( string libname, int preload, configParam_t *params )
 {
     Module *module = NULL;
-    string filename, path, ext;
+    string filename, path, ext, pre;
     libHandle_t libhandle = NULL;
     
     if (libname.empty()) {
@@ -147,12 +147,19 @@ Module *ModuleLoader::loadModule( string libname, int preload, configParam_t *pa
         }
 
         // use '.so' as postfix if it is not yet there
+        if (libname.substr(0,3) != "lib") {
+            pre = "lib";
+        }
+
+        // use '.so' as postfix if it is not yet there
         if (libname.substr(libname.size()-3,3) != ".so") {
             ext = ".so";
         }
 	
         // construct filename of module including path and extension
-        filename = path + libname + ext;
+        filename = path + pre + libname + ext;
+        
+        std::cout << filename << std::endl;
 	
         // try to load the library module
         libhandle = dlopen(filename.c_str(), RTLD_LAZY);

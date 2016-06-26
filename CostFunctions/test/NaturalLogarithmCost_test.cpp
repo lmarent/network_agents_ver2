@@ -73,7 +73,7 @@ void NaturalLogarithmCost_Test::tearDown()
 
 void NaturalLogarithmCost_Test::general_test() 
 {
-	string moduleName = "libNaturalLogarithmCost";
+	string moduleName = "NaturalLogarithmCost";
 	Module *module = loader->loadModule( moduleName, 0, NULL );
 	CostModule *costmod = dynamic_cast<CostModule*>(module);
 

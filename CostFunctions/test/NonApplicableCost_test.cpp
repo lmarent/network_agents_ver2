@@ -74,7 +74,7 @@ void NonApplicableCost_Test::tearDown()
 
 void NonApplicableCost_Test::general_test() 
 {
-	string moduleName = "libNonApplicableCost";
+	string moduleName = "NonApplicableCost";
 	Module *module = loader->loadModule( moduleName, 0, NULL );
 	CostModule *costmod = dynamic_cast<CostModule*>(module);
 

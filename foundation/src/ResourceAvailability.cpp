@@ -114,7 +114,7 @@ bool ResourceAvailability::checkAvailability(unsigned period,
 		double available = getAvailability(period);
 
 #ifndef TEST_ENABLED	
-		app.logger().debug(Poco::format("checkAvailability period:%d qtyAvailable:%f qtyRequired:%f", period, available, quantityRequired));
+		app.logger().debug(Poco::format("checkAvailability rate:%f initQty:%f period:%d qtyAvailable:%f qtyRequired:%f",rate, quantity, period, available, quantityRequired));
 #endif
 		
 		if (available >= quantityRequired) 

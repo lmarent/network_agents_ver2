@@ -864,7 +864,7 @@ void MarketPlaceSys::addPurchaseByBidCapacity(Provider *provider, Service *servi
 void MarketPlaceSys::addPurchase(Purchase * purchasePtr, Message & messageResponse)
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().information("add Purchase");
+	app.logger().information(Poco::format("Add Purchase Id:%s :Period:%d :BidId:%s qtyRequested:%f", purchasePtr->getId(), (int) _period, purchasePtr->getBid(), purchasePtr->getQuantity() ));
 	
 
 	try {

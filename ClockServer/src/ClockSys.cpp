@@ -51,7 +51,7 @@ ClockSys::~ClockSys(void)
 	app.logger().debug("Disconnecting the Event Discrete System");
 
     // Release the memory assigned to listeners ( Pointers referenced by Listener Id)
-    
+
     std::map<std::string, Listener *>::iterator it_listeners_byId;
     it_listeners_byId = _listeners_by_id.begin();
     while ( it_listeners_byId != _listeners_by_id.end())
@@ -70,7 +70,7 @@ ClockSys::~ClockSys(void)
 		_listeners.erase(it_listeners);
 		++it_listeners;
 	}
-		
+
 	app.logger().information("Event Discrete System Finished");
 }
 
@@ -86,18 +86,18 @@ void ClockSys::initialize(Poco::Util::Application &app)
 					app.config().getInt("interval_for_customer_activation", 0);
 
 	_interval_for_customer_activation = send_interval;
-	
+
 
 	// Get the number of intervals for making a round of bids
 	unsigned short intervals_per_cycle = (unsigned short)
 					app.config().getInt("intervals_per_cycle", 2);
-	
+
 	// initialize variable
 	_intervals_per_cycle = intervals_per_cycle;
 
 	FoundationSys::initialize(app, bid_periods, 0);
 	app.logger().debug("Event Discrete System initialized");
-          
+
 }
 
 const char* ClockSys::name() const
@@ -125,14 +125,14 @@ bool ClockSys::isAlreadyListener(Poco::Net::SocketAddress socketAddress)
 		found = true;
 	}
 	return found;
-	
+
 }
 
-void ClockSys::getMessage(Poco::FIFOBuffer & fifoIn, 
+void ClockSys::getMessage(Poco::FIFOBuffer & fifoIn,
 						  int len, Message &message )
 {
 	// If the socket address corresponds to a listener, then the message size
-	// could be unlimited, when it is not a listener then we have as its 
+	// could be unlimited, when it is not a listener then we have as its
 	// limit 1024.
 	std::string receiveString;
 	std::size_t i = 0;
@@ -146,13 +146,13 @@ void ClockSys::getMessage(Poco::FIFOBuffer & fifoIn,
 
 
 void ClockSys::addStagedData(Poco::Net::SocketAddress socketAddress,
-				   Poco::FIFOBuffer & fifoIn, 
+				   Poco::FIFOBuffer & fifoIn,
 				   int len)
 {
 	// If the socket address corresponds to a listener, then the message size
-	// could be unlimited, when it is not a listener then we have as its 
+	// could be unlimited, when it is not a listener then we have as its
 	// limit 1024.
-	
+
 	bool found = false;
 	Listeners::iterator it;
 	it = _listeners.find(socketAddress);
@@ -167,7 +167,7 @@ void ClockSys::addStagedData(Poco::Net::SocketAddress socketAddress,
 }
 
 
-void ClockSys::insertListener(std::string idListener, 
+void ClockSys::insertListener(std::string idListener,
 							 Poco::Net::SocketAddress socketAddress,
 							 Message & messageResponse )
 {
@@ -179,26 +179,36 @@ void ClockSys::insertListener(std::string idListener,
 	{
 		std::cout << "Insert Listener";
 		Listener *listener = new Listener(idListener, socketAddress);
-		
+
 		_listeners.insert( std::pair<Poco::Net::SocketAddress, Listener *>(socketAddress,listener));
 		_listeners_by_id.insert( std::pair<std::string, Listener *>(idListener,listener));
-		
+
 		std::cout << "Size:" << _listeners.size() << std::endl;
 		messageResponse.setResponseOk();
 	}
 }
 
-void ClockSys::startListening(Poco::Net::SocketAddress socketAddress, 
+void ClockSys::startListening(Poco::Net::SocketAddress socketAddress,
 							 Poco::UInt16 port, std::string type,
 							 Message & messageResponse)
 {
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("Start - startListening ");
+
 	Listeners::iterator it;
 	it = _listeners.find(socketAddress);
 	if (it != _listeners.end())
 	{
-		Poco::Net::SocketAddress sa = (*(it->second)).getSocketAddress();
+
+		app.logger().debug("The provider was found");
+
 		try
 		{
+			Poco::Net::SocketAddress sa = (*(it->second)).getSocketAddress();
+
+			app.logger().debug("Socket address:" + sa.toString());
+
 			std::cout << "Found the provider" << std::endl;
 			Poco::Net::SocketAddress sockadd(sa.host(), port);
 			(*(it->second)).Connect(sockadd);
@@ -209,13 +219,14 @@ void ClockSys::startListening(Poco::Net::SocketAddress socketAddress,
 			throw ClockServerException("Invalid host", 307);
 		} catch(const Poco::Net::ServiceNotFoundException &ex){
 			throw ClockServerException("Invalid port", 301);
-		}		
+		}
 	}
     else
     {
+		app.logger().debug("Error the agent is not connected");
 		throw ClockServerException("The agent is not connected", 302);
 	}
-	std::cout << "Listening" << socketAddress.toString()<< "Connected" << std::endl;
+
 }
 
 void ClockSys::insertListenerBytype(std::string type, std::string listenerId)
@@ -226,10 +237,10 @@ void ClockSys::insertListenerBytype(std::string type, std::string listenerId)
 	{
 		std::vector<std::string> list;
 		_listeners_by_type.insert(std::pair<std::string, std::vector<std::string> > (type, list));
-		
+
 	}
 	it = _listeners_by_type.find(type);
-	(it->second).push_back(listenerId);	
+	(it->second).push_back(listenerId);
 }
 
 void ClockSys::sendCurrentPeriod(Poco::Net::SocketAddress socketAddress,
@@ -245,12 +256,12 @@ void ClockSys::sendCurrentPeriod(Poco::Net::SocketAddress socketAddress,
 	it = _listeners.begin();
 	bool found = false;
     std::string sockAddrPar = socketAddress.toString();
-    
+
 	while( (it!=_listeners.end()) && (found ==false) )
 	{
 		Poco::Net::SocketAddress sa = (*(it->second)).getSocketAddress();
 		std::string sockAddrStr = sa.toString();
-		
+
 		if ( sockAddrPar.compare(sockAddrStr) == 0 ){
             // Builds the message with the current period
             messageResponse.setResponseOk();
@@ -267,7 +278,7 @@ void ClockSys::sendCurrentPeriod(Poco::Net::SocketAddress socketAddress,
 
 }
 
-bool ClockSys::getMessage(Poco::Net::SocketAddress socketAddress, 
+bool ClockSys::getMessage(Poco::Net::SocketAddress socketAddress,
 				Message & message)
 {
 	bool val_return = false;
@@ -289,13 +300,13 @@ void ClockSys::broadcastPeriodEnd(void)
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	LogStream lstr(app.logger());
 	lstr << "In broadcastPeriodEnd" << _period << std::endl;
-    
+
     // Builds the message with the current period
     Message endPeriod;
     Method method = end_period;
     endPeriod.setMethod(method);
     endPeriod.setParameter("Period", Poco::NumberFormatter::format(_period));
-    
+
     // Only send the broadcast end period to market server listeners.
 	std::map<std::string, std::vector<std::string> >::iterator it_market_server;
 	it_market_server = _listeners_by_type.find("market_place");
@@ -304,7 +315,7 @@ void ClockSys::broadcastPeriodEnd(void)
 		std::vector<std::string> list = it_market_server->second;
 		std::vector<std::string>::iterator it_strings;
 		it_strings = list.begin();
-		
+
 		while (it_strings != list.end())
 		{
 			std::map<std::string, Listener *>::iterator it = _listeners_by_id.find(*it_strings);
@@ -314,7 +325,7 @@ void ClockSys::broadcastPeriodEnd(void)
 				{
 					(*(it->second)).write (endPeriod.to_string());
 				}
-			}	
+			}
 			++it_strings;
 		}
 	}
@@ -323,7 +334,7 @@ void ClockSys::broadcastPeriodEnd(void)
 }
 
 void ClockSys::activateCustomers(int period)
-{ 
+{
 
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().debug(Poco::format("Starting activate Customers %d",period) );
@@ -333,25 +344,25 @@ void ClockSys::activateCustomers(int period)
     unsigned num_agents = 0;
     ListenerType type = CONSUMER;
     _services_activation.clear();
-   
+
     // Forecast the demand for the new period
     for(int i=0; i < _services_to_execute.size(); ++i)
-    {	
+    {
 		new_demand = 0;
 		Service * service = getService(_services_to_execute[i]);
 		new_demand = service->getForecast(period);
 		num_agents = service->getRequiredAgents(new_demand);
 
 		app.logger().debug(Poco::format("Demand:%f Num Agents:%d", new_demand, (int) num_agents) );
-				
-		if (num_agents > 0) 
+
+		if (num_agents > 0)
 		{
 			// Builds the message with the current period
 			Message * activate = new Message();
 			Method method_act = activate_consumer;
 			activate->setMethod(method_act);
 			activate->setParameter("Service", service->getId());
-			activate->setParameter("Period", (int) period);    
+			activate->setParameter("Period", (int) period);
 			activate->setParameter("Quantity", Poco::NumberFormatter::format(new_demand / num_agents));
 			// Creates the structure.
 			ServiceActivation activation;
@@ -360,25 +371,25 @@ void ClockSys::activateCustomers(int period)
 			_services_activation.insert(std::pair<std::string, ServiceActivation> (service->getId(), activation));
 		}
 	}
-	
+
 	Listeners::iterator it;
 	unsigned num_initiated = 0;
 	it = _listeners.begin();
 	while( it != _listeners.end() )
 	{
-					  
-		if ( ( (*(it->second)).getStatus() == 1 ) and 
+
+		if ( ( (*(it->second)).getStatus() == 1 ) and
 			 ((*(it->second)).getType() == type )  )
-		{ 
+		{
 			// the listener is connected and is consumer.
 
 			 std::cout << "Sending the activation message" << std::endl;
-			 std::cout << "Listener:" << (*(it->second)).getId() << "Status:" 
-					  << (*(it->second)).getStatus() << "Type:" 
-				      << (*(it->second)).getType() << std::endl; 
+			 std::cout << "Listener:" << (*(it->second)).getId() << "Status:"
+					  << (*(it->second)).getStatus() << "Type:"
+				      << (*(it->second)).getType() << std::endl;
 
 			Message * message = getActivationMessage();
-				
+
 			if (message != NULL)
 			{
 				(*(it->second)).write (message->to_string());
@@ -392,7 +403,7 @@ void ClockSys::activateCustomers(int period)
 		}
 		++it;
 	}
-	
+
 	app.logger().debug(Poco::format("Ending activate Customers %d", period) );
 }
 
@@ -403,9 +414,9 @@ void ClockSys::broadcastPeriodStart(void)
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().debug(Poco::format("Start broadcastPeriodStart %d", (int) _period));
 
-    
+
     ListenerType type = CONSUMER;
-   
+
     // Sends the message for the rest of the listeners.
     // Send the messsage to all connected listeners.
     // Builds the message with the current period
@@ -416,22 +427,22 @@ void ClockSys::broadcastPeriodStart(void)
     it = _listeners.begin();
 	while( it!=_listeners.end() )
 	{
-		if ( ( (*(it->second)).getStatus() == 1 ) and 
-		     ((*(it->second)).getType() != type )  ){ 
+		if ( ( (*(it->second)).getStatus() == 1 ) and
+		     ((*(it->second)).getType() != type )  ){
 			// the listener is connected and it is not consumer.
-			(*(it->second)).write (startPeriod.to_string());			
+			(*(it->second)).write (startPeriod.to_string());
 		}
 		++it;
 	}
-   
+
     app.logger().debug(Poco::format("Period %d intervals per cycle:%d intervals for cust act:%d", (int) _period, (int) _intervals_per_cycle, (int) _interval_for_customer_activation ));
-   
+
 	if ((_period % _intervals_per_cycle) == _interval_for_customer_activation){
 		activateCustomers(_period / _intervals_per_cycle);
 	}
-  
+
 	app.logger().debug(Poco::format("Ending broadcastPeriodStart %d", (int) _period));
-       
+
 }
 
 Message * ClockSys::getActivationMessage(void)
@@ -483,13 +494,13 @@ void ClockSys::decreaseActivationMessageCount(std::string serviceId)
 void ClockSys::broadcastTerminate(void)
 {
 	Listeners::iterator it;
-	
+
 
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	LogStream lstr(app.logger());
 	lstr << "Start broadcastTerminate" << _period << std::endl;
 
-	
+
     // Builds the message with the current period
     Message m_disconnect;
     Method method = disconnect;
@@ -498,14 +509,14 @@ void ClockSys::broadcastTerminate(void)
     // Send the messsage to all connected listeners.
 	for ( it = _listeners.begin(); it!=_listeners.end(); ++it )
 	{
-		
+
 		if ((*(it->second)).getStatus() == 1 ) // the listener is connected
 		{
 			try
 			{
 				(*(it->second)).write (m_disconnect.to_string());
 			}
-			
+
 			catch (FoundationException &e)
 			{
 				Poco::Util::Application& app = Poco::Util::Application::instance();
@@ -516,14 +527,14 @@ void ClockSys::broadcastTerminate(void)
 				continue;
 			}
 			catch (...) {
-				
+
 				Poco::Util::Application& app = Poco::Util::Application::instance();
 				app.logger().information( "Other exception" );
 				continue;
 			}
 		}
-		
-	}	
+
+	}
 
 	lstr << "Ending broadcastTerminate" << _period << std::endl;
 
@@ -551,7 +562,7 @@ void ClockSys::incrementPeriod(void)
 
 void ClockSys::deleteListener( Poco::Net::SocketAddress socketAddress,
 						      Message & messageResponse )
-{    
+{
 
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	LogStream lstr(app.logger());
@@ -572,7 +583,7 @@ void ClockSys::deleteListener( Poco::Net::SocketAddress socketAddress,
 		}
 		++it;
 	}
-    
+
     if (found == true){
 		// Disconnect the socket that is waiting for periods
 		(*(it->second)).Disconnect();
@@ -603,12 +614,12 @@ void ClockSys::getServices(std::string serviceId, Message & messageResponse)
 	Poco::XML::AutoPtr<Poco::XML::Document> pDoc = new Poco::XML::Document;
 	Poco::XML::AutoPtr<Poco::XML::Element> pRoot = pDoc->createElement("getServices");
 	pDoc->appendChild(pRoot);
-	
+
 	// std::cout << "Requested service:" << serviceId << std::endl;
-		
+
 	ServiceContainer::iterator it;
 	it = _services.begin();
-	while (it != _services.end()) 
+	while (it != _services.end())
 	{
 		if ((it->first).compare(serviceId) == 0 )
 			(*(it->second)).to_XML(pDoc, pRoot);
@@ -618,8 +629,8 @@ void ClockSys::getServices(std::string serviceId, Message & messageResponse)
 	Poco::XML::DOMWriter writer;
 	writer.setNewLine("\n");
 	writer.setOptions(Poco::XML::XMLWriter::PRETTY_PRINT);
-	std::stringstream  output; 
-	writer.writeNode(output, pDoc);	
+	std::stringstream  output;
+	writer.writeNode(output, pDoc);
 	messageResponse.setBody(output.str());
 	// std::cout << "message: " << std::endl << output.str() << std::endl;
 
@@ -628,7 +639,7 @@ void ClockSys::getServices(std::string serviceId, Message & messageResponse)
 }
 
 
-    
+
 void ClockSys::getServices(Message & messageResponse)
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
@@ -642,7 +653,7 @@ void ClockSys::getServices(Message & messageResponse)
 	Poco::XML::AutoPtr<Poco::XML::Document> pDoc = new Poco::XML::Document;
 	Poco::XML::AutoPtr<Poco::XML::Element> pRoot = pDoc->createElement("getServices");
 	pDoc->appendChild(pRoot);
-	
+
 	ServiceContainer::iterator it;
 	it = _services.begin();
 	while (it != _services.end()) {
@@ -653,8 +664,8 @@ void ClockSys::getServices(Message & messageResponse)
 	Poco::XML::DOMWriter writer;
 	writer.setNewLine("\n");
 	writer.setOptions(Poco::XML::XMLWriter::PRETTY_PRINT);
-	std::stringstream  output; 
-	writer.writeNode(output, pDoc);	
+	std::stringstream  output;
+	writer.writeNode(output, pDoc);
 	messageResponse.setBody(output.str());
 
 	lstr << "Ending getServices" << _period << std::endl;

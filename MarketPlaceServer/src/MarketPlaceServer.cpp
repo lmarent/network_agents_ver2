@@ -41,8 +41,8 @@ namespace ChoiceNet
 namespace Eco
 {
 
-    MarketPlaceServer::MarketPlaceServer(): 
-    _helpRequested(false), 
+    MarketPlaceServer::MarketPlaceServer():
+    _helpRequested(false),
     _marketSubsystemPtr(NULL)
     {
     }
@@ -56,22 +56,10 @@ namespace Eco
 
     void MarketPlaceServer::initialize(Poco::Util::Application& self)
     {
-        try{
-        	loadConfiguration();
-        	_marketSubsystemPtr  = new MarketPlaceSys();
-        	(*_marketSubsystemPtr).initialize(self);
-        	Poco::Util::ServerApplication::initialize(self);
-        } catch	(FoundationException &e){
-        	std::cout << e.message() << std::endl;
-        	terminate();
-        } catch (Poco::NotFoundException &e){
-        	std::cout << e.message() << std::endl;
-        	terminate();
-        } catch (MarketPlaceException &e){
-        	std::cout << e.message() << std::endl;
-        	terminate();
-        }
-    }	
+
+        Poco::Util::ServerApplication::initialize(self);
+
+    }
 
     void MarketPlaceServer::uninitialize()
     {
@@ -90,7 +78,7 @@ namespace Eco
                 this, &MarketPlaceServer::handleHelp)));
     }
 
-    void MarketPlaceServer::handleHelp(const std::string& name, 
+    void MarketPlaceServer::handleHelp(const std::string& name,
                     const std::string& value)
     {
         Poco::Util::HelpFormatter helpFormatter(options());
@@ -111,53 +99,64 @@ namespace Eco
 
     int MarketPlaceServer::main(const std::vector<std::string>& args)
     {
-        
-        // std::cout << "Processing start" << std::endl;
-        if (initialized()){
-			if (!_helpRequested)
-			{
 
-			   AutoPtr<FileChannel> fileChannel(new FileChannel("MarketPlaceServer.log"));
-			   AutoPtr<PatternFormatter> formatter(new PatternFormatter("%d-%m-%Y %H:%M:%S %s: %t"));
-			   AutoPtr<FormattingChannel> formattingChannel(new FormattingChannel(formatter, fileChannel));
+        // Initialize the system.
+        try
+        {
 
-			   fileChannel->setProperty("rotateOnOpen", "true");
-			   Poco::Logger& logger = Poco::Util::ServerApplication::logger();
-			   logger.setChannel(formattingChannel);
-			   logger.setLevel(Poco::Message::PRIO_TRACE);
+        	loadConfiguration();
+        	_marketSubsystemPtr  = new MarketPlaceSys();
+        	(*_marketSubsystemPtr).initialize();
 
-			   // Reads from the configuration the listening port
-			   unsigned short port = (unsigned short)
+
+        } catch	(FoundationException &e){
+        	std::cout << e.message() << std::endl;
+        	terminate();
+        } catch (Poco::NotFoundException &e){
+        	std::cout << e.message() << std::endl;
+        	terminate();
+        } catch (MarketPlaceException &e){
+        	std::cout << e.message() << std::endl;
+        	terminate();
+        }
+
+
+		AutoPtr<FileChannel> fileChannel(new FileChannel("MarketPlaceServer.log"));
+		AutoPtr<PatternFormatter> formatter(new PatternFormatter("%d-%m-%Y %H:%M:%S %s: %t"));
+		AutoPtr<FormattingChannel> formattingChannel(new FormattingChannel(formatter, fileChannel));
+
+		fileChannel->setProperty("rotateOnOpen", "true");
+		Poco::Logger& logger = Poco::Util::ServerApplication::logger();
+		logger.setChannel(formattingChannel);
+		logger.setLevel(Poco::Message::PRIO_TRACE);
+
+		// Reads from the configuration the listening port
+		unsigned short port = (unsigned short)
 						config().getInt("listening_port", 5555);
-			   
-			   // Server Socket
-			   Poco::Net::ServerSocket svs(port);
-			   // Reactor-Notifier
-			   WaitingSocketReactor reactor;
-			   // Server-Acceptor
-			   Poco::Net::SocketAcceptor<ConnectionHandler> acceptor(svs, reactor);
-			   // Threaded Reactor
-			   Poco::Thread thread;
-			   thread.start(reactor);
-			   
-			   // Sends the port for start listening for clock periods
-			   std::string type = config().getString("type", "market_place");
-			   
-			   MarketPlaceSys *sys = getMarketPlaceSubsystem();
-			   (*sys).addAsClockListener((Poco::UInt16) port, type);
-			   // Wait for CTRL+C
-			   waitForTerminationRequest();
-			   
-			   // Stop reactor
-			   reactor.stop();
-			   thread.join();
-			   return Poco::Util::ServerApplication::Application::EXIT_OK; 
-			}
-			return Poco::Util::ServerApplication::EXIT_OK;
-		}
-		else{
-			return Poco::Util::ServerApplication::EXIT_SOFTWARE;
-		}
+
+		// Server Socket
+		Poco::Net::ServerSocket svs(port);
+		// Reactor-Notifier
+		WaitingSocketReactor reactor;
+		// Server-Acceptor
+		Poco::Net::SocketAcceptor<ConnectionHandler> acceptor(svs, reactor);
+		// Threaded Reactor
+		Poco::Thread thread;
+		thread.start(reactor);
+
+		// Sends the port for start listening for clock periods
+		std::string type = config().getString("type", "market_place");
+
+		MarketPlaceSys *sys = getMarketPlaceSubsystem();
+		(*sys).addAsClockListener((Poco::UInt16) port, type);
+		// Wait for CTRL+C
+		waitForTerminationRequest();
+
+		// Stop reactor
+		reactor.stop();
+		thread.join();
+		return Poco::Util::ServerApplication::Application::EXIT_OK;
+		return Poco::Util::ServerApplication::EXIT_OK;
     }
 
 } /// End Eco namespace

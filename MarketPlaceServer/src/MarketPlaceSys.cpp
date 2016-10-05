@@ -17,6 +17,7 @@
 #include <Poco/Data/Session.h>
 #include <Poco/Data/SQLite/Connector.h>
 #include <Poco/Data/MySQL/Connector.h>
+#include <Poco/LogStream.h>
 
 
 #include "MarketPlaceException.h"
@@ -34,7 +35,7 @@ namespace Eco
 
 using Poco::NumberFormatter;
 
-MarketPlaceSys::MarketPlaceSys(void): 
+MarketPlaceSys::MarketPlaceSys(void):
 FoundationSys(MARKET_SERVER),
 _clockSocket(NULL),
 _current_bids(NULL),
@@ -50,20 +51,20 @@ MarketPlaceSys::~MarketPlaceSys(void)
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().information("Eliminating the market place system");
-		
+
 	// Release the memory assigned to socket and current bids pointers
-		
+
 	if (_clockSocket != NULL)
 		(*_clockSocket).shutdown();
 		(*_clockSocket).close();
-		delete _clockSocket;	
-	
+		delete _clockSocket;
+
 	if (_current_bids != NULL)
 		delete _current_bids;
-	
+
 	if (_current_purchases != NULL)
 		delete _current_purchases;
-	
+
 	app.logger().debug("Eliminating bids registered");
 	// erase elements in the container bids to broadcast.
 	BidContainer::iterator it;
@@ -79,7 +80,7 @@ MarketPlaceSys::~MarketPlaceSys(void)
 		delete it_container_bid->second;
 		_bids.erase(it_container_bid);
 	}
-	
+
 	app.logger().information("Eliminating listeners registered");
 	// Release the memory assigned to agents listener
 	Listeners::iterator it_listeners;
@@ -92,8 +93,8 @@ MarketPlaceSys::~MarketPlaceSys(void)
 		_listeners.erase(it_listeners);
 		++it_listeners;
 	}
-	
-	
+
+
 	app.logger().information("Eliminating providers registered");
 	// Release the memory assigned to providers
 	std::map<std::string, Provider *>::iterator it_providers;
@@ -104,8 +105,8 @@ MarketPlaceSys::~MarketPlaceSys(void)
 		_providers.erase(it_providers);
 		++it_providers;
 	}
-	
-	
+
+
 	app.logger().information("Eliminating purchases registered");
 	// Release the memory assigned to purchase objects
 	PurchaseHistory::iterator it_history;
@@ -115,7 +116,7 @@ MarketPlaceSys::~MarketPlaceSys(void)
 		delete it_history->second;
 		_purchase_history.erase(it_history);
 		++it_history;
-	}	
+	}
 
 	app.logger().debug("Disconnecting from the database");
 	if (_pool != NULL)
@@ -123,34 +124,41 @@ MarketPlaceSys::~MarketPlaceSys(void)
 
 	Poco::Data::MySQL::Connector::unregisterConnector();
 
-	app.logger().information("Eliminating the market sys - Finished");	
+	app.logger().information("Eliminating the market sys - Finished");
 }
 
 void MarketPlaceSys::sendMessageToClock(Message & message, Message & response)
 {
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("Starting sendMessageToClock");
+
 	std::string msgStr = message.to_string();
 	char * message_char = new char [msgStr.length()];
 	strcpy (message_char, msgStr.c_str() );
 	(*_clockSocket).sendBytes(message_char, msgStr.length());
-	
+
 	// Receive the response and based on that continues
 	char buffer[1024];
 	int bytes_received = (*_clockSocket).receiveBytes(buffer, sizeof(buffer)-1);
 	std::string recvline(buffer);
-	response.setData(recvline);	
+	response.setData(recvline);
+
+	app.logger().debug("ending sendMessageToClock");
 }
 
-void MarketPlaceSys::initialize(Poco::Util::Application &app)
+void MarketPlaceSys::initialize()
 {
     int statusCd = 0;
+	Poco::Util::Application& app = Poco::Util::Application::instance();
     app.logger().debug("Initialization market place System");
 
     unsigned short port = (unsigned short)
                 app.config().getInt("clock_port", 3333);
-    
+
     unsigned pareto_fronts_to_send = (unsigned)
                 app.config().getInt("pareto_fronts_to_send", 3);
-    
+
     Poco::UInt16 u16Port = (Poco::UInt16) port;
 
 	// Get the interval to send information
@@ -158,15 +166,15 @@ void MarketPlaceSys::initialize(Poco::Util::Application &app)
 					app.config().getInt("send_information_on_interval", 1);
 
 	_send_interval = send_interval;
-	
+
 
 	// Get the number of intervals for making a round of bids
 	unsigned short intervals_per_cycle = (unsigned short)
 					app.config().getInt("intervals_per_cycle", 2);
-	
+
 	// initialize variable
 	_intervals_per_cycle = intervals_per_cycle;
-	
+
 	try{//
 		// Connection string to POCO
 		std::string db_host = (std::string)
@@ -202,9 +210,9 @@ void MarketPlaceSys::initialize(Poco::Util::Application &app)
 		throw MarketPlaceException(e.what(), e.code());
 	}
 
-    
+
 	FoundationSys::initialize(app, 0, pareto_fronts_to_send);
-	
+
     try{
     	std::string clock_address = app.config().getString("clock_server_address");
 
@@ -278,7 +286,7 @@ void MarketPlaceSys::addAsClockListener(Poco::UInt16 port, std::string type)
 	port_msg.setParameter("Port", portStr);
 	port_msg.setParameter("Type", type);
 	sendMessageToClock(port_msg, messageResponse);
-	
+
     // If the message is not ok, show the message description and rise an exception
     if (!(messageResponse.isMessageStatusOk())){
 		std::string statusDescr = messageResponse.getParameter("Status_Description");
@@ -288,7 +296,7 @@ void MarketPlaceSys::addAsClockListener(Poco::UInt16 port, std::string type)
 
 const char* MarketPlaceSys::name() const
 {
-    if (p_cName.size() > 0) 
+    if (p_cName.size() > 0)
 		p_cName.c_str();
     else
 		return "Subsystem Market Place ";
@@ -316,11 +324,11 @@ bool MarketPlaceSys::isAlreadyListener(Poco::Net::SocketAddress socketAddress)
 	return found;
 }
 
-void MarketPlaceSys::getMessage(Poco::FIFOBuffer & fifoIn, 
+void MarketPlaceSys::getMessage(Poco::FIFOBuffer & fifoIn,
 						  int len, Message &message )
 {
 	// If the socket address corresponds to a listener, then the message size
-	// could be unlimited, when it is not a listener then we have as its 
+	// could be unlimited, when it is not a listener then we have as its
 	// limit 1024.
 	std::string receiveString;
 	std::size_t i = 0;
@@ -349,13 +357,13 @@ bool MarketPlaceSys::getMessage(Poco::Net::SocketAddress socketAddress, Message 
 
 
 void MarketPlaceSys::addStagedData(Poco::Net::SocketAddress socketAddress,
-								   Poco::FIFOBuffer & fifoIn, 
+								   Poco::FIFOBuffer & fifoIn,
 								   int len)
 {
 	// If the socket address corresponds to a listener, then the message size
-	// could be unlimited, when it is not a listener then we have as its 
+	// could be unlimited, when it is not a listener then we have as its
 	// limit 1024.
-	
+
 	bool found = false;
 	Listeners::iterator it;
 	it = _listeners.find(socketAddress);
@@ -369,7 +377,7 @@ void MarketPlaceSys::addStagedData(Poco::Net::SocketAddress socketAddress,
 	}
 }
 
-void MarketPlaceSys::insertListener(std::string idListener, 
+void MarketPlaceSys::insertListener(std::string idListener,
 							 Poco::Net::SocketAddress socketAddress,
 							 Message & messageResponse )
 {
@@ -384,16 +392,16 @@ void MarketPlaceSys::insertListener(std::string idListener,
 	else
 	{
 		Listener *listener = new Listener(idListener, socketAddress);
-		
+
 		_listeners.insert( std::pair<Poco::Net::SocketAddress, Listener *>(socketAddress,listener));
 		_listeners_by_id.insert( std::pair<std::string, Listener *>(idListener,listener));
-		
+
 		messageResponse.setResponseOk();
 		app.logger().information(Poco::format("listener %s inserted", idListener));
 	}
 }
 
-void MarketPlaceSys::startListening(Poco::Net::SocketAddress socketAddress, 
+void MarketPlaceSys::startListening(Poco::Net::SocketAddress socketAddress,
 							 Poco::UInt16 port, std::string type,
 							 ProviderCapacityType capacity_type,
 							 Message & messageResponse)
@@ -402,7 +410,7 @@ void MarketPlaceSys::startListening(Poco::Net::SocketAddress socketAddress,
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().information(Poco::format("Start Listening by port:%u, type:%s", port, type ));
 
-	
+
 	Listeners::iterator it;
 	it = _listeners.find(socketAddress);
 	if (it != _listeners.end())
@@ -411,11 +419,14 @@ void MarketPlaceSys::startListening(Poco::Net::SocketAddress socketAddress,
 		try
 		{
 			Poco::Net::SocketAddress sockadd(sa.host(), port);
+
+			app.logger().debug("Socket address:" + sa.toString());
+
 			(*(it->second)).Connect(sockadd);
 			(*(it->second)).setListeningPort(port);
 			(*(it->second)).setType(type);
 			// If the listener is a provider, we added to the list of providers.
-			if (type.compare("provider") ==  0)
+			if (type.compare("provider") == 0 )
 			{
 				std::string providerId = (it->second)->getId();
 				app.logger().information(Poco::format("Connecting provider with Id: %s", providerId) );
@@ -425,18 +436,18 @@ void MarketPlaceSys::startListening(Poco::Net::SocketAddress socketAddress,
 			insertListenerBytype(type, (*(it->second)).getId());
 			messageResponse.setParameter("Period", (int) _period);
 			messageResponse.setResponseOk();
-			
+
 		} catch(const Poco::InvalidArgumentException &ex) {
 			throw MarketPlaceException("Invalid host", 307);
 		} catch(const Poco::Net::ServiceNotFoundException &ex){
 			throw MarketPlaceException("Invalid port", 301);
-		}		
+		}
 	}
     else
     {
 		throw MarketPlaceException("The agent is not connected", 302);
 	}
-	
+
 	app.logger().information(Poco::format("Ending Start Listening by port:%u, type:%s", port, type ));
 }
 
@@ -448,41 +459,41 @@ void MarketPlaceSys::insertListenerBytype(std::string type, std::string listener
 	{
 		std::vector<std::string> list;
 		_listeners_by_type.insert(std::pair<std::string, std::vector<std::string> > (type, list));
-		
+
 	}
 	it = _listeners_by_type.find(type);
-	(it->second).push_back(listenerId);	
+	(it->second).push_back(listenerId);
 }
 
 void MarketPlaceSys::reinitiateDataContainers(MARKET_HISTORY_PERIOD subperiod)
 {
-	
+
 	BidContainer::iterator it;
 	for (it = _bids_to_broadcast.begin(); it != _bids_to_broadcast.end() ; ++it)
 	{
 		_bids_to_broadcast.erase(it);
 	}
-		
+
     if (_current_purchases != NULL){
-		std::string periodStd = Poco::NumberFormatter::format((int) _period); 
+		std::string periodStd = Poco::NumberFormatter::format((int) _period);
 		std::string subPeriodStd = Poco::NumberFormatter::format((int) subperiod);
 		periodStd = periodStd + subPeriodStd;
-		
+
 	 	_purchase_history.insert( std::pair< std::string, PurchaseInformation *> (periodStd, _current_purchases) );
 		// Initialize again current purchases
 		_current_purchases = NULL;
-									   
+
 	}
-	
+
 	// Creates the new structure for the information.
 	if (_current_purchases == NULL){
 		_current_purchases = new PurchaseInformation();
 	}
-		
+
 	ServiceContainer::iterator it_services;
 	for (it_services = _services.begin(); it_services != _services.end(); ++it_services)
 		_current_purchases->addService(it_services->first);
-		
+
 }
 
 
@@ -502,17 +513,19 @@ void MarketPlaceSys::initializePeriodSession(unsigned interval)
 		disseminateInformation();
 		reinitiateDataContainers(START);
 	}
-		
+
 	app.logger().information(Poco::format("Ending initialize interval session: %d", (int) interval));
 
 }
 
 void MarketPlaceSys::broadCastInformation(Message & message, std::string type)
 {
-	// std::cout << "Starting broadcast information to type" << type << std::endl;
-	
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("starting broadCastInformation");
+	app.logger().debug(Poco::format("message: %s", message.to_string()));
+
 	std::map<std::string, std::vector<std::string> >::iterator it_type;
-		
+
 	it_type = _listeners_by_type.find(type);
 	if ( it_type != _listeners_by_type.end() )
 	{
@@ -520,7 +533,7 @@ void MarketPlaceSys::broadCastInformation(Message & message, std::string type)
 		std::vector<std::string> list = it_type->second;
 		std::vector<std::string>::iterator it_strings;
 		it_strings = list.begin();
-		
+
 		while (it_strings != list.end())
 		{
 			std::map<std::string, Listener *>::iterator it = _listeners_by_id.find(*it_strings);
@@ -530,32 +543,33 @@ void MarketPlaceSys::broadCastInformation(Message & message, std::string type)
 				{
 					try
 					{
-						(*(it->second)).write(message.to_string());					
+						(*(it->second)).write(message.to_string());
 					}
 					catch (FoundationException &e)
 					{
-						Poco::Util::Application& app = Poco::Util::Application::instance();
 						std::string msg = "Ther listener: ";
 						msg.append(it->first);
 						msg.append("is not listening anymore");
 						app.logger().error(msg);
-						
+
 						// Remove the listener from the list.
 					}
 				}
-			}	
+			}
 			++it_strings;
 		}
 	}
+
+	app.logger().debug("ending broadCastInformation");
 }
 
 void MarketPlaceSys::saveBidInformation(void)
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().information("Starting saveBidInformation");
-	
+
 	if (_period > 0){
-	
+
 		BidContainer::iterator it;
 		for (it = _bids_to_broadcast.begin(); it != _bids_to_broadcast.end() ; ++it)
 		{
@@ -584,60 +598,60 @@ void MarketPlaceSys::broadCastBidInformation(void)
 
 	Poco::XML::AutoPtr<Poco::XML::Document> pDoc = new Poco::XML::Document;
 	Poco::XML::AutoPtr<Poco::XML::Element> pCompetitorBids = pDoc->createElement("New_Bids");
-		
+
 	BidContainer::iterator it;
 	for (it = _bids_to_broadcast.begin(); it != _bids_to_broadcast.end() ; ++it)
 	{
 		Bid * bid = (it->second);
 		bid->to_XML(pDoc, pCompetitorBids);
 	}
-	
+
 	pDoc->appendChild(pCompetitorBids);
 	Poco::XML::DOMWriter writer;
 	writer.setNewLine("\n");
 	writer.setOptions(Poco::XML::XMLWriter::PRETTY_PRINT);
-	std::stringstream  output; 
-	writer.writeNode(output, pDoc);	
+	std::stringstream  output;
+	writer.writeNode(output, pDoc);
 	message.setBody(output.str());
-	
+
 	// Send the message to providers and presenters.
 	broadCastInformation(message, "provider");
 	broadCastInformation(message, "presenter");
-	
+
 }
 
 
 void MarketPlaceSys::sendProviderPurchaseInformation(void)
 {
-	
+
 	// Iterate over the providers and send the information of purchases for the period.
     std::map<std::string, Provider *>::iterator it_provider;
-    for(it_provider = _providers.begin(); it_provider != _providers.end(); it_provider++) 
+    for(it_provider = _providers.begin(); it_provider != _providers.end(); it_provider++)
     {
 		// std::cout << "In sendProviderPurchaseInformation: Provider" << it_provider->first << std::endl;
 		std::map<std::string, Listener *>::iterator it_listeners;
 		it_listeners = _listeners_by_id.find(it_provider->first);
 		if (it_listeners != _listeners_by_id.end())
 		{
-	
+
 			if (_current_bids != NULL)
-			{				
-				Poco::XML::AutoPtr<Poco::XML::Document> pDoc = new Poco::XML::Document;		
+			{
+				Poco::XML::AutoPtr<Poco::XML::Document> pDoc = new Poco::XML::Document;
 				Poco::XML::AutoPtr<Poco::XML::Element> pParentPurchaseUsage = pDoc->createElement("Receive_Purchases");
 
 				// Get provider's bids and for each of them gets its neighbors
 				std::map<std::string, std::vector<std::string> > bids;
 
 				(*_current_bids).getProviderBids(it_provider->first, bids);
-								
-				(*_current_purchases).getPurchasesForProvider(pDoc, pParentPurchaseUsage, bids); 
-								
+
+				(*_current_purchases).getPurchasesForProvider(pDoc, pParentPurchaseUsage, bids);
+
 				pDoc->appendChild(pParentPurchaseUsage);
 				Poco::XML::DOMWriter writer;
 				writer.setNewLine("\n");
 				writer.setOptions(Poco::XML::XMLWriter::PRETTY_PRINT);
-				std::stringstream  output; 
-				writer.writeNode(output, pDoc);	
+				std::stringstream  output;
+				writer.writeNode(output, pDoc);
 				Message message;
 				Method method = receive_purchase_feedback;
 				message.setMethod(method);
@@ -656,10 +670,10 @@ void MarketPlaceSys::sendProviderPurchaseInformation(void)
 					msg.append("is not listening anymore");
 					app.logger().error(msg);
 				}
-				
+
 				broadCastInformation(message, "presenter");
 			}
-		}	
+		}
 	}
 }
 
@@ -684,8 +698,8 @@ void MarketPlaceSys::disseminateInformation()
 {
 
 	broadCastBidInformation();
-	sendProviderPurchaseInformation();	
-	
+	sendProviderPurchaseInformation();
+
 }
 
 void MarketPlaceSys::finalizePeriodSession(unsigned  period,  Message & messageResponse)
@@ -697,7 +711,7 @@ void MarketPlaceSys::finalizePeriodSession(unsigned  period,  Message & messageR
 	saveInformation();
 	disseminateInformation();
 	reinitiateDataContainers(END);
-	
+
 	activatePresenter();
 	messageResponse.setResponseOk();
 }
@@ -710,27 +724,27 @@ void MarketPlaceSys::addBid(Bid * bidPtr, Message & messageResponse)
 
 	// First verify that the bid was not included
 	std::map<std::string, Bid *>::iterator it;
-	 
+
 	it = _bids.find((*bidPtr).getId());
 	if (it == _bids.end())
 	{
-		// Verify if the service exist 
+		// Verify if the service exist
 		bool exist = (*_current_bids).existService((*bidPtr).getService());
-		
+
 		if (!exist){
 			// When it does not exist then creates the service
 			// std::cout << "adding service in the market place" << std::endl;
 			(*_current_bids).addService((*bidPtr).getService());
 		}
-		
+
 		// In any case inserts the bid into the service container, this part
-		// also verifies whether or not the bid given belongs to the best bids. 
+		// also verifies whether or not the bid given belongs to the best bids.
 		(*_current_bids).addBidToService(bidPtr);
 		// std::cout << "Bid inserted in the market place" << std::endl;
-		
+
 		// Insert the bid in the container
 		_bids.insert(std::pair<std::string, Bid *> ((*bidPtr).getId(), bidPtr));
-		
+
 		// Insert in the brodcast container
 		_bids_to_broadcast.insert(std::pair<std::string, Bid *> ((*bidPtr).getId(), bidPtr));
 
@@ -750,16 +764,16 @@ void MarketPlaceSys::deleteBid(Bid * bidPtr, Message & messageResponse)
 {
 	// First verify that the bid was not included
 	std::map<std::string, Bid *>::iterator it;
-	 
+
 	it = _bids.find((*bidPtr).getId());
 	if (it != _bids.end())
 	{
-		
+
 		// In any case deletes the bid into the service container, so the bid
 		// does not continue in the pareto front.
 		(*_current_bids).deleteBidToService(bidPtr);
 		// std::cout << "Bid inserted in the market place" << std::endl;
-		
+
 		// Deletes all the neighbors of the bid
 		Bid * bidSearched = it->second;
 		std::vector<std::string> neigbors;
@@ -778,7 +792,7 @@ void MarketPlaceSys::deleteBid(Bid * bidPtr, Message & messageResponse)
 
 		// Insert in the brodcast container
 		_bids_to_broadcast.insert(std::pair<std::string, Bid *> ((*bidPtr).getId(), bidPtr));
-					
+
 		// set the response as Ok
 		messageResponse.setResponseOk();
 	}
@@ -798,13 +812,13 @@ void MarketPlaceSys::addPurchaseBulkCapacity(Provider *provider, Service *servic
 	{
 		// In any case inserts the purchase into the service container.
 		(*_current_purchases).addPurchaseToService(purchasePtr, purchaseFound);
-		
+
 		// std::cout << "Purchase inserted in the market place" << std::endl;
 		_purchases.insert(std::pair<std::string, Purchase *>((*purchasePtr).getId(), purchasePtr) );
-		
+
 		// Deducts from the availability
 		provider->deductAvailability(_period, service, purchasePtr, bid);
-		
+
 		// Establishes the quantity purchased as a feedback to the agent.
 		messageResponse.setParameter("Quantity_Purchased", purchasePtr->getQuantityStr());
 	}
@@ -813,12 +827,14 @@ void MarketPlaceSys::addPurchaseBulkCapacity(Provider *provider, Service *servic
 		// Set the quantity to purchase equal to zero as it is not going to purchase anything.
 		purchasePtr->setQuantityBacklog(purchasePtr->getQuantity());
 		purchasePtr->setQuantity(0);
-		
+
 		// In any case inserts the purchase into the service container.
 		(*_current_purchases).addPurchaseToService(purchasePtr, purchaseFound);
 
 		messageResponse.setParameter("Quantity_Purchased", "0");
 	}
+
+	app.logger().debug("Ending addPurchaseBulkCapacity");
 
 }
 
@@ -840,12 +856,12 @@ void MarketPlaceSys::addPurchaseByBidCapacity(Provider *provider, Service *servi
 		messageResponse.setParameter("Quantity_Purchased", purchasePtr->getQuantityStr());
 
 	} else {
-		
+
 		// It establish the backlog for that bid.
 		if (purchaseFound == false) {
 			purchasePtr->setQuantityBacklog(purchasePtr->getQuantity() - bid->getCapacity());
 		}
-		
+
 		// It buys the quantity available.
 		purchasePtr->setQuantity(bid->getCapacity());
 
@@ -865,15 +881,15 @@ void MarketPlaceSys::addPurchase(Purchase * purchasePtr, Message & messageRespon
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().information(Poco::format("Add Purchase Id:%s :Period:%d :BidId:%s qtyRequested:%f", purchasePtr->getId(), (int) _period, purchasePtr->getBid(), purchasePtr->getQuantity() ));
-	
+
 
 	try {
 
 		// Search if the purchased has already sent for another bid.
 		bool purchaseFound = false;
-		
+
 		std::map<std::string, int >::iterator it;
-		it = request_purchases.find(purchasePtr->getId()); 
+		it = request_purchases.find(purchasePtr->getId());
 		if ( it !=  request_purchases.end()){
 			it->second = it->second + 1;
 			purchaseFound = true;
@@ -888,12 +904,12 @@ void MarketPlaceSys::addPurchase(Purchase * purchasePtr, Message & messageRespon
 		{
 			Service * service = getService(purchasePtr->getService());
 			Provider * provider = getProvider(bid->getProvider());
-			
+
 			if (provider->getCapacityType() == BULK_CAPACITY)
 				addPurchaseBulkCapacity(provider, service, bid, purchasePtr, purchaseFound, messageResponse);
 			else
 				addPurchaseByBidCapacity(provider, service, bid, purchasePtr, purchaseFound, messageResponse);
-				
+
 			// set the response as Ok
 			messageResponse.setResponseOk();
 		}
@@ -908,7 +924,7 @@ void MarketPlaceSys::addPurchase(Purchase * purchasePtr, Message & messageRespon
 	} catch (MarketPlaceException &e) {
 		app.logger().error(Poco::format("could not purchase -raise exception error:%s", e.message()) );
 		throw e;
-		
+
 	}
 }
 
@@ -927,7 +943,7 @@ void MarketPlaceSys::setProviderAvailability(std::string providerId,
 	app.logger().debug("Ending -------- MarketPlaceSys - setProviderAvailability");
 }
 
-void MarketPlaceSys::getBestBids(std::string providerId, std::string serviceId, 
+void MarketPlaceSys::getBestBids(std::string providerId, std::string serviceId,
 								Message & messageResponse)
 {
 
@@ -937,8 +953,8 @@ void MarketPlaceSys::getBestBids(std::string providerId, std::string serviceId,
 	int fronts = getParetoFrontsToExchange();
 
 	messageResponse.setResponseOk();
-	// Constructs a message with header and body, 
-	// the header is composed of the service and the number of pareto fronts 
+	// Constructs a message with header and body,
+	// the header is composed of the service and the number of pareto fronts
 	// delivered. The body corresponds to the bids delivered.
     std::string xml = (*_current_bids).getBestBids(serviceId, fronts);
 	messageResponse.setParameter("Service", serviceId);
@@ -949,7 +965,7 @@ void MarketPlaceSys::getBestBids(std::string providerId, std::string serviceId,
 
 }
 
-void MarketPlaceSys::getBestBids(std::string providerId, std::string serviceId, 
+void MarketPlaceSys::getBestBids(std::string providerId, std::string serviceId,
 								 int fronts, Message & messageResponse)
 {
 
@@ -957,9 +973,9 @@ void MarketPlaceSys::getBestBids(std::string providerId, std::string serviceId,
 	app.logger().debug(Poco::format("Entering getBestBids - fronts: %d", fronts));
 
 	messageResponse.setResponseOk();
-	
-	// Constructs a message with header and body, 
-	// the header is composed of the service and the number of pareto fronts 
+
+	// Constructs a message with header and body,
+	// the header is composed of the service and the number of pareto fronts
 	// delivered. The body corresponds to the bids delivered.
     std::string xml = (*_current_bids).getBestBids(serviceId, fronts);
 	messageResponse.setParameter("Service", serviceId);
@@ -974,7 +990,7 @@ void MarketPlaceSys::sendBid(std::string bidId, Message & messageResponse)
 {
 
 	messageResponse.setResponseOk();
-	
+
     Bid * bid = getBid(bidId);
 	bid->toMessage(messageResponse);
 }
@@ -1044,35 +1060,59 @@ void MarketPlaceSys::storeCurrentPurchaseInformation()
 		if (_current_purchases != NULL)
 		{
 			_current_purchases->toDatabase(_pool, FoundationSys::getExecutionCount() , (int) _period -1 );
-		} 
+		}
 		else{
 			app.logger().debug(Poco::format("no current purchases to store - Period:%d", (int) _period) );
 		}
-	} 
+	}
 	else {
 		app.logger().debug(Poco::format("invalid period - Period:%d", (int) _period) );
 	}
 	app.logger().debug("Ending storeCurrentPurchaseInformation");
 }
 
-void MarketPlaceSys::removeListener(std::string idListener)
+void MarketPlaceSys::deleteListener( Poco::Net::SocketAddress socketAddress,
+						      Message & messageResponse )
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().debug("Starting removeListener");
-
+	Poco::LogStream lstr(app.logger());
+	lstr << "Start deleteListener" << std::endl;
 	Listener *list = NULL;
-    // remove the listener from the vector
-	std::map<Poco::Net::SocketAddress, Listener*>::iterator it;
-    for (it = _listeners.begin(); it != _listeners.end(); ++it ){
-    	if ((it->second)->getId().compare(idListener) == 0){
-    		list = it->second;
-    		_listeners.erase(it);
-    	}
-    }
 
-    if (list != NULL){
-    	// Delete the listener from the list of listeners by type.
+
+	// Find the listener
+	Listeners::iterator it;
+	bool found = false;
+
+	lstr << "Nbr Listeners:" << _listeners.size() << std::endl;
+
+    std::string sockAddrPar = socketAddress.toString();
+
+    lstr << "Sock Address Par:" << sockAddrPar << std::endl;
+	it = _listeners.begin();
+	while( (it!=_listeners.end()) && (found ==false) )
+	{
+		Poco::Net::SocketAddress sa = (*(it->second)).getSocketAddress();
+		std::string sockAddrStr = sa.toString();
+
+		lstr << "Ssock Address:" << sockAddrStr << std::endl;
+
+		if ( sockAddrPar.compare(sockAddrStr) == 0 ){
+		   found = true;
+		   break;
+		}
+		++it;
+	}
+
+    lstr << "address found:" << found << std::endl;
+
+    if (found == true){
+		list = it->second;
+		_listeners.erase(it);
+		std::string idListener = list->getId();
 		std::string type = list->getTypeStr();
+
+    	// Delete the listener from the list of listeners by type.
 		std::map<std::string, std::vector<std::string> >::iterator it2;
 		it2 = _listeners_by_type.find(type);
 		if (it2 != _listeners_by_type.end()){
@@ -1102,6 +1142,9 @@ void MarketPlaceSys::removeListener(std::string idListener)
 			}
 		}
 
+		// Disconnect the socket.
+		list->Disconnect();
+
 		// Finally dispose the listener object
 		delete list;
     }
@@ -1119,10 +1162,10 @@ bool MarketPlaceSys::sendInformation(unsigned interval)
 	bool val_return = false;
 	if ( (interval % _intervals_per_cycle) == _send_interval)
 		val_return = true;
-	
+
 	app.logger().debug(Poco::format("Ending sendInformation %b", val_return));
 	return val_return;
-	
+
 }
 
 }  /// End Eco namespace

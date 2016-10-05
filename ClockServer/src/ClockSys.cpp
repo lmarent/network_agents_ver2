@@ -162,6 +162,7 @@ void ClockSys::addStagedData(Poco::Net::SocketAddress socketAddress,
 	}
 	else
 	{
+		std::cout << "The agent is not a listener" << std::endl;
 		throw ClockServerException("The agent is not a listener", 303);
 	}
 }
@@ -173,6 +174,7 @@ void ClockSys::insertListener(std::string idListener,
 {
 	if (isAlreadyListener(idListener))
 	{
+		std::cout << "The agent is already a listener" << std::endl;
 		throw ClockServerException("The agent is already a listener", 302);
 	}
 	else
@@ -216,21 +218,29 @@ void ClockSys::startListening(Poco::Net::SocketAddress socketAddress,
 			insertListenerBytype(type, (*(it->second)).getId());
 			messageResponse.setResponseOk();
 		} catch(const Poco::InvalidArgumentException &ex) {
+			std::cout << "Invalid host" << std::endl;
 			throw ClockServerException("Invalid host", 307);
 		} catch(const Poco::Net::ServiceNotFoundException &ex){
+			std::cout << "Invalid port" << std::endl;
 			throw ClockServerException("Invalid port", 301);
 		}
 	}
     else
     {
 		app.logger().debug("Error the agent is not connected");
+		std::cout << "The agent is not connected" << std::endl;
 		throw ClockServerException("The agent is not connected", 302);
 	}
 
+	app.logger().debug("Ending - startListening ");
 }
 
 void ClockSys::insertListenerBytype(std::string type, std::string listenerId)
 {
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("Start - insertListenerBytype ");
+
 	std::map<std::string, std::vector<std::string> >::iterator it;
 	it = _listeners_by_type.find(type);
 	if (it == _listeners_by_type.end())
@@ -241,7 +251,32 @@ void ClockSys::insertListenerBytype(std::string type, std::string listenerId)
 	}
 	it = _listeners_by_type.find(type);
 	(it->second).push_back(listenerId);
+
+	app.logger().debug("Ending - insertListenerBytype ");
 }
+
+void ClockSys::deleteListenerBytype(std::string type, std::string listenerId)
+{
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("Start - deleteListenerBytype ");
+
+	// Find the type in the list of listener types.
+	std::map<std::string, std::vector<std::string> >::iterator it;
+	it = _listeners_by_type.find(type);
+	if (it != _listeners_by_type.end())
+	{
+		// Find the specific listener id in the list.
+		std::vector<std::string>::iterator iter_list_ids;
+		for (unsigned i=0; (it->second).size(); ++i){
+    		if (listenerId.compare((it->second)[i]) == 0)
+    			(it->second).erase((it->second).begin() + i);
+		}
+	}
+
+	app.logger().debug("Ending - deleteListenerBytype ");
+}
+
 
 void ClockSys::sendCurrentPeriod(Poco::Net::SocketAddress socketAddress,
 								 Message & messageResponse)
@@ -271,6 +306,7 @@ void ClockSys::sendCurrentPeriod(Poco::Net::SocketAddress socketAddress,
 		++it;
 	}
     if (found == false){
+		std::cout << "The agent is not inscribed as listener" << std::endl;
 		throw ClockServerException("The agent is not inscribed as listener", 303);
 	}
 
@@ -282,6 +318,10 @@ bool ClockSys::getMessage(Poco::Net::SocketAddress socketAddress,
 				Message & message)
 {
 	bool val_return = false;
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("Start - getMessage");
+
 	Listeners::iterator it;
 	it = _listeners.find(socketAddress);
 	if ( it != _listeners.end())
@@ -290,8 +330,12 @@ bool ClockSys::getMessage(Poco::Net::SocketAddress socketAddress,
 	}
 	else
 	{
+		std::cout << "The agent is not a listener" << std::endl;
 		throw ClockServerException("The agent is not a listener", 303);
 	}
+
+	app.logger().debug("End - getMessage");
+
 	return val_return;
 }
 
@@ -424,9 +468,14 @@ void ClockSys::broadcastPeriodStart(void)
     Method method = start_period;
     startPeriod.setMethod(method);
     startPeriod.setParameter("Period", Poco::NumberFormatter::format(_period));
+
+    app.logger().debug(Poco::format("Message: %s", startPeriod.to_string()) );
+
     it = _listeners.begin();
 	while( it!=_listeners.end() )
 	{
+		app.logger().debug(Poco::format("sending message to %s", (it->second)->getId()));
+
 		if ( ( (*(it->second)).getStatus() == 1 ) and
 		     ((*(it->second)).getType() != type )  ){
 			// the listener is connected and it is not consumer.
@@ -572,13 +621,22 @@ void ClockSys::deleteListener( Poco::Net::SocketAddress socketAddress,
 	Listeners::iterator it;
 	it = _listeners.begin();
 	bool found = false;
+
+	lstr << "Nbr Listeners:" << _listeners.size() << std::endl;
+
     std::string sockAddrPar = socketAddress.toString();
+
+    lstr << "Sock Address Par:" << sockAddrPar << std::endl;
+
 	while( (it!=_listeners.end()) && (found ==false) )
 	{
 		Poco::Net::SocketAddress sa = (*(it->second)).getSocketAddress();
 		std::string sockAddrStr = sa.toString();
+
+		lstr << "Ssock Address:" << sockAddrStr << std::endl;
+
 		if ( sockAddrPar.compare(sockAddrStr) == 0 ){
-		   found ==true;
+		   found = true;
 		   break;
 		}
 		++it;
@@ -586,7 +644,18 @@ void ClockSys::deleteListener( Poco::Net::SocketAddress socketAddress,
 
     if (found == true){
 		// Disconnect the socket that is waiting for periods
-		(*(it->second)).Disconnect();
+		Listener *listener = (it->second);
+		listener->Disconnect();
+
+		// Delete from the listeners by type repository.
+		std::map<std::string, Listener *>::iterator listeners_by_id_iter;
+		listeners_by_id_iter = _listeners_by_id.find(listener->getId());
+		if (listeners_by_id_iter != _listeners_by_id.end())
+			_listeners_by_id.erase(listeners_by_id_iter);
+
+		// Delete from the listeners by type repository
+		deleteListenerBytype(listener->getTypeStr(), listener->getId());
+
 		// Erase the agent from the list of listeners
 		_listeners.erase(it);
 		messageResponse.setResponseOk();
@@ -594,6 +663,8 @@ void ClockSys::deleteListener( Poco::Net::SocketAddress socketAddress,
 	else
 	{
 	    // Build an exception to the agent saying that it is not a current listener.
+	    lstr << "The agent is not inscribed as listener" << std::endl;
+	    std::cout << "The agent is not inscribed as listener" << std::endl;
 	    throw ClockServerException("The agent is not inscribed as listener", 303);
 	}
 

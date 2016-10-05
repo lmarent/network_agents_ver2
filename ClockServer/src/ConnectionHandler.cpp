@@ -49,6 +49,10 @@
 #include <Poco/Types.h>
 #include <Poco/NumberParser.h>
 #include <Poco/NumberFormatter.h>
+#include <Poco/LogStream.h>
+#include <Poco/Net/NetException.h>
+
+
 
 #include "FoundationException.h"
 #include "ClockServerException.h"
@@ -56,6 +60,8 @@
 #include "ClockSys.h"
 #include "ClockServer.h"
 #include "Message.h"
+
+using Poco::LogStream;
 
 namespace ChoiceNet
 {
@@ -98,10 +104,24 @@ _fifoOut(BUFFER_SIZE, true)
 ConnectionHandler::~ConnectionHandler()
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
+
 	try
 	{
-		std::cout << "Disconnecting" << _socket.peerAddress().toString();
 		app.logger().information("Disconnecting " + _socket.peerAddress().toString());
+		ChoiceNet::Eco::Message messageResponse;
+
+		ClockServer &server = dynamic_cast<ClockServer&>(app);
+		ClockSys * clocksys = server.getClockSubsystem();
+		(*clocksys).deleteListener( _socket.peerAddress(), messageResponse );
+		app.logger().information("deleted the listener");
+	}
+	catch (Poco::Net::NetException &e){
+		// peer not connected.
+	}
+
+
+	try
+	{
 
 		_reactor.removeEventHandler(_socket, Poco::NObserver<ConnectionHandler,
 					Poco::Net::ReadableNotification>(*this, &ConnectionHandler::onSocketReadable));
@@ -116,8 +136,11 @@ ConnectionHandler::~ConnectionHandler()
 		_fifoIn.writable -= Poco::delegate(this, &ConnectionHandler::onFIFOInWritable);
 
 	} catch (Poco::SystemException &e){
+		std::cout << "closing the ConnectionHandler because a SystemException" << std::endl;
 		throw ClockServerException( e.message());
+
 	}catch(Poco::Exception &e){
+		std::cout << "closing the ConnectionHandler because a PocoException" << e.className() << e.message() << std::endl;
 		throw ClockServerException("ERROR IN CLOSING CONNECTION");
 	}
 
@@ -147,12 +170,17 @@ void ConnectionHandler::Connect(Poco::Net::SocketAddress socketAddress,
 									   ChoiceNet::Eco::Message & message,
 									   ChoiceNet::Eco::Message & messageResponse)
 {
-	std::string listenerId = message.getParameter("Agent");
 
 	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().information("start Connect");
+
+	std::string listenerId = message.getParameter("Agent");
 	ClockServer &server = dynamic_cast<ClockServer&>(app);
 	ClockSys *clocksys = server.getClockSubsystem();
 	(*clocksys).insertListener(listenerId, socketAddress, messageResponse);
+
+	app.logger().information("ending Connect");
+
 }
 
 void ConnectionHandler::providerStartListening(Poco::Net::SocketAddress socketAddress,
@@ -169,7 +197,6 @@ void ConnectionHandler::providerStartListening(Poco::Net::SocketAddress socketAd
 	std::string type = message.getParameter("Type");
 	if ( Uport <= 0xFFFF)
 	{
-		Poco::Util::Application& app = Poco::Util::Application::instance();
 		ClockServer &server = dynamic_cast<ClockServer&>(app);
 		ClockSys * clocksys = server.getClockSubsystem();
 		Poco::UInt16 u16Port = (Poco::UInt16) Uport;
@@ -177,6 +204,7 @@ void ConnectionHandler::providerStartListening(Poco::Net::SocketAddress socketAd
 	}
 	else
 	{
+		std::cout << "Invalid Port" << std::endl;
 		app.logger().debug("Invalid Port");
 		throw ClockServerException("Invalid Port", 301);
 	}
@@ -188,20 +216,32 @@ void ConnectionHandler::sendCurrentPeriod(Poco::Net::SocketAddress socketAddress
 										  ChoiceNet::Eco::Message & messageRequest,
 										  ChoiceNet::Eco::Message & messageResponse)
 {
+
 	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().information("start sendCurrentPeriod");
+
 	ClockServer &server = dynamic_cast<ClockServer&>(app);
 	ClockSys * clocksys = server.getClockSubsystem();
 	(*clocksys).sendCurrentPeriod(socketAddress, messageResponse);
+
+	app.logger().information("ending sendCurrentPeriod");
+
 }
 
 void ConnectionHandler::disconnectListener(Poco::Net::SocketAddress socketAddress,
 										   ChoiceNet::Eco::Message & messageRequest,
 										   ChoiceNet::Eco::Message & messageResponse)
 {
+
 	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().information("Start disconnectListener");
+
 	ClockServer &server = dynamic_cast<ClockServer&>(app);
 	ClockSys * clocksys = server.getClockSubsystem();
 	(*clocksys).deleteListener( socketAddress, messageResponse );
+
+	app.logger().information("Ending disconnectListener");
+
 }
 
 void ConnectionHandler::getServices(Poco::Net::SocketAddress ipAddress,
@@ -210,11 +250,11 @@ void ConnectionHandler::getServices(Poco::Net::SocketAddress ipAddress,
 {
 
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().information("Request for Services");
+	app.logger().information("start getServices");
+
 	ClockServer &server = dynamic_cast<ClockServer&>(app);
 	ClockSys *sys = server.getClockSubsystem();
 
-	std::cout << "In get services" << std::endl;
 	if (messageRequest.existsParameter("Service")){
 		std::string serviceId = messageRequest.getParameter("Service");
 		(*sys).getServices(serviceId, messageResponse);
@@ -222,7 +262,8 @@ void ConnectionHandler::getServices(Poco::Net::SocketAddress ipAddress,
 	else{
 		(*sys).getServices(messageResponse);
 	}
-	std::cout << "Ending get services" << std::endl;
+
+	app.logger().information("Ending main getServices");
 }
 
 void ConnectionHandler::errorProcedure(ChoiceNet::Eco::Message & messageResponse)
@@ -238,6 +279,7 @@ void ConnectionHandler::doProcessing(Poco::Net::SocketAddress socketAddress,
 	Method meth = message.getMethod();
 
 	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().information("start doProcessing");
 
 	// This object will be the response for the calling application.
 	ChoiceNet::Eco::Message messageResponse;
@@ -320,7 +362,10 @@ void ConnectionHandler::doProcessing(Poco::Net::SocketAddress socketAddress,
 	   _fifoOut.resize(_fifoOut.used() + responseStr.length() + 1, true);
 	}
     charactersWritten = _fifoOut.write(responseStr.c_str(), responseStr.length());
-    std::cout << "Character written" << charactersWritten << std::endl;
+
+    LogStream lstr(app.logger());
+	lstr << "ending doProcessing - bytes written" << charactersWritten << std::endl;
+
 }
 
 void ConnectionHandler::onSocketReadable(const Poco::AutoPtr<Poco::Net::ReadableNotification>& pNf)
@@ -330,43 +375,51 @@ void ConnectionHandler::onSocketReadable(const Poco::AutoPtr<Poco::Net::Readable
 
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 
-	if (_socket.available())
+	try
 	{
-
-		int len = _socket.receiveBytes(_fifoIn.next(), _fifoIn.available() );
-
-		_fifoIn.advance(len);
-
-		ClockServer &server = dynamic_cast<ClockServer&>(app);
-		ClockSys *sys = server.getClockSubsystem();
-		ChoiceNet::Eco::Message message;
-
-		if ((*sys).isAlreadyListener(_socket.peerAddress()))
+		if (_socket.available())
 		{
-			(*sys).addStagedData(_socket.peerAddress(), _fifoIn, len);
-			bool defined = true;
-			do {
+
+			int len = _socket.receiveBytes(_fifoIn.next(), _fifoIn.available() );
+
+			_fifoIn.advance(len);
+
+			ClockServer &server = dynamic_cast<ClockServer&>(app);
+			ClockSys *sys = server.getClockSubsystem();
+			ChoiceNet::Eco::Message message;
+
+			if ((*sys).isAlreadyListener(_socket.peerAddress()))
+			{
+				(*sys).addStagedData(_socket.peerAddress(), _fifoIn, len);
+				bool defined = true;
+				do {
+					Message message;
+					defined = (*sys).getMessage(_socket.peerAddress(), message);
+					if (defined == true){
+						app.logger().debug("message to process:%s", message.to_string());
+						doProcessing(_socket.peerAddress(), message);
+					}
+				} while (defined == true);
+			}
+			else
+			{
 				Message message;
-				defined = (*sys).getMessage(_socket.peerAddress(), message);
-				if (defined == true){
-					app.logger().debug("message to process:%s", message.to_string());
-					doProcessing(_socket.peerAddress(), message);
-				}
-			} while (defined == true);
+				app.logger().debug("new listener:%s", (_socket.peerAddress()).toString().c_str());
+				std::string received;
+				(*sys).getMessage(_fifoIn, len, message);
+				doProcessing(_socket.peerAddress(), message);
+			}
 		}
 		else
 		{
-			Message message;
-			app.logger().debug("new listener:%s", (_socket.peerAddress()).toString().c_str());
-			std::string received;
-			(*sys).getMessage(_fifoIn, len, message);
-			doProcessing(_socket.peerAddress(), message);
+			delete this;
+			// std::cout << "Socket is unavailable" << std::endl;
 		}
 	}
-	else
+	catch(ClockServerException &e)
 	{
-		delete this;
-		// std::cout << "Socket is unavailable" << std::endl;
+		// Some required parameter was not given
+		app.logger().debug(Poco::format("Raise a clockserver exception - %s, %d ", e.message(), e.code()) );
 	}
 
 }

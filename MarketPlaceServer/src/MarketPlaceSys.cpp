@@ -955,9 +955,13 @@ void MarketPlaceSys::getProviderAvailability(std::string providerId,
 	Service * service = getService(serviceId);
 
 	if (provider->getCapacityType() == BULK_CAPACITY)
-		getBulkAvailability(resource, quantity);
-	else
-		getBidAvailability(resource, quantity);
+	{
+		getBulkAvailability(provider, service, messageResponse);
+	}
+	else{
+		Bid * bid = getBid(bidId);
+		getBidAvailability(provider, service, bid, messageResponse);
+	}
 
 	messageResponse.setResponseOk();
 	app.logger().debug("Ending -------- MarketPlaceSys - getProviderAvailability");
@@ -970,27 +974,27 @@ void MarketPlaceSys::getBulkAvailability(Provider *provider, Service *service, M
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().debug("Entering getBulkAvailability");
 
-	avail = 0;
-	boolean enter_resource = false;
+	double avail = 0;
+	double avail_tmp = 0;
+	bool enter_resource = false;
 	if (service->hasQualityVariables() == true)
 	{
-		std::map<std::string, DecisionVariable *>::iterator it;
-		for (it=(service->_decision_variables.begin()); it!=(service->_decision_variables.end()); ++it)
+		std::vector<std::string>::iterator it;
+		std::vector<std::string> names = service->getQualityVariables();
+		for (it=names.begin(); it!=names.end(); ++it)
 		{
-			DecisionVariable *variable = it->second;
-			if (variable->getModeling() == MODEL_QUALITY)
+
+			DecisionVariable *variable = service->getDecisionVariable(*it);
+			if (enter_resource == false)
 			{
-				if (enter_resource == false)
+				avail = provider->getResourceAvailability(_period, variable->getResource());
+				enter_resource = true;
+			}
+			else{
+				avail_tmp = provider->getResourceAvailability(_period, variable->getResource());
+				if (avail_tmp < avail)
 				{
-					avail = provider->getResourceAvailability(_period, variable->getResource());
-					enter_resource = true;
-				}
-				else{
-					avail_tmp = provider->getResourceAvailability(_period, variable->getResource());
-					if (avail_tmp < avail)
-					{
-						avail = avail_tmp;
-					}
+					avail = avail_tmp;
 				}
 			}
 		}
@@ -1011,11 +1015,11 @@ void MarketPlaceSys::getBidAvailability(Provider *provider, Service *service, Bi
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().debug("Entering getBidAvailability");
 
-	avail = 0;
+	double avail = 0;
 	bool isActive = (*_current_bids).isBidActive(bid->getService(), bid->getProvider(), bid->getId());
 
 	if (isActive == true){
-		avail = bid->getCapacity() >= purchasePtr->getQuantity())
+		avail = bid->getCapacity();
 	}
 
 	std::ostringstream sstream;

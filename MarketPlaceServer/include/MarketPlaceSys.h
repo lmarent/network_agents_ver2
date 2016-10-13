@@ -130,6 +130,10 @@ public:
 
     void activatePresenter(void);
 
+    void getBulkAvailability(Provider *provider, Service *service, Message & messageResponse);
+
+    void getBidAvailability(Provider *provider, Service *service, Bid *bid, Message & messageResponse);
+
 protected:
     virtual const char* name() const;
     void sendMessageToClock(Message & message, Message & response);

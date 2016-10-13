@@ -857,7 +857,7 @@ void MarketPlaceSys::addPurchaseByBidCapacity(Provider *provider, Service *servi
 
 	} else {
 
-		// It establish the backlog for that bid.
+		// It establishes the backlog for that bid.
 		if (purchaseFound == false) {
 			purchasePtr->setQuantityBacklog(purchasePtr->getQuantity() - bid->getCapacity());
 		}
@@ -942,6 +942,91 @@ void MarketPlaceSys::setProviderAvailability(std::string providerId,
 	messageResponse.setResponseOk();
 	app.logger().debug("Ending -------- MarketPlaceSys - setProviderAvailability");
 }
+
+void MarketPlaceSys::getProviderAvailability(std::string providerId,
+											 std::string serviceId,
+								    		 std::string bidId,
+								    		 Message & messageResponse)
+{
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("Entering MarketPlaceSys - getProviderAvailability");
+
+	Provider * provider = getProvider(providerId);
+	Service * service = getService(serviceId);
+
+	if (provider->getCapacityType() == BULK_CAPACITY)
+		getBulkAvailability(resource, quantity);
+	else
+		getBidAvailability(resource, quantity);
+
+	messageResponse.setResponseOk();
+	app.logger().debug("Ending -------- MarketPlaceSys - getProviderAvailability");
+}
+
+
+void MarketPlaceSys::getBulkAvailability(Provider *provider, Service *service, Message & messageResponse)
+{
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("Entering getBulkAvailability");
+
+	avail = 0;
+	boolean enter_resource = false;
+	if (service->hasQualityVariables() == true)
+	{
+		std::map<std::string, DecisionVariable *>::iterator it;
+		for (it=(service->_decision_variables.begin()); it!=(service->_decision_variables.end()); ++it)
+		{
+			DecisionVariable *variable = it->second;
+			if (variable->getModeling() == MODEL_QUALITY)
+			{
+				if (enter_resource == false)
+				{
+					avail = provider->getResourceAvailability(_period, variable->getResource());
+					enter_resource = true;
+				}
+				else{
+					avail_tmp = provider->getResourceAvailability(_period, variable->getResource());
+					if (avail_tmp < avail)
+					{
+						avail = avail_tmp;
+					}
+				}
+			}
+		}
+	}
+
+	std::ostringstream sstream;
+	sstream << avail;
+	std::string varAsString = sstream.str();
+
+	messageResponse.setParameter("Quantity", varAsString);
+	app.logger().debug("Ending getBulkAvailability");
+
+}
+
+void MarketPlaceSys::getBidAvailability(Provider *provider, Service *service, Bid *bid, Message & messageResponse)
+{
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("Entering getBidAvailability");
+
+	avail = 0;
+	bool isActive = (*_current_bids).isBidActive(bid->getService(), bid->getProvider(), bid->getId());
+
+	if (isActive == true){
+		avail = bid->getCapacity() >= purchasePtr->getQuantity())
+	}
+
+	std::ostringstream sstream;
+	sstream << avail;
+	std::string varAsString = sstream.str();
+
+	messageResponse.setParameter("Quantity", varAsString);
+	app.logger().debug("Ending getBidAvailability");
+
+}
+
 
 void MarketPlaceSys::getBestBids(std::string providerId, std::string serviceId,
 								Message & messageResponse)

@@ -12,15 +12,15 @@ namespace Eco
 #define LINE_SEPARATOR "\r\n"
 #define MESSAGE_SIZE 10
 
-enum Method 
-{ 
-  undefined =1, 
-  connect =2, 
-  receive_bid=3, 
-  get_best_bids=4, 
-  send_port=5, 
-  start_period=6, 
-  end_period=7, 
+enum Method
+{
+  undefined =1,
+  connect =2,
+  receive_bid=3,
+  get_best_bids=4,
+  send_port=5,
+  start_period=6,
+  end_period=7,
   receive_purchase=8,
   get_current_period=9,
   disconnect=10,
@@ -32,44 +32,45 @@ enum Method
   get_bid = 16,
   get_provider_channel = 17,
   get_unitary_cost = 18,
-  activate_presenter=19
+  activate_presenter=19,
+  get_availability=20
 };
 
 
-class Message 
+class Message
 {
 public:
 	Message();
 	Message(std::string data);
-	
-	~Message(); 
-	
+
+	~Message();
+
 	Method getMethod();
-	
+
 	void setData(std::string data);
-	
+
 	std::string getParameter(std::string param);
-	
+
 	bool existsParameter(std::string param);
-	
+
 	void setMethod(Method method);
-	
+
 	std::string getStrMethod();
-	
+
 	void setParameter(std::string parameterKey, std::string parameterValue);
-	
+
 	void setParameter(std::string parameterKey, int parameterValue);
 
 	void setParameter(std::string parameterKey, double parameterValue);
-	
+
 	std::string to_string();
-	
+
 	void setResponseOk();
-	
+
 	bool isMessageStatusOk();
-	
+
 	void setBody(std::string body);
-	
+
 	bool isComplete(size_t lenght);
 
 private:

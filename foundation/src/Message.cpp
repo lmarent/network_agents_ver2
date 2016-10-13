@@ -16,12 +16,12 @@ Message::Message():_method(undefined)
 {
 }
 
-Message::Message(std::string data): 
+Message::Message(std::string data):
 _method(undefined)
 {
 	setData(data);
 }
-	
+
 Message::~Message()
 {
 
@@ -60,22 +60,22 @@ void Message::setData(std::string data)
 			}
 			else if (methodParam[1].compare("get_current_period") == 0){
 				_method = get_current_period;
-			}						
+			}
 			else if (methodParam[1].compare("disconnect") == 0){
 				_method = disconnect;
-			}						
+			}
 			else if (methodParam[1].compare("get_services") == 0){
 				_method = get_services;
-			}						
+			}
 			else if (methodParam[1].compare("activate_consumer") == 0){
 				_method = activate_consumer;
-			}						
+			}
 			else if (methodParam[1].compare("receive_purchase_feedback") == 0){
 				_method = receive_purchase_feedback;
-			}						
+			}
 			else if (methodParam[1].compare("send_availability") == 0){
 				_method = send_availability;
-			}						
+			}
 			else if (methodParam[1].compare("receive_bid_information") == 0){
 				_method = receive_bid_information;
 			}
@@ -84,18 +84,21 @@ void Message::setData(std::string data)
 			}
 			else if (methodParam[1].compare("get_provider_channel") == 0){
 				_method = get_provider_channel;
-			}			
+			}
 			else if (methodParam[1].compare("get_unitary_cost") == 0){
 				_method = get_unitary_cost;
-			}			
+			}
 			else if (methodParam[1].compare("activate_presenter") == 0){
 				_method = activate_presenter;
-			}						
+			}
+			else if (methodParam[1].compare("get_availability") == 0){
+				_method = get_availability;
+			}
 			else{
 				_method = undefined;
 			}
 		}
-			
+
 		// Repeat for each line to get the parameters and body
 		if (count > 1){
 			int i = 1;
@@ -106,17 +109,17 @@ void Message::setData(std::string data)
 					Poco::StringTokenizer linesParam(paramLine, ":",Poco::StringTokenizer::TOK_TRIM);
 					if (linesParam.count() == 2){
 						_parameters.insert ( std::pair<std::string,std::string>
-									   (linesParam[0],linesParam[1]) );	
+									   (linesParam[0],linesParam[1]) );
 					}
 				}
 				else
 				{
 					break;
-				}	
+				}
 				i++;
 			}
-			
-			// If i < count the rest of the lines are the body so we 
+
+			// If i < count the rest of the lines are the body so we
 			// have to concatenate them.
 			while (i < count) {
 				_body.append(lines[i]);
@@ -125,7 +128,7 @@ void Message::setData(std::string data)
 		}
 	}
 }
-	
+
 Method Message::getMethod()
 {
 	return _method;
@@ -187,10 +190,10 @@ std::string Message::getStrMethod()
           break;
        case start_period:
           result = "start_period";
-          break;       
-       case end_period: 
+          break;
+       case end_period:
           result = "end_period";
-          break;       
+          break;
        case receive_purchase:
           result = "receive_purchase";
           break;
@@ -198,10 +201,10 @@ std::string Message::getStrMethod()
 		  result = "get_best_bids";
 		  break;
 	   case get_current_period:
-	      result = "get_current_period"; 
+	      result = "get_current_period";
 		  break;
 	   case disconnect:
-	      result = "disconnect"; 
+	      result = "disconnect";
 		  break;
 	   case get_services:
 		  result = "get_services";
@@ -230,6 +233,9 @@ std::string Message::getStrMethod()
 	   case get_unitary_cost:
 		  result = "get_unitary_cost";
 		  break;
+	   case get_availability:
+	   	  result = "get_availability";
+	   	  break;
     }
     return result;
 }
@@ -269,7 +275,7 @@ std::string Message::to_string()
 	result = "Method:";
 	result.append(getStrMethod());
 	result.append(LINE_SEPARATOR);
-	
+
 	std::string result2;
 	std::map<std::string,std::string>::iterator it;
 	for (it=_parameters.begin(); it!=_parameters.end(); ++it)
@@ -287,7 +293,7 @@ std::string Message::to_string()
 
 	result.append("Message_Size:");
 	unsigned size = result2.size() + result.size() + 2 + MESSAGE_SIZE;
-	Poco::NumberFormatter::append(result, size, MESSAGE_SIZE);	
+	Poco::NumberFormatter::append(result, size, MESSAGE_SIZE);
 	result.append(LINE_SEPARATOR);
 	result.append(result2);
 	// std::cout << "Message size:" << size << "final string size" << result.size();

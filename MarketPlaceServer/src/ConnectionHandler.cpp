@@ -347,6 +347,13 @@ void ConnectionHandler::doProcessing(Poco::Net::SocketAddress socketAddress,
 			    getProviderChannel(socketAddress, message, messageResponse);
 			    break;
 			 }
+			case get_availability:
+			 {
+  				app.logger().debug("In getAvailability");
+				getAvailability( socketAddress, message, messageResponse );
+				app.logger().debug(Poco::format("response message: %s", messageResponse.to_string()));
+				break;
+		 	 }
 		   case disconnect:
 		 	 {
 			    // Ends the execution of the process.
@@ -573,6 +580,25 @@ void ConnectionHandler::setProviderAvailability(Poco::Net::SocketAddress socketA
 	{
 		throw MarketPlaceException("Invalid quantity", 316);
 	}
+}
+
+
+void ConnectionHandler::getAvailability(Poco::Net::SocketAddress socketAddress,
+										Message & messageRequest,
+										Message & messageResponse)
+{
+	double quantity=0;
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("Get provider availability in the market place");
+
+	MarketPlaceServer &server = dynamic_cast<MarketPlaceServer&>(app);
+	MarketPlaceSys *sys = server.getMarketPlaceSubsystem();
+
+	std::string providerId = messageRequest.getParameter("Provider");
+	std::string serviceId = messageRequest.getParameter("Service");
+	std::string bidId = messageRequest.getParameter("Bid");
+	(*sys).getProviderAvailability(providerId, serviceId, bidId, messageResponse);
+	app.logger().debug("End set provider availability in the market place");
 }
 
 void ConnectionHandler::getBestBids(Poco::Net::SocketAddress socketAddress,

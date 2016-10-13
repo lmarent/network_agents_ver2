@@ -98,6 +98,9 @@ public:
 	void getBestBids(std::string providerId, std::string serviceId,
 								int fronts, Message & messageResponse);
 
+	void getProviderAvailability(std::string providerId, std::string serviceId,
+								    std::string bidId, Message & messageResponse);
+
     void sendBid(std::string bidId, Message & messageResponse);
 
     void sendProviderChannel(std::string providerId, Message & messageResponse);

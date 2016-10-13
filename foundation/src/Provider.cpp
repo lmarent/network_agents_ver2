@@ -12,7 +12,7 @@ Provider::Provider(std::string id, ProviderCapacityType capacity_type):
 _id(id), _type(capacity_type)
 {
 }
-    
+
 Provider::~Provider()
 {
 	std::map<std::string, ResourceAvailability *>::iterator it;
@@ -24,7 +24,7 @@ Provider::~Provider()
 		++it;
 	}
 }
-    
+
 void Provider::addResourceAvailability(std::string resourceId)
 {
     std::map<std::string, ResourceAvailability *>::iterator it;
@@ -37,16 +37,16 @@ void Provider::addResourceAvailability(std::string resourceId)
 	else
 	{
 		throw FoundationException("Resource already registered in the provider", 313);
-	}	
+	}
 }
-    
+
 void Provider::setInitialAvailability(Resource *resource, double quantity)
 {
 
 #ifndef TEST_ENABLED
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().debug("Entering provider setInitialAvailability");
-#endif	
+#endif
 
 
     std::map<std::string, ResourceAvailability *>::iterator it;
@@ -61,17 +61,17 @@ void Provider::setInitialAvailability(Resource *resource, double quantity)
 		it = _resources.find(resource->getId());
 		(*(it->second)).setResource(resource);
 		(*(it->second)).setInitialAvailability(quantity);
-	}	
+	}
 
 #ifndef TEST_ENABLED
 	app.logger().debug("Ending provider setInitialAvailability");
-#endif	
+#endif
 
 }
 
-void Provider::deductResourceAvailability(unsigned period, 
-										 std::string resourceId, 
-										 DecisionVariable *variable, 
+void Provider::deductResourceAvailability(unsigned period,
+										 std::string resourceId,
+										 DecisionVariable *variable,
 										 double level,
 										 double quantity )
 {
@@ -81,35 +81,35 @@ void Provider::deductResourceAvailability(unsigned period,
 	if (it != _resources.end())
 		(*(it->second)).deductAvailability(period, variable, level,quantity);
 }
-		
-void Provider::deductAvailability(unsigned period, 
-									Service * service, 
+
+void Provider::deductAvailability(unsigned period,
+									Service * service,
 									Purchase * purchase,
 									Bid * bid)
 {
-	std::map<std::string, DecisionVariable *>::iterator it; 
+	std::map<std::string, DecisionVariable *>::iterator it;
 	for (it=(service->_decision_variables.begin()); it!=(service->_decision_variables.end()); ++it)
 	{
 		DecisionVariable *variable = it->second;
 		if (variable->getModeling() == MODEL_QUALITY)
 		{
-			
-			deductResourceAvailability(period, 
-									   variable->getResource(), 
-									   variable, 
+
+			deductResourceAvailability(period,
+									   variable->getResource(),
+									   variable,
 									   bid->getDecisionVariable(variable->getId()),
 									   purchase->getQuantity() );
 		}
 	}
 }
 
-double Provider::getResourceAvailability(unsigned period, 
+double Provider::getResourceAvailability(unsigned period,
 										 std::string resourceId)
 {
 
 	ResourceMap::iterator it;
 	it = _resources.find(resourceId);
-	
+
 	// When the resourceId is not found the system, it assumes not capacity
 	if (it != _resources.end()){
 		return (it->second)->getAvailability(period);
@@ -117,21 +117,21 @@ double Provider::getResourceAvailability(unsigned period,
 	else{
 	    return false;
 	}
-	
-	
-	
+
+
+
 }
 
-bool Provider::checkResourceAvailability(unsigned period, 
-										 std::string resourceId, 
-										 DecisionVariable *variable, 
+bool Provider::checkResourceAvailability(unsigned period,
+										 std::string resourceId,
+										 DecisionVariable *variable,
 										 double level,
 										 double quantity )
 {
-	
+
 	ResourceMap::iterator it;
 	it = _resources.find(resourceId);
-	
+
 	// When the resourceId is not found the system, it assumes not capacity
 	if (it != _resources.end()){
 		return (it->second)->checkAvailability(period, variable, level,quantity);
@@ -146,27 +146,27 @@ bool Provider::isBulkAvailable(unsigned period, Service * service,  Purchase * p
 #ifndef TEST_ENABLED
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().debug("Entering provider isAvailable");
-#endif	
-	
+#endif
+
 	bool available = true;
-	
+
 	if (service->hasQualityVariables() == true)
-	{	
-		std::map<std::string, DecisionVariable *>::iterator it; 
+	{
+		std::map<std::string, DecisionVariable *>::iterator it;
 		for (it=(service->_decision_variables.begin()); it!=(service->_decision_variables.end()); ++it)
 		{
 			DecisionVariable *variable = it->second;
 			if (variable->getModeling() == MODEL_QUALITY)
 			{
-				
-				
+
+
 #ifndef TEST_ENABLED
 				app.logger().debug("Checking resource availability for resource" + variable->getResource());
-#endif			
-		
-				available = available && checkResourceAvailability(period, 
-																   variable->getResource(), 
-																   variable, 
+#endif
+
+				available = available && checkResourceAvailability(period,
+																   variable->getResource(),
+																   variable,
 																   bid->getDecisionVariable(variable->getId()),
 																   purchase->getQuantity() );
 			}
@@ -174,25 +174,25 @@ bool Provider::isBulkAvailable(unsigned period, Service * service,  Purchase * p
 	}
 	else {
 
-		std::map<std::string, DecisionVariable *>::iterator it; 
+		std::map<std::string, DecisionVariable *>::iterator it;
 		for (it=(service->_decision_variables.begin()); it!=(service->_decision_variables.end()); ++it)
 		{
 			DecisionVariable *variable = it->second;
 			if (variable->getModeling() == MODEL_PRICE )
 			{
-				
+
 #ifndef TEST_ENABLED
 				app.logger().debug("Checking resource availability for resource" + variable->getResource());
-#endif			
-	
-				available = available && checkResourceAvailability(period, 
-																   variable->getResource(), 
-																   variable, 
+#endif
+
+				available = available && checkResourceAvailability(period,
+																   variable->getResource(),
+																   variable,
 																   bid->getDecisionVariable(variable->getId()),
 																   purchase->getQuantity() );
 			}
 		}
-		
+
 	}
 
 #ifndef TEST_ENABLED

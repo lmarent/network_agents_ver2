@@ -21,13 +21,13 @@ namespace Eco
 Service::Service(): _last_dimension(-1)
 {
 }
-	
+
 Service::Service(std::string id, std::string name): _last_dimension(0)
 {
 	_id = id;
 	_name = name;
 }
-	
+
 Service::~Service()
 {
 	// Release the memory assigned to decision variables
@@ -43,7 +43,7 @@ Service::~Service()
     {
 		delete _demand_forecaster;
 	}
-	
+
 	if (_traffic_converter != NULL)
 	{
 		delete _traffic_converter;
@@ -70,9 +70,9 @@ void Service::addDecisionVariable(DecisionVariable * quality_param)
 	if(it == _decision_variables.end()) {
 		_decision_variables.insert ( std::pair<std::string, DecisionVariable *>
 									   (quality_param->getId(),quality_param) );
-		_last_dimension = _last_dimension + 1;							   
+		_last_dimension = _last_dimension + 1;
 		// std::cout << "Inserting dec variable:" <<  quality_param->getId() << "in dimension:" << _last_dimension << std::endl;
-		_dimensions.insert ( std::pair<std::string, size_t> 
+		_dimensions.insert ( std::pair<std::string, size_t>
 							   ( quality_param->getId(), _last_dimension) );
 	}
 	else
@@ -80,7 +80,7 @@ void Service::addDecisionVariable(DecisionVariable * quality_param)
 		throw FoundationException("Decision variable is already included");
 	}
 }
-	
+
 DecisionVariable * Service::getDecisionVariable(std::string id)
 {
 	std::map<std::string, DecisionVariable *>::iterator it;
@@ -149,22 +149,22 @@ void Service::to_XML(Poco::XML::AutoPtr<Poco::XML::Document> pDoc,
 {
 	// std::cout << "putting the information of the service:" << getId() <<  std::endl;
 
-	Poco::XML::AutoPtr<Poco::XML::Element> proot = 
+	Poco::XML::AutoPtr<Poco::XML::Element> proot =
 											pDoc->createElement("Service");
 
-	Poco::XML::AutoPtr<Poco::XML::Element> pId = 
+	Poco::XML::AutoPtr<Poco::XML::Element> pId =
 							pDoc->createElement("Id");
 	Poco::XML::AutoPtr<Poco::XML::Text> pText1 = pDoc->createTextNode(getId());
-	pId->appendChild(pText1);		
+	pId->appendChild(pText1);
 	proot->appendChild(pId);
 
-	Poco::XML::AutoPtr<Poco::XML::Element> pName = 
+	Poco::XML::AutoPtr<Poco::XML::Element> pName =
 							pDoc->createElement("Name");
 	Poco::XML::AutoPtr<Poco::XML::Text> pText2 = pDoc->createTextNode(getName());
-	pName->appendChild(pText2);		
+	pName->appendChild(pText2);
 	proot->appendChild(pName);
 
-	
+
 	std::map<std::string, DecisionVariable *>::iterator it;
 	for (it=_decision_variables.begin(); it!=_decision_variables.end(); ++it)
 	{
@@ -197,17 +197,17 @@ void Service::loadDemand(std::string file_name)
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
     std::string demand_subdirect = app.config().getString("demand_directory", "demand/");
-	
+
 	std::string adj_path = findExecutionPath();
 	std::cout << "The path is:" << adj_path;
 	adj_path.append(demand_subdirect);
-	
+
 	// Loads the demand forecast.
 	std::map<std::string, std::string> parameters;
 	parameters.insert(std::pair<std::string, std::string> ("location", adj_path));
 	parameters.insert(std::pair<std::string, std::string> ("file_name", file_name));
 	_demand_forecaster = new PointSetDemandForecaster( parameters );
-	
+
 }
 
 
@@ -264,8 +264,38 @@ bool Service::hasQualityVariables()
 			return true;
 		}
 	}
-	
+
 	return false;
+}
+
+std::vector<std::string> Service::getQualityVariables()
+{
+	std::vector<std::string> names;
+
+	std::map<std::string, DecisionVariable *>::iterator it;
+	for (it=_decision_variables.begin(); it!=_decision_variables.end(); ++it)
+	{
+ 	    names.push_back(it->first);
+	}
+
+	return names;
+}
+
+std::string Service::getPriceVariable()
+{
+	std::string name;
+
+	std::map<std::string, DecisionVariable *>::iterator it;
+	for (it=_decision_variables.begin(); it!=_decision_variables.end(); ++it)
+	{
+ 	    DecisionVariable *variable = it->second;
+		if (variable->getModeling() == MODEL_PRICE)
+		{
+			return it->first;
+		}
+	}
+
+	return name;
 }
 
 }  /// End Eco namespace

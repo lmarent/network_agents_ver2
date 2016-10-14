@@ -267,10 +267,10 @@ void ConnectionHandler::doProcessing(Poco::Net::SocketAddress socketAddress,
 									 Message & message)
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().debug("do processing");
+
 
 	Method meth = message.getMethod();
-
+	app.logger().debug(Poco::format("do processing: %s", message.to_string()) );
 	// This object will be the response for the calling application.
 	Message messageResponse;
 	messageResponse.setMethod(meth);
@@ -421,6 +421,10 @@ void ConnectionHandler::StartListening(Poco::Net::SocketAddress socketAddress,
 	unsigned  Uport;
 	ProviderCapacityType capacityType;
 
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("Start Listening");
+
+
 	std::string port = messageRequest.getParameter("Port");
 
 	bool v_result = Poco::NumberParser::tryParseUnsigned(port, Uport);
@@ -451,7 +455,7 @@ void ConnectionHandler::StartListening(Poco::Net::SocketAddress socketAddress,
 	{
 		throw MarketPlaceException("Invalid Port", 301);
 	}
-	// std::cout << "Connected to listener" << std::endl;
+	app.logger().debug("Ending Listening");
 }
 
 void ConnectionHandler::initializePeriodSession(Poco::Net::SocketAddress socketAddress,

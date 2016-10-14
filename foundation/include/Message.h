@@ -33,7 +33,7 @@ enum Method
   get_provider_channel = 17,
   get_unitary_cost = 18,
   activate_presenter=19,
-  get_availability=20
+  get_availability=20,
 };
 
 

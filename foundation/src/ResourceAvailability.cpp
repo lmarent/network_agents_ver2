@@ -8,7 +8,7 @@ namespace ChoiceNet
 namespace Eco
 {
 
-ResourceAvailability::ResourceAvailability(std::string id): 
+ResourceAvailability::ResourceAvailability(std::string id):
 _id(id),
 _init_availability(0),
 _resource(NULL)
@@ -34,13 +34,13 @@ void ResourceAvailability::setInitialAvailability(double quantity)
 {
 	_init_availability = quantity;
 }
-	
+
 double ResourceAvailability::getAvailability(unsigned period)
 {
     std::map<unsigned, double>::iterator it;
 	it = _time_availability.find(period);
-	if (it != _time_availability.end()) 
-	{   
+	if (it != _time_availability.end())
+	{
 		return it->second;
 	}
 	else
@@ -48,9 +48,9 @@ double ResourceAvailability::getAvailability(unsigned period)
 		return _init_availability;
 	}
 }
-	
-double ResourceAvailability::deductAvailability(unsigned period, 
-												DecisionVariable *variable, 
+
+double ResourceAvailability::deductAvailability(unsigned period,
+												DecisionVariable *variable,
 											    double level,
 											    double quantity)
 {
@@ -58,9 +58,9 @@ double ResourceAvailability::deductAvailability(unsigned period,
 #ifndef TEST_ENABLED
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().debug("Entering deductAvailability");
-#endif	
-	
-	
+#endif
+
+
 	if ( _resource != NULL )
 	{
 		double rateAdj = 0;
@@ -70,25 +70,25 @@ double ResourceAvailability::deductAvailability(unsigned period,
 			rateAdj = cost_function->getEvaluation(rate);
 		else
 			rateAdj = rate;
-				
+
 		double quantityRequired = quantity * rateAdj;
 		std::map<unsigned, double>::iterator it;
 		it = _time_availability.find(period);
 		if (it == _time_availability.end()){
 			_time_availability.insert(std::pair<unsigned, double>(period,_init_availability));
 		}
-		it = _time_availability.find(period);			
+		it = _time_availability.find(period);
 		it->second -= quantityRequired;
 
 #ifndef TEST_ENABLED
 		app.logger().debug(Poco::format("Ending deductAvailability - final availability: %f", it->second) );
-#endif	
+#endif
 
 	}
 }
 
-bool ResourceAvailability::checkAvailability(unsigned period, 
-											 DecisionVariable *variable, 
+bool ResourceAvailability::checkAvailability(unsigned period,
+											 DecisionVariable *variable,
 											 double level,
 											 double quantity)
 {
@@ -98,27 +98,33 @@ bool ResourceAvailability::checkAvailability(unsigned period,
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().debug("Entering ResourceAvailability - checkAvailability");
 #endif
-		
+
 	if ( _resource != NULL )
 	{
-		
+
 		double rateAdj = 0;
 		double rate =_resource->getConsumption(variable,level);
 		CostFunction *cost_function = variable->getCostFunction();
-		if (cost_function != NULL)
+		if (cost_function != NULL){
+#ifndef TEST_ENABLED
+			app.logger().debug(Poco::format("cost_function called %s", cost_function->getName() ));
+#endif
+
 			rateAdj = cost_function->getEvaluation(rate);
-		else
+		}
+		else{
 			rateAdj = rate;
-		
+		}
+
 		double quantityRequired = quantity * rateAdj;
 		double available = getAvailability(period);
 
-#ifndef TEST_ENABLED	
-		app.logger().debug(Poco::format("checkAvailability rate:%f initQty:%f period:%d qtyAvailable:%f qtyRequired:%f",rate, quantity, (int) period, available, quantityRequired));
+#ifndef TEST_ENABLED
+		app.logger().debug(Poco::format("checkAvailability rate:%f rateAdj:%f initQty:%f period:%d qtyAvailable:%f qtyRequired:%f",rate, rateAdj, quantity, (int) period, available, quantityRequired));
 #endif
-		
-		if (available >= quantityRequired) 
-		{   
+
+		if (available >= quantityRequired)
+		{
 			val_return = true;
 		}
 		else
@@ -126,19 +132,19 @@ bool ResourceAvailability::checkAvailability(unsigned period,
 			val_return= false;
 		}
 	}
-	else 
-	{   
-#ifndef TEST_ENABLED	
+	else
+	{
+#ifndef TEST_ENABLED
 		app.logger().debug("checkAvailability - undefined resource");
 #endif
-		
+
 		val_return = false;
 	}
 
-#ifndef TEST_ENABLED		
+#ifndef TEST_ENABLED
 	app.logger().debug("Ending ResourceAvailability - checkAvailability" + val_return);
 #endif
-	
+
 	return val_return;
 }
 

@@ -408,7 +408,7 @@ void MarketPlaceSys::startListening(Poco::Net::SocketAddress socketAddress,
 {
 
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().information(Poco::format("Start Listening by port:%u, type:%s", port, type ));
+	app.logger().information(Poco::format("Start Listening by port:%d, type:%s", (int) port, type ));
 
 
 	Listeners::iterator it;
@@ -429,7 +429,7 @@ void MarketPlaceSys::startListening(Poco::Net::SocketAddress socketAddress,
 			if (type.compare("provider") == 0 )
 			{
 				std::string providerId = (it->second)->getId();
-				app.logger().information(Poco::format("Connecting provider with Id: %s", providerId) );
+				app.logger().debug(Poco::format("Connecting provider with Id: %s", providerId) );
 				Provider * provider = new Provider(providerId, capacity_type);
 				_providers.insert(std::pair<std::string, Provider *>( providerId, provider));
 			}
@@ -445,10 +445,11 @@ void MarketPlaceSys::startListening(Poco::Net::SocketAddress socketAddress,
 	}
     else
     {
+		app.logger().error(Poco::format("error the agent is not connected:%d, type:%s", (int) port, type ));
 		throw MarketPlaceException("The agent is not connected", 302);
 	}
 
-	app.logger().information(Poco::format("Ending Start Listening by port:%u, type:%s", port, type ));
+	app.logger().information(Poco::format("Ending Start Listening by port:%d, type:%s", (int) port, type ));
 }
 
 void MarketPlaceSys::insertListenerBytype(std::string type, std::string listenerId)
@@ -1119,7 +1120,7 @@ Provider * MarketPlaceSys::getProvider(std::string providerId)
 	else
 	{
 		Poco::Util::Application& app = Poco::Util::Application::instance();
-		app.logger().debug("Provider is not included in the container %s", providerId);
+		app.logger().debug(Poco::format("Provider is not included in the container %s", providerId));
 		throw MarketPlaceException("Provider is not included in the container");
 	}
 }

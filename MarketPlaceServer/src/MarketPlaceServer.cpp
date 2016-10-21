@@ -128,7 +128,7 @@ namespace Eco
 		fileChannel->setProperty("rotateOnOpen", "true");
 		Poco::Logger& logger = Poco::Util::ServerApplication::logger();
 		logger.setChannel(formattingChannel);
-		logger.setLevel(Poco::Message::PRIO_TRACE);
+		logger.setLevel(Poco::Message::PRIO_INFORMATION);
 
 		// Reads from the configuration the listening port
 		unsigned short port = (unsigned short)

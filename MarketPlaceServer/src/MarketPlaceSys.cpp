@@ -501,13 +501,14 @@ void MarketPlaceSys::reinitiateDataContainers(MARKET_HISTORY_PERIOD subperiod)
 void MarketPlaceSys::initializePeriodSession(unsigned interval)
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().information(Poco::format("initialize interval session -----------------  : %d", (int) interval));
+	app.logger().debug(Poco::format("initialize interval session -----------------  : %d", (int) interval));
 
 	if (_intervals_per_cycle > 0)
 		_period = interval / _intervals_per_cycle;
 	else
 		_period = interval;
 
+	app.logger().information(Poco::format("initialize Period session -----------------  : %d", (int) _period));
 
 	if (sendInformation(interval)) {
 		saveInformation();
@@ -522,7 +523,7 @@ void MarketPlaceSys::initializePeriodSession(unsigned interval)
 void MarketPlaceSys::broadCastInformation(Message & message, std::string type)
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().debug("starting broadCastInformation");
+	app.logger().information("starting broadCastInformation");
 	app.logger().debug(Poco::format("message: %s", message.to_string()));
 
 	std::map<std::string, std::vector<std::string> >::iterator it_type;
@@ -561,7 +562,7 @@ void MarketPlaceSys::broadCastInformation(Message & message, std::string type)
 		}
 	}
 
-	app.logger().debug("ending broadCastInformation");
+	app.logger().information("ending broadCastInformation");
 }
 
 void MarketPlaceSys::saveBidInformation(void)
@@ -721,7 +722,7 @@ void MarketPlaceSys::addBid(Bid * bidPtr, Message & messageResponse)
 {
 
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().information("Starting add Bid");
+	app.logger().information(Poco::format("Starting add Bid: %s", bidPtr->getId() ));
 
 	// First verify that the bid was not included
 	std::map<std::string, Bid *>::iterator it;
@@ -766,6 +767,9 @@ void MarketPlaceSys::deleteBid(Bid * bidPtr, Message & messageResponse)
 	// First verify that the bid was not included
 	std::map<std::string, Bid *>::iterator it;
 
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().information(Poco::format("Starting delete Bid: %s", bidPtr->getId() ));
+
 	it = _bids.find((*bidPtr).getId());
 	if (it != _bids.end())
 	{
@@ -793,6 +797,8 @@ void MarketPlaceSys::deleteBid(Bid * bidPtr, Message & messageResponse)
 
 		// Insert in the brodcast container
 		_bids_to_broadcast.insert(std::pair<std::string, Bid *> ((*bidPtr).getId(), bidPtr));
+
+		app.logger().information("Ending delete Bid");
 
 		// set the response as Ok
 		messageResponse.setResponseOk();
@@ -911,6 +917,8 @@ void MarketPlaceSys::addPurchase(Purchase * purchasePtr, Message & messageRespon
 			else
 				addPurchaseByBidCapacity(provider, service, bid, purchasePtr, purchaseFound, messageResponse);
 
+			app.logger().information("purchase message processed");
+
 			// set the response as Ok
 			messageResponse.setResponseOk();
 		}
@@ -935,13 +943,13 @@ void MarketPlaceSys::setProviderAvailability(std::string providerId,
 											 Message & messageResponse)
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().debug("Entering MarketPlaceSys - setProviderAvailability");
+	app.logger().information("Entering MarketPlaceSys - setProviderAvailability");
 
 	Provider * provider = getProvider(providerId);
 	Resource * resource = getResource(resourceId);
 	provider->setInitialAvailability(resource, quantity);
 	messageResponse.setResponseOk();
-	app.logger().debug("Ending -------- MarketPlaceSys - setProviderAvailability");
+	app.logger().information("Ending -------- MarketPlaceSys - setProviderAvailability");
 }
 
 void MarketPlaceSys::getProviderAvailability(std::string providerId,
@@ -950,7 +958,7 @@ void MarketPlaceSys::getProviderAvailability(std::string providerId,
 								    		 Message & messageResponse)
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().debug("Entering MarketPlaceSys - getProviderAvailability");
+	app.logger().information("Entering MarketPlaceSys - getProviderAvailability");
 
 	Provider * provider = getProvider(providerId);
 	Service * service = getService(serviceId);
@@ -965,7 +973,7 @@ void MarketPlaceSys::getProviderAvailability(std::string providerId,
 	}
 
 	messageResponse.setResponseOk();
-	app.logger().debug("Ending -------- MarketPlaceSys - getProviderAvailability");
+	app.logger().information("Ending -------- MarketPlaceSys - getProviderAvailability");
 }
 
 
@@ -1038,7 +1046,7 @@ void MarketPlaceSys::getBestBids(std::string providerId, std::string serviceId,
 {
 
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().debug("Entering getBestBids");
+	app.logger().information("Entering getBestBids");
 
 	int fronts = getParetoFrontsToExchange();
 
@@ -1051,7 +1059,7 @@ void MarketPlaceSys::getBestBids(std::string providerId, std::string serviceId,
 	messageResponse.setParameter("Fronts", fronts);
     messageResponse.setBody(xml);
 
-	app.logger().debug("Ending getBestBids");
+	app.logger().information("Ending getBestBids");
 
 }
 
@@ -1060,7 +1068,7 @@ void MarketPlaceSys::getBestBids(std::string providerId, std::string serviceId,
 {
 
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().debug(Poco::format("Entering getBestBids - fronts: %d", fronts));
+	app.logger().information(Poco::format("Entering getBestBids - fronts: %d", fronts));
 
 	messageResponse.setResponseOk();
 
@@ -1072,7 +1080,7 @@ void MarketPlaceSys::getBestBids(std::string providerId, std::string serviceId,
 	messageResponse.setParameter("Fronts", fronts);
     messageResponse.setBody(xml);
 
-    app.logger().debug("Ending getBestBids");
+    app.logger().information("Ending getBestBids");
 
 }
 

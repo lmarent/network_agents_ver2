@@ -546,6 +546,8 @@ void MarketPlaceSys::broadCastInformation(Message & message, std::string type)
 					try
 					{
 						(*(it->second)).write(message.to_string());
+
+						app.logger().information(Poco::format("broadCastInformation performed to listener: %s", (it->second)->getId() ) );
 					}
 					catch (FoundationException &e)
 					{

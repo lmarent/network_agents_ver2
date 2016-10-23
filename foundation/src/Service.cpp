@@ -275,7 +275,11 @@ std::vector<std::string> Service::getQualityVariables()
 	std::map<std::string, DecisionVariable *>::iterator it;
 	for (it=_decision_variables.begin(); it!=_decision_variables.end(); ++it)
 	{
- 	    names.push_back(it->first);
+		DecisionVariable *variable = it->second;
+		if (variable->getModeling() == MODEL_QUALITY)
+		{
+ 	    	names.push_back(it->first);
+		}
 	}
 
 	return names;

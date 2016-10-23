@@ -117,10 +117,26 @@ double Provider::getResourceAvailability(unsigned period,
 	else{
 	    return false;
 	}
-
-
-
 }
+
+double Provider::getUnitaryRequirement(unsigned period,
+									   std::string resourceId,
+									   DecisionVariable *variable,
+									   double level)
+{
+
+	ResourceMap::iterator it;
+	it = _resources.find(resourceId);
+
+	// When the resourceId is not found the system, it assumes not capacity
+	if (it != _resources.end()){
+		return (it->second)->getUnitaryRequirement(period, variable, level );
+	}
+	else{
+	    return -1; // An the resource was not found.
+	}
+}
+
 
 bool Provider::checkResourceAvailability(unsigned period,
 										 std::string resourceId,
@@ -203,16 +219,18 @@ bool Provider::isBulkAvailable(unsigned period, Service * service,  Purchase * p
 }
 
 
-double Provider::getBulkAvailability(unsigned period, Service * service)
+double Provider::getBulkAvailability(unsigned period, Service * service, Bid * bid)
 {
 #ifndef TEST_ENABLED
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().debug("Entering provider getBulkAvailability");
 #endif
 
-	double availability = 0;
+	double availabilityResource = 0;
 	bool enter = false;
 	double availabilityTmp;
+	double availability;
+	double requirement;
 
 	if (service->hasQualityVariables() == true)
 	{
@@ -227,17 +245,25 @@ double Provider::getBulkAvailability(unsigned period, Service * service)
 #ifndef TEST_ENABLED
 				app.logger().debug("Getting resource availability - Resource:" + variable->getResource());
 #endif
-				if (enter == false)
-				{
-					availability = getResourceAvailability(period,variable->getResource() );
-					enter = true;
+				requirement = getUnitaryRequirement(period,variable->getResource(), variable, bid->getDecisionVariable(variable->getId()) );
+				if (requirement < 0){
+					return 0; // The resource was not found, which means it has no capacity.
 				}
-				else
-				{
-					// The assumption here is that every resource can be compared in terms of capacity.
-					availabilityTmp = getResourceAvailability(period,variable->getResource() );
-					if (availabilityTmp <availability){
-						availability = availabilityTmp;
+				else{
+					if (enter == false)
+					{
+						availabilityResource = getResourceAvailability(period,variable->getResource() );
+						availability = availabilityResource / requirement;
+						enter = true;
+					}
+					else
+					{
+						// The assumption here is that every resource can be compared in terms of capacity.
+						availabilityResource = getResourceAvailability(period,variable->getResource() );
+						availabilityTmp = availabilityResource / requirement;
+						if (availabilityTmp <availability){
+							availability = availabilityTmp;
+						}
 					}
 				}
 			}
@@ -255,16 +281,19 @@ double Provider::getBulkAvailability(unsigned period, Service * service)
 #ifndef TEST_ENABLED
 				app.logger().debug("Getting resource availability - Resource:" + variable->getResource());
 #endif
+				requirement = getUnitaryRequirement(period,variable->getResource(), variable, bid->getDecisionVariable(variable->getId()) );
 				if (enter == false)
 				{
-					availability = getResourceAvailability(period,variable->getResource() );
+					availabilityResource = getResourceAvailability(period,variable->getResource() );
+					availability = availabilityResource / requirement;
 					enter = true;
 				}
 				else
 				{
 					// The assumption here is that every resource can be compared in terms of capacity.
-					availabilityTmp = getResourceAvailability(period,variable->getResource() );
-					if (availabilityTmp <availability){
+					availabilityResource = getResourceAvailability(period,variable->getResource() );
+					availabilityTmp = availabilityResource / requirement;
+					if (availabilityTmp < availability){
 						availability = availabilityTmp;
 					}
 				}

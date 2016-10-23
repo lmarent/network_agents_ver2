@@ -819,7 +819,9 @@ void MarketPlaceSys::addPurchaseBulkCapacity(Provider *provider, Service *servic
 
 	double availability;
 
-	availability = provider->getBulkAvailability(_period, service);
+	availability = provider->getBulkAvailability(_period, service, bid);
+
+	app.logger().debug("Entering addPurchaseBulkCapacity");
 
 	if ( availability > 0 )
 	{
@@ -973,7 +975,7 @@ void MarketPlaceSys::getProviderAvailability(std::string providerId,
 								    		 Message & messageResponse)
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().information("Entering MarketPlaceSys - getProviderAvailability");
+	app.logger().information(Poco::format("Entering MarketPlaceSys - getProviderAvailability Provider:%s, serviceId:%s, BidId:%s", providerId,serviceId,bidId)   );
 
 	Provider * provider = getProvider(providerId);
 	Service * service = getService(serviceId);
@@ -1007,12 +1009,15 @@ void MarketPlaceSys::getBulkAvailability(Provider *provider, Service *service, M
 		std::vector<std::string> names = service->getQualityVariables();
 		for (it=names.begin(); it!=names.end(); ++it)
 		{
+			app.logger().information(Poco::format("variable %s",*it) );
 
 			DecisionVariable *variable = service->getDecisionVariable(*it);
 			if (enter_resource == false)
 			{
 				avail = provider->getResourceAvailability(_period, variable->getResource());
 				enter_resource = true;
+
+				app.logger().information(Poco::format("availability resource %f",avail) );
 			}
 			else{
 				avail_tmp = provider->getResourceAvailability(_period, variable->getResource());
@@ -1023,13 +1028,16 @@ void MarketPlaceSys::getBulkAvailability(Provider *provider, Service *service, M
 			}
 		}
 	}
+	else{
+		app.logger().information("The service does not have quality variables");
+	}
 
 	std::ostringstream sstream;
 	sstream << avail;
 	std::string varAsString = sstream.str();
 
 	messageResponse.setParameter("Quantity", varAsString);
-	app.logger().debug("Ending getBulkAvailability");
+	app.logger().information(Poco::format("Ending getBulkAvailability %f",avail) );
 
 }
 

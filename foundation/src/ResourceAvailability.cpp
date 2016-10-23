@@ -49,6 +49,35 @@ double ResourceAvailability::getAvailability(unsigned period)
 	}
 }
 
+double ResourceAvailability::getUnitaryRequirement(unsigned period,
+												   DecisionVariable *variable,
+										    	   double level)
+{
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("Entering getUnitaryRequirement");
+
+	double quantityRequired = 0;
+
+	if ( _resource != NULL )
+	{
+		double rateAdj = 0;
+		double rate =_resource->getConsumption(variable,level);
+		CostFunction *cost_function = variable->getCostFunction();
+		if (cost_function != NULL)
+			rateAdj = cost_function->getEvaluation(rate);
+		else
+			rateAdj = rate;
+
+		quantityRequired = rateAdj;
+
+	}
+
+	app.logger().debug(Poco::format("Ending getUnitaryRequirement %f", quantityRequired) );
+
+	return quantityRequired;
+}
+
 double ResourceAvailability::deductAvailability(unsigned period,
 												DecisionVariable *variable,
 											    double level,

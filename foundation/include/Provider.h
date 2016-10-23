@@ -47,8 +47,10 @@ public:
 	bool isBulkAvailable(unsigned period, Service * service, Purchase * purchase, Bid * bid);
 	/// Determines whether a provider is availability for a purchase.
 
-	double getBulkAvailability(unsigned period, Service * service);
+	double getBulkAvailability(unsigned period, Service * service, Bid * bid);
 	/// Gets the availability of a provider for a specific service.
+
+	double getUnitaryRequirement(unsigned period, std::string resourceId, DecisionVariable *variable, double level);
 
 	double getResourceAvailability(unsigned period, std::string resourceId);
 

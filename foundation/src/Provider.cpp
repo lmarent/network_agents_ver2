@@ -202,6 +202,85 @@ bool Provider::isBulkAvailable(unsigned period, Service * service,  Purchase * p
 	return available;
 }
 
+
+double Provider::getBulkAvailability(unsigned period, Service * service)
+{
+#ifndef TEST_ENABLED
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().debug("Entering provider getBulkAvailability");
+#endif
+
+	double availability = 0;
+	bool enter = false;
+	double availabilityTmp;
+
+	if (service->hasQualityVariables() == true)
+	{
+		std::map<std::string, DecisionVariable *>::iterator it;
+		for (it=(service->_decision_variables.begin()); it!=(service->_decision_variables.end()); ++it)
+		{
+			DecisionVariable *variable = it->second;
+			if (variable->getModeling() == MODEL_QUALITY)
+			{
+
+
+#ifndef TEST_ENABLED
+				app.logger().debug("Getting resource availability - Resource:" + variable->getResource());
+#endif
+				if (enter == false)
+				{
+					availability = getResourceAvailability(period,variable->getResource() );
+					enter = true;
+				}
+				else
+				{
+					// The assumption here is that every resource can be compared in terms of capacity.
+					availabilityTmp = getResourceAvailability(period,variable->getResource() );
+					if (availabilityTmp <availability){
+						availability = availabilityTmp;
+					}
+				}
+			}
+		}
+	}
+	else {
+
+		std::map<std::string, DecisionVariable *>::iterator it;
+		for (it=(service->_decision_variables.begin()); it!=(service->_decision_variables.end()); ++it)
+		{
+			DecisionVariable *variable = it->second;
+			if (variable->getModeling() == MODEL_PRICE )
+			{
+
+#ifndef TEST_ENABLED
+				app.logger().debug("Getting resource availability - Resource:" + variable->getResource());
+#endif
+				if (enter == false)
+				{
+					availability = getResourceAvailability(period,variable->getResource() );
+					enter = true;
+				}
+				else
+				{
+					// The assumption here is that every resource can be compared in terms of capacity.
+					availabilityTmp = getResourceAvailability(period,variable->getResource() );
+					if (availabilityTmp <availability){
+						availability = availabilityTmp;
+					}
+				}
+			}
+		}
+
+	}
+
+#ifndef TEST_ENABLED
+	app.logger().debug(Poco::format("Ending provider getBulkAvailability %d", availability ));
+#endif
+
+	return availability;
+}
+
+
 ProviderCapacityType Provider::getCapacityType(void)
 {
 	return _type;

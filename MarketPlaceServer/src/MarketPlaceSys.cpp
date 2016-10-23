@@ -817,8 +817,21 @@ void MarketPlaceSys::addPurchaseBulkCapacity(Provider *provider, Service *servic
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().debug("Entering addPurchaseBulkCapacity");
 
-	if (provider->isBulkAvailable(_period, service, purchasePtr, bid))
+	double availability;
+
+	availability = provider->getBulkAvailability(_period, service);
+
+	if ( availability > 0 )
 	{
+		if (availability >= purchasePtr->getQuantity()) // Enough quantity
+		{
+		    // We don't have to make changes to the purchase.
+		}
+		else{ // Not Enough quantity
+			purchasePtr->setQuantityBacklog(purchasePtr->getQuantity() - availability);
+			purchasePtr->setQuantity(availability);
+		}
+
 		// In any case inserts the purchase into the service container.
 		(*_current_purchases).addPurchaseToService(purchasePtr, purchaseFound);
 

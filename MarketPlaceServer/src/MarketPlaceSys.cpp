@@ -18,13 +18,17 @@
 #include <Poco/Data/SQLite/Connector.h>
 #include <Poco/Data/MySQL/Connector.h>
 #include <Poco/LogStream.h>
+#include <Poco/Tuple.h>
+#include <Poco/Data/Session.h>
+#include <Poco/Data/SQLite/Connector.h>
+#include <Poco/Data/SessionFactory.h>
 
 
+#include "Bid.h"
 #include "MarketPlaceException.h"
 #include "FoundationException.h"
 #include "MarketPlaceSys.h"
 #include "Message.h"
-#include "Bid.h"
 #include "Purchase.h"
 
 
@@ -34,6 +38,10 @@ namespace Eco
 {
 
 using Poco::NumberFormatter;
+using namespace Poco::Data::Keywords;
+using Poco::Data::Session;
+using Poco::Data::Statement;
+
 
 MarketPlaceSys::MarketPlaceSys(void):
 FoundationSys(MARKET_SERVER),
@@ -567,6 +575,7 @@ void MarketPlaceSys::broadCastInformation(Message & message, std::string type)
 	app.logger().information("ending broadCastInformation");
 }
 
+/*
 void MarketPlaceSys::saveBidInformation(void)
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
@@ -591,6 +600,124 @@ void MarketPlaceSys::saveBidInformation(void)
 	app.logger().information("Ending saveBidInformation");
 
 }
+*/
+
+void MarketPlaceSys::saveBidInformation(void)
+{
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().information("Starting saveBidInformation");
+
+	std::vector<int> bVal1;							  // period,
+	std::vector<std::string> bVal2;					  // bidId,
+	std::vector<std::string> bVal3;					  // providerId,
+	std::vector<int> bVal4;							  // status,
+	std::vector<int> bVal5;							  // paretoStatus,
+	std::vector<int> bVal6;							  // dominatedCount,
+	std::vector<int> bVal7;							  // execution_count,
+	std::vector<double> bVal8;						  // unitary_profit,
+	std::vector<double> bVal9;						  // unitary_cost,
+	std::vector<std::string> bVal10;				   // parentBidId,
+	std::vector<double> bVal11;						   // capacity,
+	std::vector<double> bVal12;						   // init_capacity,
+	std::vector<int> bVal13;						   // creation_period
+
+
+	std::vector<std::string> dvbidIds;
+	std::vector<std::string> dvvariableIds;
+	std::vector<double> dvdecisionvalues;
+	std::vector<int> dvexecutionCount;
+
+	if (_period > 0){
+
+		BidContainer::iterator it;
+		for (it = _bids_to_broadcast.begin(); it != _bids_to_broadcast.end() ; ++it)
+		{
+
+			app.logger().information("saving Bid information");
+
+			std::map<std::string, double > decVars;
+
+			Bid * bid = (it->second);
+			BidStruct bidS = bid->getDBBidStructure(FoundationSys::getExecutionCount(), (int) _period - 1);
+			bVal1.push_back(bidS._period);
+			bVal2.push_back(bidS._id);
+			bVal3.push_back(bidS._provider);
+			bVal4.push_back(bidS._status);
+			bVal5.push_back(bidS._paretoStatus);
+			bVal6.push_back((int) bidS._dominatedCount);
+			bVal7.push_back(bidS._execution_count);
+			bVal8.push_back(bidS._unitary_profit);
+			bVal9.push_back(bidS._unitary_cost);
+			bVal10.push_back(bidS._parent_bid_id);
+			bVal11.push_back(bidS._capacity);
+			bVal12.push_back(bidS._init_capacity);
+			bVal13.push_back(bidS._creation_period);
+
+			bid->getDBDecisionVariables(&decVars);
+			std::map<std::string, double >::iterator itDes;
+			for (itDes = decVars.begin(); itDes != decVars.end() ; ++itDes)
+			{
+				dvbidIds.push_back(bid->getId());
+				dvvariableIds.push_back(itDes->first);
+				dvdecisionvalues.push_back(itDes->second);
+				dvexecutionCount.push_back(FoundationSys::getExecutionCount());
+			}
+
+		}
+
+		app.logger().information("It is going to put in the DB");
+
+		if (bVal1.size() > 0)
+		{
+			Poco::Data::Session session2(_pool->get());
+
+			// Perform the inserts in bulk.
+			Poco::Data::Statement insertBids(session2);
+			insertBids << "insert into simulation_bid (period, bidId, providerId, status, paretoStatus, dominatedCount, execution_count, unitary_profit, unitary_cost, parentBidId, capacity, init_capacity, creation_period) values (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+								use(bVal1), // period,
+								use(bVal2), // bidId,
+								use(bVal3), // providerId,
+								use(bVal4), // status,
+								use(bVal5), // paretoStatus,
+								use(bVal6), // dominatedCount,
+								use(bVal7), // execution_count,
+								use(bVal8), // unitary_profit,
+								use(bVal9), // unitary_cost,
+								use(bVal10), // parentBidId,
+								use(bVal11), // capacity,
+								use(bVal12), // init_capacity,
+								use(bVal13); // creation_period
+
+			insertBids.execute();
+			session2.commit();
+
+			app.logger().information("After inserting Bid headers");
+
+			Poco::Data::Session session(_pool->get());
+
+			Poco::Data::Statement insertDecisionVariable(session);
+			insertDecisionVariable << "insert into simulation_bid_decision_variable (parentId, decisionVariableName, value, execution_count ) values(?,?,?,?)",
+								use(dvbidIds),
+								use(dvvariableIds),
+								use(dvdecisionvalues),
+								use(dvexecutionCount);
+
+			insertDecisionVariable.execute();
+
+			// session2 << "insert into simulation_bid_decision_variable (parentId, decisionVariableName, value, execution_count ) values(?,?,?,?)", use(setDecvs), now;
+			session.commit();
+		}
+
+		app.logger().information("After the DB is updated");
+	}
+	else {
+		app.logger().debug("Invalid period during saveBidInformation - period 0");
+	}
+
+	app.logger().information("Ending saveBidInformation");
+
+}
+
 
 void MarketPlaceSys::broadCastBidInformation(void)
 {
@@ -818,6 +945,7 @@ void MarketPlaceSys::addPurchaseBulkCapacity(Provider *provider, Service *servic
 	app.logger().debug("Entering addPurchaseBulkCapacity");
 
 	double availability;
+	double qtyPurchased;
 
 	availability = provider->getBulkAvailability(_period, service, bid);
 
@@ -845,6 +973,8 @@ void MarketPlaceSys::addPurchaseBulkCapacity(Provider *provider, Service *servic
 
 		// Establishes the quantity purchased as a feedback to the agent.
 		messageResponse.setParameter("Quantity_Purchased", purchasePtr->getQuantityStr());
+
+		qtyPurchased = purchasePtr->getQuantity();
 	}
 	else
 	{
@@ -856,9 +986,11 @@ void MarketPlaceSys::addPurchaseBulkCapacity(Provider *provider, Service *servic
 		(*_current_purchases).addPurchaseToService(purchasePtr, purchaseFound);
 
 		messageResponse.setParameter("Quantity_Purchased", "0");
+
+		qtyPurchased = 0;
 	}
 
-	app.logger().debug("Ending addPurchaseBulkCapacity");
+	app.logger().information(Poco::format("Ending addPurchaseBulkCapacity %f", qtyPurchased));
 
 }
 

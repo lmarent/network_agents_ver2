@@ -6,9 +6,12 @@
 #include <Poco/DOM/Text.h>
 #include <Poco/DOM/AutoPtr.h>
 #include <Poco/Data/SessionPool.h>
+#include <Poco/Tuple.h>
+
 
 
 #include <string>
+#include <vector>
 #include "Datapoint.h"
 #include "Message.h"
 #include "Service.h"
@@ -37,52 +40,86 @@ struct BidStruct
     int 		_creation_period;
 };
 
+
+
 class Bid: public Datapoint
 {
 
+private:
+    enum BidStatus
+    {
+		active = 1,
+		inactive = 0
+	};
+
+
+    std::string _provider;
+    std::string _service;
+
+    // By default the bid is always active; its status changes only when
+    // providers order to put it in inactive .
+    BidStatus _status;
+
+    // These values are just for reporting
+    double    	_unitary_cost;
+    double    	_unitary_profit;
+    std::string _parent_bid_id;
+    double 		_capacity;
+    double 		_init_capacity;
+
+    int 		_creation_period;
+
+    // This map maintains the mapping between the variable and its value as a
+    // dimension (size_t) in a datapoint.
+    std::map<std::string, size_t> _decision_variables;
+    std::map<std::string, int > _decision_variables_objectives;
+    std::map<std::string, std::string> _neighbors;
+
+
 public:
+
 
 	Bid(std::string id,
 		std::string providerParam,
 		std::string serviceParam,
 		size_t numberDecisionVariables);
-	/// Creates a bid with the information provided. 
-	
+	/// Creates a bid with the information provided.
+
 	Bid(Service *service, Message & message);
-	/// Creates a bid with the information contained in the message. Throws 
+	/// Creates a bid with the information contained in the message. Throws
 	/// an exception when not complete information was given.
-		
+
 	~Bid();
-	
+
 	std::string getId();
-	
+
 	/// Gets the provider of the bid.
 	std::string getProvider();
-	
+
 	/// Gets the service of the bid.
 	std::string getService();
-	
+
 	/// Gets the status of the bid
 	std::string getStatus(void);
-	
+
 	/// Verify whether the bid is active or not.
 	bool isActive(void);
-	
+
 	/// Sets the status of the bid. Valid values are: active and inactive.
 	void setStatus(std::string status);
-	
+
 	/// Sets the unitary profit for the bid
 	void setUnitaryProfit(std::string unitaryProfit);
 
 	/// Sets the unitary cost for the bid
 	void setUnitaryCost(std::string unitaryCost);
-	
+
 	/// Sets the parent Bid id
 	void setParentBidId(std::string parentBidId);
 
 	/// Sets the capacity from string
 	void setCapacity(std::string capacity);
-	
+
 	/// Sets the capacity from double
 	void setCapacity(double capacity);
 
@@ -97,76 +134,52 @@ public:
 
 	/// Gets the unitary cost of the bid
 	double getUnitaryCost(void);
-	
+
 	/// Gets the parent Bid Id
 	std::string getParentBidId(void);
-	
+
 	/// Gets capacity
 	double getCapacity(void);
-	
+
 	double getInitCapacity(void);
-	
+
 	/// Sets a decision variable associated with the bid.
 	void setDecisionVariable(std::string decisionVariableId, size_t dimension, double value, OptimizationObjective objetive);
-	
+
 	/// Gets a decision variable associated with the bid.
 	double getDecisionVariable(std::string decisionVariableId);
 
 	/// Gets a decision variable in string associated with the bid.
 	std::string getDecisionVariableStr(std::string decisionVariableId);
-	
+
 	void addNeighbor(std::string bidId);
-	
+
 	void deleteNeighbor(std::string bidId);
-	
+
 	int getNumberOfNeighbors(void);
-		
-	void getNeighbors(std::vector<std::string>& listResult);	
-		
+
+	void getNeighbors(std::vector<std::string>& listResult);
+
 	void to_XML(Poco::XML::AutoPtr<Poco::XML::Document> pDoc,
 				 Poco::XML::AutoPtr<Poco::XML::Element> pParent);
-    /// Creates an XML node under pParent for the Bid, pDoc is the pointer 
+    /// Creates an XML node under pParent for the Bid, pDoc is the pointer
     /// to the XML document.
-    
+
     void toMessage(Message & message);
 
     // Store the bid in the pool.
     void toDatabase(Poco::Data::SessionPool * _pool, int period, int execution_count);
 
 	int getCreationPeriod(void);
-	
+
 	void setCreationPeriod(std::string period);
 
-private:
-    enum BidStatus
-    {
-		active = 1,
-		inactive = 0
-	};
+	BidStruct getDBBidStructure(int execute_count, int period);
+	void getDBDecisionVariables(std::map<std::string, double> *lst);
 
 
-    std::string _provider;
-    std::string _service;
-    
-    // By default the bid is always active; its status changes only when 
-    // providers order to put it in inactive .
-    BidStatus _status;
 
-    // These values are just for reporting
-    double    	_unitary_cost;
-    double    	_unitary_profit;
-    std::string _parent_bid_id;
-    double 		_capacity;
-    double 		_init_capacity;
-   
-    int 		_creation_period;
-    
-    // This map maintains the mapping between the variable and its value as a 
-    // dimension (size_t) in a datapoint.
-    std::map<std::string, size_t> _decision_variables;
-    std::map<std::string, int > _decision_variables_objectives;
-    std::map<std::string, std::string> _neighbors;
-    
+
 };
 
 }  /// End Eco namespace

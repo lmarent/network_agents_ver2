@@ -122,7 +122,7 @@ namespace Eco
 
 
 		AutoPtr<FileChannel> fileChannel(new FileChannel("MarketPlaceServer.log"));
-		AutoPtr<PatternFormatter> formatter(new PatternFormatter("%d-%m-%Y %H:%M:%S %s: %t"));
+		AutoPtr<PatternFormatter> formatter(new PatternFormatter("%d-%m-%Y %H:%M:%S:%F %s: %t"));
 		AutoPtr<FormattingChannel> formattingChannel(new FormattingChannel(formatter, fileChannel));
 
 		fileChannel->setProperty("rotateOnOpen", "true");

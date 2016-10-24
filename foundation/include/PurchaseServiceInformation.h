@@ -7,6 +7,7 @@
 #include <Poco/DOM/Element.h>
 #include <Poco/DOM/Text.h>
 #include <Poco/DOM/AutoPtr.h>
+#include <Poco/Tuple.h>
 
 #include "Purchase.h"
 
@@ -42,25 +43,27 @@ public:
 
 	void addPurchase(Purchase *purchasePtr, bool purchaseFound);
 
-	void getPurchases(Poco::XML::AutoPtr<Poco::XML::Document> pDoc, 
-					  Poco::XML::AutoPtr<Poco::XML::Element> pParent, 
+	void getPurchases(Poco::XML::AutoPtr<Poco::XML::Document> pDoc,
+					  Poco::XML::AutoPtr<Poco::XML::Element> pParent,
 					  std::map<std::string, std::vector<std::string> > & bids);
-	
-	void createCompetitorBidNode(Poco::XML::AutoPtr<Poco::XML::Document> pDoc, 
-								 Poco::XML::AutoPtr<Poco::XML::Element> pParent, 
+
+	void createCompetitorBidNode(Poco::XML::AutoPtr<Poco::XML::Document> pDoc,
+								 Poco::XML::AutoPtr<Poco::XML::Element> pParent,
 								 std::string id, double quantity);
-								 
-	void createBidNode(Poco::XML::AutoPtr<Poco::XML::Document> pDoc, 
-					   Poco::XML::AutoPtr<Poco::XML::Element> pParent, 
+
+	void createBidNode(Poco::XML::AutoPtr<Poco::XML::Document> pDoc,
+					   Poco::XML::AutoPtr<Poco::XML::Element> pParent,
 					   std::string id, double quantity);
 
     // Store purchases for the service in the database pool.
     void toDatabase(Poco::Data::SessionPool * _pool, int execution_count, int period, std::string serviceId);
 
+	typedef Poco::Tuple<int,std::string,std::string,double,double,int> DBPurchaseStructType;
+
 private:
-    
+
     std::map<std::string, PurchaseQuantities> _summaries_by_bid;
-    
+
     std::vector<std::string> _detail;
 };
 

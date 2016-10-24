@@ -51,49 +51,49 @@ class DecisionVariable
 public:
 
     DecisionVariable(std::string id);
-    
+
     ~DecisionVariable();
-    
+
     std::string getId();
-    
+
     void setName(std::string name);
-    
+
     std::string getName(void);
-        
+
     void setObjetive(OptimizationObjective objetive);
-    
+
     OptimizationObjective getObjetive(void);
-    
+
     void setModelling(Modeling modeling);
-    
+
     Modeling getModeling(void);
-        
+
     std::string getModelingStr(void);
-    
+
     std::string getObjectiveStr(void);
 
     void setRange(double min_value, double max_value);
-    
+
     double getMinValue(void);
-    
+
     std::string getMinValueStr(void);
-    
+
     double getMaxValue(void);
 
 	std::string getMaxValueStr(void);
-    
+
     void setResource(std::string resourceId);
-    
+
     std::string getResource();
-        
+
     void setProbabilityDistribution(Purpose  purpose, ProbabilityDistribution * probability_distribution);
-    
+
     ProbabilityDistribution * getProbabilityDistribution(Purpose purpose);
 
 	void setCostFunction(CostFunction *cost_function);
-	
+
 	CostFunction * getCostFunction();
-    
+
     void to_XML(Poco::XML::AutoPtr<Poco::XML::Document> pDoc,
 					Poco::XML::AutoPtr<Poco::XML::Element> pParent);
 
@@ -103,19 +103,19 @@ protected:
 
 
 private:
-	
+
 	std::string _id;
 	std::string _name;
 	OptimizationObjective _opt_objetive;
 	double _min_value;
 	double _max_value;
-	std::string _resourceId;  
+	std::string _resourceId;
 	/// Corresponds to the resource that the decision variable consumes
 	/// only it is associated when the objetive is a quality parameter.
-	
+
 	Modeling _is_modeling;
 	std::map< std::string, ProbabilityDistribution *> _probability_distributions;
-	
+
 	/// The cost function is not owned by this object, so at the destroy method nothing happen
 	CostFunction *_cost_function;
 };

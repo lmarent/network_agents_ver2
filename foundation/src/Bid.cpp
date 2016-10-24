@@ -30,7 +30,7 @@ namespace Eco
 {
 
 Bid::Bid(std::string idParam,
-		 std::string providerParam, 
+		 std::string providerParam,
 		 std::string serviceParam,
 		 size_t numberDecisionVariables):
 Datapoint(idParam),
@@ -51,7 +51,7 @@ _creation_period(0)
 	}
 }
 
-Bid::Bid(Service *service, Message & message): 
+Bid::Bid(Service *service, Message & message):
 Datapoint()
 {
 	try
@@ -62,7 +62,7 @@ Datapoint()
 			Datapoint::addNumber(0);
 		}
 
-   	    // Obtains the values required to create a bid from the message 
+   	    // Obtains the values required to create a bid from the message
 	    _id = message.getParameter("Id");
 	    _provider = message.getParameter("Provider");
 	    _service = message.getParameter("Service");
@@ -73,15 +73,15 @@ Datapoint()
 	    std::string parentBidId = message.getParameter("ParentBid");
 	    std::string capacity = message.getParameter("Capacity");
 	    std::string period = message.getParameter("CreationPeriod");
-	    
+
 	    setUnitaryProfit(unitaryProfit);
 	    setUnitaryCost(unitaryCost);
 	    setParentBidId(parentBidId);
 	    setCapacity(capacity);
 	    setInitCapacity(capacity);
 	    setCreationPeriod(period);
-	    
-		std::map<std::string, DecisionVariable *>::iterator it; 
+
+		std::map<std::string, DecisionVariable *>::iterator it;
 		for (it=(service->_decision_variables.begin()); it!=(service->_decision_variables.end()); ++it)
 		{
 			std::string decision_variable = it->first;
@@ -89,10 +89,10 @@ Datapoint()
 			std::string valueStr =  message.getParameter(decision_variable);
 			double value = Poco::NumberParser::parseFloat(valueStr);
 
-		
+
 			// Insert in the mapping between the names of decision variables and their dimensions.
 			_decision_variables.insert( std::pair<std::string, size_t>(decision_variable,dimension));
-			
+
 			// Insert the decision variable objetive
 			std::string objetive = (*(it->second)).getObjectiveStr();
 			// std::cout << "Objetive:" << objetive << std::endl;
@@ -117,7 +117,7 @@ Datapoint()
 		throw FoundationException(ex.message(), ex.code());
 	}
 }
-		
+
  Bid::~Bid()
 {
 	// std::cout << "Number of neigborhood bids" << _neighbors.size() << std::endl;
@@ -128,7 +128,7 @@ std::string Bid::getId()
 {
 	return _id;
 }
-	
+
 std::string Bid::getProvider()
 {
 	return _provider;
@@ -141,7 +141,7 @@ std::string Bid::getService()
 
 std::string Bid::getStatus(void)
 {
-	
+
 	if (_status == inactive)
 		return "inactive";
 	else
@@ -178,7 +178,7 @@ void Bid::setStatus(std::string status)
 	{
 		_status = inactive;
 	}
-	else 
+	else
 	{
 		_status = active;
 	}
@@ -196,7 +196,7 @@ void Bid::setDecisionVariable(std::string decisionVariableId, size_t dimension, 
 	if(it == _decision_variables.end()) {
 		// Insert in the mapping between the names of decision variables and their dimensions.
 		_decision_variables.insert( std::pair<std::string, size_t>(decisionVariableId,dimension));
-		
+
 		// Insert the decision variable objetive
 		int objetive_int;
 		if (objetive == MAXIME){
@@ -211,7 +211,7 @@ void Bid::setDecisionVariable(std::string decisionVariableId, size_t dimension, 
 				objetive_int = 3;
 		}
 		_decision_variables_objectives.insert( std::pair<std::string, int> (decisionVariableId, objetive_int));
-		
+
 	}
 	else{
 		throw FoundationException("The decision variable is already in the Bid");
@@ -228,7 +228,7 @@ double Bid::getDecisionVariable(std::string decisionVariableId)
 	if(it != _decision_variables.end()) {
 		size_t dimension = it->second;
 		int objetive_int = it_objetive->second;
-		
+
 		double val = Datapoint::getNumberAtDim(dimension);
 		if (objetive_int != 1)
 			val = val * -1;
@@ -254,72 +254,106 @@ void Bid::to_XML(Poco::XML::AutoPtr<Poco::XML::Document> pDoc,
 {
 	// std::cout << "putting the information of the bid:" << getId() <<  std::endl;
 
-	Poco::XML::AutoPtr<Poco::XML::Element> proot = 
+	Poco::XML::AutoPtr<Poco::XML::Element> proot =
 											pDoc->createElement("Bid");
 
-	Poco::XML::AutoPtr<Poco::XML::Element> pId = 
+	Poco::XML::AutoPtr<Poco::XML::Element> pId =
 							pDoc->createElement("Id");
 	Poco::XML::AutoPtr<Poco::XML::Text> pText1 = pDoc->createTextNode(getId());
 	pId->appendChild(pText1);
-	
-	Poco::XML::AutoPtr<Poco::XML::Element> pProvider = 
+
+	Poco::XML::AutoPtr<Poco::XML::Element> pProvider =
 							pDoc->createElement("Provider");
-	Poco::XML::AutoPtr<Poco::XML::Text> pText2 = 
+	Poco::XML::AutoPtr<Poco::XML::Text> pText2 =
 							pDoc->createTextNode(getProvider());
-	pProvider->appendChild(pText2);							
+	pProvider->appendChild(pText2);
 
-	Poco::XML::AutoPtr<Poco::XML::Element> pService = 
+	Poco::XML::AutoPtr<Poco::XML::Element> pService =
 											pDoc->createElement("Service");
-	Poco::XML::AutoPtr<Poco::XML::Text> pText3 = 
+	Poco::XML::AutoPtr<Poco::XML::Text> pText3 =
 							pDoc->createTextNode(getService());
-	pService->appendChild(pText3);	
+	pService->appendChild(pText3);
 
-	Poco::XML::AutoPtr<Poco::XML::Element> pStatus = 
+	Poco::XML::AutoPtr<Poco::XML::Element> pStatus =
 											pDoc->createElement("Status");
-	Poco::XML::AutoPtr<Poco::XML::Text> pText6 = 
+	Poco::XML::AutoPtr<Poco::XML::Text> pText6 =
 							pDoc->createTextNode(getStatus());
-	pStatus->appendChild(pText6);	
+	pStatus->appendChild(pText6);
 
-	Poco::XML::AutoPtr<Poco::XML::Element> pParentBid = 
+	Poco::XML::AutoPtr<Poco::XML::Element> pParentBid =
 											pDoc->createElement("ParentBid");
-	Poco::XML::AutoPtr<Poco::XML::Text> pText7 = 
+	Poco::XML::AutoPtr<Poco::XML::Text> pText7 =
 							pDoc->createTextNode(getParentBidId());
-	pParentBid->appendChild(pText7);	
-	
-									
+	pParentBid->appendChild(pText7);
+
+
 	proot->appendChild(pId);
 	proot->appendChild(pProvider);
 	proot->appendChild(pService);
 	proot->appendChild(pStatus);
 	proot->appendChild(pParentBid);
-	
+
 
 	std::map<std::string, size_t>::iterator it;
 	for (it= _decision_variables.begin(); it != _decision_variables.end(); ++it)
 	{
-		Poco::XML::AutoPtr<Poco::XML::Element> pDecisionVariable = 
+		Poco::XML::AutoPtr<Poco::XML::Element> pDecisionVariable =
 											pDoc->createElement("Decision_Variable");
-											
+
 		// Name of the decision variable
-		Poco::XML::AutoPtr<Poco::XML::Element> pDecisionVariableName = 
+		Poco::XML::AutoPtr<Poco::XML::Element> pDecisionVariableName =
 											pDoc->createElement("Name");
-	    Poco::XML::AutoPtr<Poco::XML::Text> pText4 = 
+	    Poco::XML::AutoPtr<Poco::XML::Text> pText4 =
 							pDoc->createTextNode(it->first);
-	    pDecisionVariableName->appendChild(pText4);	
+	    pDecisionVariableName->appendChild(pText4);
 
 		// Value of the decision variable
-		Poco::XML::AutoPtr<Poco::XML::Element> pDecisionVariableValue = 
+		Poco::XML::AutoPtr<Poco::XML::Element> pDecisionVariableValue =
 											pDoc->createElement("Value");
-	    Poco::XML::AutoPtr<Poco::XML::Text> pText5 = 
+	    Poco::XML::AutoPtr<Poco::XML::Text> pText5 =
 							pDoc->createTextNode(getDecisionVariableStr(it->first));
-	    pDecisionVariableValue->appendChild(pText5);	
-	    
+	    pDecisionVariableValue->appendChild(pText5);
+
 	    pDecisionVariable->appendChild(pDecisionVariableName);
 	    pDecisionVariable->appendChild(pDecisionVariableValue);
 		proot->appendChild(pDecisionVariable);
-	}		
+	}
 	pParent->appendChild(proot);
 }
+
+BidStruct Bid::getDBBidStructure(int execute_count, int period)
+{
+	BidStruct BidS = { period,
+					   getId(),
+					   getProvider(),
+					   getService(),
+					   (int) _status,
+					   getParetoStatus(),
+					   numDominated(),
+					   execute_count,
+					   getUnitaryProfit(),
+					   getUnitaryCost(),
+					   getParentBidId(),
+					   getCapacity(),
+					   getInitCapacity(),
+					   getCreationPeriod() };
+	return BidS;
+
+}
+
+void Bid::getDBDecisionVariables(std::map<std::string, double>  *listDecVars )
+{
+
+	std::map<std::string, size_t>::iterator it;
+	for (it= _decision_variables.begin(); it != _decision_variables.end(); ++it)
+	{
+
+		listDecVars->insert(std::pair<std::string,double>(it->first, getDecisionVariable(it->first)) );
+
+	}
+
+}
+
 
 void Bid::toDatabase(Poco::Data::SessionPool * _pool, int execute_count, int period)
 {
@@ -337,7 +371,7 @@ void Bid::toDatabase(Poco::Data::SessionPool * _pool, int execute_count, int per
 					   execute_count,
 					   getUnitaryProfit(),
 					   getUnitaryCost(),
-					   getParentBidId(), 
+					   getParentBidId(),
 					   getCapacity(),
 					   getInitCapacity(),
 					   getCreationPeriod() };
@@ -402,7 +436,7 @@ void Bid::deleteNeighbor(std::string bidId)
 	it = _neighbors.find(bidId);
 	if (it != _neighbors.end())
 	{
-		_neighbors.erase(it); 
+		_neighbors.erase(it);
 	}
 }
 
@@ -414,7 +448,7 @@ int Bid::getNumberOfNeighbors(void)
 void Bid::getNeighbors(std::vector<std::string>& listResult)
 {
 	    // Iterate over the provider bids
-    for(std::map<std::string, std::string>::iterator it = _neighbors.begin(); it != _neighbors.end(); it++) 
+    for(std::map<std::string, std::string>::iterator it = _neighbors.begin(); it != _neighbors.end(); it++)
     {
 		listResult.push_back(it->first);
 	}

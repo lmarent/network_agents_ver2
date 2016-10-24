@@ -14,12 +14,12 @@
 #include <map>
 #include <iostream>
 
+#include "Bid.h"
 #include "FoundationSys.h"
 #include "Listener.h"
 #include "BidInformation.h"
 #include "PurchaseInformation.h"
 #include "Provider.h"
-#include "Bid.h"
 #include "Resource.h"
 
 

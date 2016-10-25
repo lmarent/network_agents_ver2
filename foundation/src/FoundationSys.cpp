@@ -42,7 +42,7 @@ FoundationSys::~FoundationSys(void)
 		_services.erase(it_service);
 		++it_service;
 	}
-	
+
 	app.logger().debug("Eliminating Decision Variables registered");
 	// Release the memory assigned to Decision Variables objects
 	DecisionVariableContainer::iterator it_parameter;
@@ -53,7 +53,7 @@ FoundationSys::~FoundationSys(void)
 		_decision_variables.erase(it_parameter);
 		++it_parameter;
 	}
-	
+
 	app.logger().debug("Eliminating Resources registered");
 	ResourceContainer::iterator it_resources;
 	it_resources = _resources.begin();
@@ -83,17 +83,17 @@ FoundationSys::~FoundationSys(void)
 		_cost_functions.erase(it_cost_functions);
 		++it_cost_functions;
 	}
-		
+
 	app.logger().debug("Disconnecting from the database");
 	if (_pool != NULL)
 		delete _pool;
-		
+
 	Poco::Data::MySQL::Connector::unregisterConnector();
 
 	app.logger().debug("Eliminating modules");
 	if (_loader != NULL){
 		delete (_loader);
-	}	
+	}
 
 
 }
@@ -114,17 +114,17 @@ void FoundationSys::initialize(Poco::Util::Application &app, int bid_periods, in
 
 		std::string db_password = (std::string)
 					app.config().getString("db_password","password");
-	
+
 		std::string db_name = (std::string)
 					app.config().getString("db_name","Network_Simulation");
-	
+
 		std::string sPort = Poco::NumberFormatter::format(db_port);
 		std::string connectionStr = "host=" + db_host + ";port=" + sPort + ";user=" + db_user + ";password=" + db_password + ";db=" + db_name;
 
 		std::cout << "connectionStr:" << connectionStr << std::endl;
 		app.logger().information("Connecting with the database");
 		_pool = new Poco::Data::SessionPool("MySQL", connectionStr);
-		
+
 	} catch (Poco::NotFoundException &e) {
     	throw FoundationException("Foundation information not found");
 	} catch (Poco::InvalidArgumentException &e) {
@@ -136,12 +136,12 @@ void FoundationSys::initialize(Poco::Util::Application &app, int bid_periods, in
 	if (_bid_periods == 0 ){
 		_bid_periods = bid_periods;
 	}
-	
+
 	if (_pareto_fronts_to_exchange == 0)
 	{
 		_pareto_fronts_to_exchange = pareto_fronts;
 	}
-	
+
 	app.logger().debug("Read the resources");
 	readResourcesFromDataBase();
 
@@ -150,9 +150,9 @@ void FoundationSys::initialize(Poco::Util::Application &app, int bid_periods, in
 
 	std::string moduleDir = (std::string)
 					app.config().getString("module_dir", DEF_LIBDIR);
-	
+
 	std::cout << "module_dir:" << moduleDir << std::endl;
-	
+
 	try
 	{
 		_loader = new ModuleLoader( moduleDir.c_str() /*module (lib) basedir*/,
@@ -187,7 +187,7 @@ void FoundationSys::readGeneralParametersFromDataBase(void)
 	int bid_periods = 0;
 	int pareto_fronts_to_exchange = 0;
 	int execution_count = 0;
-	
+
 	if (getType() == CLOCK_SERVER){
 		Poco::Data::Statement insert(session);
 		insert << "update simulation_generalparameters set execution_count = execution_count + 1 limit 1";
@@ -206,7 +206,7 @@ void FoundationSys::readGeneralParametersFromDataBase(void)
 		 _bid_periods = bid_periods;
 		 _pareto_fronts_to_exchange = pareto_fronts_to_exchange;
 		 _execution_count = execution_count;
-		 
+
 		 std::cout << "In readGeneralParametersFromDataBase " << _bid_periods << std::endl;
 	 }
 
@@ -214,12 +214,12 @@ void FoundationSys::readGeneralParametersFromDataBase(void)
 	 app.logger().information(Poco::format("read general parameters from database Periods:%d execution count:%d", _bid_periods, _execution_count));
 }
 
-void FoundationSys::readDiscreteProbabilityDistributionsFromDataBase( int probabilityId, 
+void FoundationSys::readDiscreteProbabilityDistributionsFromDataBase( int probabilityId,
 					ProbabilityDistribution * probDistribution)
 {
 	// Obtain a session from the pool
 	Poco::Data::Session session(_pool->get());
-		
+
 	double value;
 	double probability;
 	Poco::Data::Statement select(session);
@@ -228,21 +228,21 @@ void FoundationSys::readDiscreteProbabilityDistributionsFromDataBase( int probab
 			into(probability),
 			use(probabilityId),
 			range(0, 1); //  iterate over result set one row at a time
-	
+
 	while (!select.done())
     {
         select.execute();
         probDistribution->addPoint(value, probability);
-    }	
+    }
 
 }
 
-void FoundationSys::readContinuousProbabilityDistributionsFromDataBase(int probabilityId, 
+void FoundationSys::readContinuousProbabilityDistributionsFromDataBase(int probabilityId,
 					ProbabilityDistribution * probDistribution)
 {
 	// Obtain a session from the pool
 	Poco::Data::Session session(_pool->get());
-		
+
 	std::string parameter;
 	double value;
 	Poco::Data::Statement select(session);
@@ -251,12 +251,12 @@ void FoundationSys::readContinuousProbabilityDistributionsFromDataBase(int proba
 			into(value),
 			use(probabilityId),
 			range(0, 1); //  iterate over result set one row at a time
-	
+
 	while (!select.done())
     {
         select.execute();
         probDistribution->addParameter(parameter, value);
-    }	
+    }
 
 }
 
@@ -265,12 +265,12 @@ void FoundationSys::readProbabilityDistributionsFromDataBase(void)
 {
 	 // Obtain a session from the pool
 	Poco::Data::Session session(_pool->get());
-	
+
 	int id;
 	std::string name;
 	std::string domainStr;
 	std::string class_name;
-	
+
 	Poco::Data::Statement select(session);
 	select << "SELECT id, name, domain, class_name FROM simulation_probabilitydistribution",
 			into(id),
@@ -278,7 +278,7 @@ void FoundationSys::readProbabilityDistributionsFromDataBase(void)
 			into(domainStr),
 			into(class_name),
 			range(0, 1); //  iterate over result set one row at a time
-	
+
 	while (!select.done())
     {
         select.execute();
@@ -287,7 +287,7 @@ void FoundationSys::readProbabilityDistributionsFromDataBase(void)
 			domain = DOM_CONTINUOUS;
 		else
 			domain = DOM_DISCRETE;
-		
+
 		std::string probId;
 		Poco::NumberFormatter::append(probId, id);
 		ProbabilityDistribution * probDistribution = new ProbabilityDistribution(probId, class_name, domain);
@@ -306,6 +306,11 @@ void FoundationSys::readProbabilityDistributionsFromDataBase(void)
 
 void FoundationSys::readContinuousCostFunctionsFromDataBase(int costFunctionId, CostFunction * cost_function)
 {
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().information("read general parameters from database");
+
+
 	// Obtain a session from the pool
 	Poco::Data::Session session(_pool->get());
 
@@ -314,7 +319,7 @@ void FoundationSys::readContinuousCostFunctionsFromDataBase(int costFunctionId, 
 		// Load the class from modules.
 		Module *module = _loader->loadModule( cost_function->getClassName() , 0, NULL );
 		CostModule *costmod = dynamic_cast<CostModule*>(module);
-		
+
 		if (costmod != NULL){
 
 			cost_function->setModule(costmod);
@@ -326,21 +331,23 @@ void FoundationSys::readContinuousCostFunctionsFromDataBase(int costFunctionId, 
 					into(value),
 					use(costFunctionId),
 					range(0, 1); //  iterate over result set one row at a time
-	
+
 			while (!select.done())
 			{
 				select.execute();
+				app.logger().information(Poco::format("CostFunction:%d Parameter:%s - Value:%f", costFunctionId, parameter, value ));
+
 				// Only add the parameter if not empty.
 				if (!parameter.empty()){
 					cost_function->addParameter(parameter, value);
 				}
 			}
 		}
-	    
+
 	} catch (ProcError &e){
 		throw FoundationException(e.getError());
 	}
-    
+
 
 }
 
@@ -348,12 +355,12 @@ void FoundationSys::readCostFunctionsFromDataBase(void)
 {
 	 // Obtain a session from the pool
 	Poco::Data::Session session(_pool->get());
-	
+
 	int id;
 	std::string name;
 	std::string rangeStr;
 	std::string class_name;
-	
+
 	Poco::Data::Statement select(session);
 	select << "SELECT id, name, range_function, class_name FROM simulation_costfunction",
 			into(id),
@@ -361,7 +368,7 @@ void FoundationSys::readCostFunctionsFromDataBase(void)
 			into(rangeStr),
 			into(class_name),
 			range(0, 1); //  iterate over result set one row at a time
-	
+
 	while (!select.done())
     {
         select.execute();
@@ -370,7 +377,7 @@ void FoundationSys::readCostFunctionsFromDataBase(void)
 			range = RANGE_CONTINUOUS;
 		else
 			range = RANGE_DISCRETE;
-		
+
 		std::string cstFunctionId;
 		Poco::NumberFormatter::append(cstFunctionId, id);
 		CostFunction * cstFunction = new CostFunction(cstFunctionId, class_name, range, _loader);
@@ -387,7 +394,7 @@ void FoundationSys::readResourcesFromDataBase(void)
 
 	// Obtain a session from the pool
 	Poco::Data::Session session(_pool->get());
-		
+
 	int id;
 	std::string name;
 	Poco::Data::Statement select(session);
@@ -395,16 +402,16 @@ void FoundationSys::readResourcesFromDataBase(void)
 			into(id),
 			into(name),
 			range(0, 1); //  iterate over result set one row at a time
-	
+
 	while (!select.done())
     {
         select.execute();
         std::string resourceId;
-        Poco::NumberFormatter::append(resourceId, id);	
-        Resource *resource = new Resource(resourceId); 
+        Poco::NumberFormatter::append(resourceId, id);
+        Resource *resource = new Resource(resourceId);
         resource->setName(name);
 		_resources.insert(std::pair<std::string, Resource *> (resource->getId(), resource));
-    }	
+    }
 }
 
 
@@ -412,7 +419,7 @@ void FoundationSys::readDecisionVariablesFromDataBase(void)
 {
 	 // Obtain a session from the pool
 	Poco::Data::Session session(_pool->get());
-	
+
 	int id;
 	std::string name;
 	std::string optimizationStr;
@@ -423,7 +430,7 @@ void FoundationSys::readDecisionVariablesFromDataBase(void)
 	int sensDistribId;
 	int valDistribId;
 	int cstFunctionId;
-	
+
 	Poco::Data::Statement select(session);
 	select << "SELECT id, name, optimization, min_value, max_value, resource_id, modeling, sensitivity_distribution_id, value_distribution_id, cost_function_id FROM simulation_decisionvariable",
 			into(id),
@@ -437,7 +444,7 @@ void FoundationSys::readDecisionVariablesFromDataBase(void)
 			into(valDistribId),
 			into(cstFunctionId),
 			range(0, 1); //  iterate over result set one row at a time
-	
+
 	while (!select.done())
     {
         select.execute();
@@ -452,14 +459,14 @@ void FoundationSys::readDecisionVariablesFromDataBase(void)
 			modeling = MODEL_QUALITY;
 		else
 			modeling = MODEL_PRICE;
-		
+
 		std::string decId, resourceId, sensitivityDistrId,valueDistrId, costFunctionId;
 		Poco::NumberFormatter::append(decId, id);
 		Poco::NumberFormatter::append(resourceId, resId);
 		Poco::NumberFormatter::append(sensitivityDistrId, sensDistribId);
-		Poco::NumberFormatter::append(valueDistrId, valDistribId);	
-		Poco::NumberFormatter::append(costFunctionId, cstFunctionId);	
-		
+		Poco::NumberFormatter::append(valueDistrId, valDistribId);
+		Poco::NumberFormatter::append(costFunctionId, cstFunctionId);
+
 		DecisionVariable * decisionVar = new DecisionVariable(decId);
 		decisionVar->setName(name);
 		decisionVar->setModelling(modeling);
@@ -468,9 +475,9 @@ void FoundationSys::readDecisionVariablesFromDataBase(void)
 		decisionVar->setResource(resourceId);
 		decisionVar->setProbabilityDistribution( SENSITIVITY, getProbabilityDistribution(sensitivityDistrId));
 		decisionVar->setProbabilityDistribution( VALUE, getProbabilityDistribution(valueDistrId));
-		if (cstFunctionId > 0) 
+		if (cstFunctionId > 0)
 			decisionVar->setCostFunction(getCostFunction(costFunctionId));
-		
+
 		insertDecisionVariable(decisionVar);
     }
 }
@@ -480,18 +487,18 @@ void FoundationSys::readServiceDecisionVariablesFromDataBase(int serviceId,  Ser
 	 // Obtain a session from the pool
 	Poco::Data::Session session(_pool->get());
 	Poco::Data::Statement select(session);
-	
+
 	int id;
 	select << "SELECT id_decision_variable_id FROM simulation_service_decisionvariable where id_service_id = ?",
 			into(id),
 			use(serviceId),
 			range(0, 1);
-			
+
 	while (!select.done())
 	{
 		select.execute();
 		std::string variableId;
-		Poco::NumberFormatter::append(variableId, id);	
+		Poco::NumberFormatter::append(variableId, id);
 		DecisionVariable * variable = getDecisionVariable(variableId);
 		service->addDecisionVariable(variable);
 	}
@@ -530,7 +537,7 @@ void FoundationSys::readServicesFromDataBase(void)
 			service->loadTrafficConverter(file_name_converter);
 		}
 		readServiceDecisionVariablesFromDataBase(id, service);
-		insertService(service);	
+		insertService(service);
 	}
 }
 
@@ -576,7 +583,7 @@ void FoundationSys::insertCostFunction(CostFunction * cost_function)
 {
 	CostFunctionContainer::iterator it;
 	it = _cost_functions.find(cost_function->getId());
-	
+
 	if(it == _cost_functions.end()) {
 		_cost_functions.insert ( std::pair<std::string, CostFunction *> (cost_function->getId(),cost_function) );
 	}
@@ -619,7 +626,7 @@ CostFunction * FoundationSys::getCostFunction(std::string id)
 {
 	CostFunctionContainer::iterator it;
 	it = _cost_functions.find(id);
-	if(it != _cost_functions.end()) 
+	if(it != _cost_functions.end())
 	{
 		return it->second;
 	}
@@ -634,7 +641,7 @@ ProbabilityDistribution * FoundationSys::getProbabilityDistribution(std::string 
 {
 	ProbabilityDistributionContainer::iterator it;
 	it = _probability_distributions.find(id);
-	if(it != _probability_distributions.end()) 
+	if(it != _probability_distributions.end())
 	{
 		return it->second;
 	}
@@ -708,7 +715,7 @@ SimplestTrafficConverter * FoundationSys::loadTrafficConverter(std::string servi
 {
 
 	std::cout << "Starting loadTrafficConverter Parameter:" <<  serviceId << std::endl;
-	
+
 	// Obtain a session from the pool
 	Poco::Data::Session session(_pool->get());
 	double average, variance, market_potential;
@@ -728,7 +735,7 @@ SimplestTrafficConverter * FoundationSys::loadTrafficConverter(std::string servi
 		return traffic_converter;
 	}
 	// if it is not configured, then it returns NULL.
-	return NULL;		
+	return NULL;
 }
 
 AgentType FoundationSys::getType()

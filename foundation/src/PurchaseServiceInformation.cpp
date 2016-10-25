@@ -234,12 +234,21 @@ void PurchaseServiceInformation::toDatabase(Poco::Data::SessionPool * _pool, int
 	if (periods.size() > 0 ){
 
 		Poco::Data::Session session(_pool->get());
-		Poco::Data::Statement insert(session);
+		Poco::Data::Statement inserttmp(session);
 
-		insert << "insert into simulation_bid_purchases(period, serviceId, bidId, quantity, qty_backlog, execution_count) values(?,?,?,?,?,?)", use(periods),
+		inserttmp << "insert into simulation_bid_purchases_tmp(period, serviceId, bidId, quantity, qty_backlog, execution_count) values(?,?,?,?,?,?)", use(periods),
 						use(serviceIds), use(bidIds), use(quantities), use(quantityBacklogs), use(executioncount);
 
+		inserttmp.execute();
+
+		Poco::Data::Statement insert(session);
+		insert << "insert into simulation_bid_purchases(period, serviceId, bidId, quantity, qty_backlog, execution_count) select period, serviceId, bidId, quantity, qty_backlog, execution_count from simulation_bid_purchases_tmp";
 		insert.execute();
+
+		Poco::Data::Statement deletetmp(session);
+		deletetmp << "truncate simulation_bid_purchases_tmp";
+		deletetmp.execute();
+
 		session.commit();
 	}
 

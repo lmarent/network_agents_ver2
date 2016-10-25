@@ -2,6 +2,7 @@
 #include <Poco/Util/ServerApplication.h>
 #include "FoundationException.h"
 #include "Provider.h"
+#include <limits>
 
 namespace ChoiceNet
 {
@@ -241,31 +242,47 @@ double Provider::getBulkAvailability(unsigned period, Service * service, Bid * b
 			if (variable->getModeling() == MODEL_QUALITY)
 			{
 
-
-#ifndef TEST_ENABLED
 				app.logger().debug("Getting resource availability - Resource:" + variable->getResource());
-#endif
 				requirement = getUnitaryRequirement(period,variable->getResource(), variable, bid->getDecisionVariable(variable->getId()) );
 				if (requirement < 0){
+					app.logger().error("The resource was not found, which means it has no capacity");
 					return 0; // The resource was not found, which means it has no capacity.
 				}
 				else{
 					if (enter == false)
 					{
 						availabilityResource = getResourceAvailability(period,variable->getResource() );
-						availability = availabilityResource / requirement;
-						enter = true;
+						if (requirement > 0) {
+							availability = availabilityResource / requirement;
+							enter = true;
+						}
+						else{
+							// It puts the maximum availability
+							availability = std::numeric_limits<double>::max();
+							enter = true;
+						}
 					}
 					else
 					{
 						// The assumption here is that every resource can be compared in terms of capacity.
 						availabilityResource = getResourceAvailability(period,variable->getResource() );
-						availabilityTmp = availabilityResource / requirement;
-						if (availabilityTmp <availability){
-							availability = availabilityTmp;
+						if (requirement > 0) {
+							availabilityTmp = availabilityResource / requirement;
+							if (availabilityTmp <availability){
+								availability = availabilityTmp;
+							}
+						}
+						else {
+							availabilityTmp = std::numeric_limits<double>::max();
+							if (availabilityTmp <availability){
+								availability = availabilityTmp;
+							}
 						}
 					}
 				}
+
+				app.logger().information(Poco::format("resource: %s - Requirement:%f - Availability:%f", variable->getResource(), requirement, availability) );
+
 			}
 		}
 	}
@@ -297,6 +314,8 @@ double Provider::getBulkAvailability(unsigned period, Service * service, Bid * b
 						availability = availabilityTmp;
 					}
 				}
+
+				app.logger().information(Poco::format("resource: %s - Requirement:%f - Availability:%f", variable->getResource(), requirement, availability) );
 			}
 		}
 

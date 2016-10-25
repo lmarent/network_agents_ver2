@@ -70,11 +70,7 @@ double Resource::getConsumption(DecisionVariable *qualityParameter, double value
             percentage = percentage + (maxValue - value) / (maxValue - minValue);
 	}
 
-#ifndef TEST_ENABLED
-	std::string percentageStr;
-	Poco::NumberFormatter::append(percentageStr, percentage);
-	app.logger().debug("Ending Resource - get Consumption" + percentageStr);
-#endif
+	app.logger().information(Poco::format("Ending Resource - get Consumption percentage:%f", percentage) );
 
 	return percentage;
 }

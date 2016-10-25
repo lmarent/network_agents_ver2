@@ -673,7 +673,7 @@ void MarketPlaceSys::saveBidInformation(void)
 
 			// Perform the inserts in bulk.
 			Poco::Data::Statement insertBids(session2);
-			insertBids << "insert into simulation_bid (period, bidId, providerId, status, paretoStatus, dominatedCount, execution_count, unitary_profit, unitary_cost, parentBidId, capacity, init_capacity, creation_period) values (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+			insertBids << "insert into simulation_bid_tmp (period, bidId, providerId, status, paretoStatus, dominatedCount, execution_count, unitary_profit, unitary_cost, parentBidId, capacity, init_capacity, creation_period) values (?,?,?,?,?,?,?,?,?,?,?,?,?)",
 								use(bVal1), // period,
 								use(bVal2), // bidId,
 								use(bVal3), // providerId,
@@ -689,6 +689,15 @@ void MarketPlaceSys::saveBidInformation(void)
 								use(bVal13); // creation_period
 
 			insertBids.execute();
+
+			Poco::Data::Statement inserttmpbid(session2);
+			inserttmpbid << "insert into simulation_bid(period, bidId, providerId, status, paretoStatus, dominatedCount, execution_count, unitary_profit, unitary_cost, parentBidId, capacity, init_capacity, creation_period) select period, bidId, providerId, status, paretoStatus, dominatedCount, execution_count, unitary_profit, unitary_cost, parentBidId, capacity, init_capacity, creation_period from simulation_bid_tmp";
+			inserttmpbid.execute();
+
+			Poco::Data::Statement deletetmpbid(session2);
+			deletetmpbid << "truncate simulation_bid_tmp";
+			deletetmpbid.execute();
+
 			session2.commit();
 
 			app.logger().information("After inserting Bid headers");
@@ -696,7 +705,7 @@ void MarketPlaceSys::saveBidInformation(void)
 			Poco::Data::Session session(_pool->get());
 
 			Poco::Data::Statement insertDecisionVariable(session);
-			insertDecisionVariable << "insert into simulation_bid_decision_variable (parentId, decisionVariableName, value, execution_count ) values(?,?,?,?)",
+			insertDecisionVariable << "insert into simulation_bid_decision_variable_tmp (parentId, decisionVariableName, value, execution_count ) values(?,?,?,?)",
 								use(dvbidIds),
 								use(dvvariableIds),
 								use(dvdecisionvalues),
@@ -704,7 +713,14 @@ void MarketPlaceSys::saveBidInformation(void)
 
 			insertDecisionVariable.execute();
 
-			// session2 << "insert into simulation_bid_decision_variable (parentId, decisionVariableName, value, execution_count ) values(?,?,?,?)", use(setDecvs), now;
+			Poco::Data::Statement inserttmp(session);
+			inserttmp << "insert into simulation_bid_decision_variable(parentId, decisionVariableName, value, execution_count) select parentId, decisionVariableName, value, execution_count from simulation_bid_decision_variable_tmp";
+			inserttmp.execute();
+
+			Poco::Data::Statement deletetmp(session);
+			deletetmp << "truncate simulation_bid_decision_variable_tmp";
+			deletetmp.execute();
+
 			session.commit();
 		}
 
@@ -949,7 +965,7 @@ void MarketPlaceSys::addPurchaseBulkCapacity(Provider *provider, Service *servic
 
 	availability = provider->getBulkAvailability(_period, service, bid);
 
-	app.logger().debug("Entering addPurchaseBulkCapacity");
+	app.logger().information(Poco::format("Availability: %f", availability) );
 
 	if ( availability > 0 )
 	{
@@ -961,6 +977,8 @@ void MarketPlaceSys::addPurchaseBulkCapacity(Provider *provider, Service *servic
 			purchasePtr->setQuantityBacklog(purchasePtr->getQuantity() - availability);
 			purchasePtr->setQuantity(availability);
 		}
+
+		app.logger().information(Poco::format("Qty to purchase:%f", purchasePtr->getQuantity() ));
 
 		// In any case inserts the purchase into the service container.
 		(*_current_purchases).addPurchaseToService(purchasePtr, purchaseFound);
@@ -1307,7 +1325,7 @@ Bid * MarketPlaceSys::getBid(std::string bidId)
 void MarketPlaceSys::storeCurrentPurchaseInformation()
 {
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().debug("Starting storeCurrentPurchaseInformation");
+	app.logger().information("Starting storeCurrentPurchaseInformation");
 
 	if (_period > 0){
 		if (_current_purchases != NULL)
@@ -1321,7 +1339,7 @@ void MarketPlaceSys::storeCurrentPurchaseInformation()
 	else {
 		app.logger().debug(Poco::format("invalid period - Period:%d", (int) _period) );
 	}
-	app.logger().debug("Ending storeCurrentPurchaseInformation");
+	app.logger().information("Ending storeCurrentPurchaseInformation");
 }
 
 void MarketPlaceSys::deleteListener( Poco::Net::SocketAddress socketAddress,

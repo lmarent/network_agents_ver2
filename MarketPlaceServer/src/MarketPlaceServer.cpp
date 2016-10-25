@@ -100,6 +100,17 @@ namespace Eco
     int MarketPlaceServer::main(const std::vector<std::string>& args)
     {
 
+
+		AutoPtr<FileChannel> fileChannel(new FileChannel("MarketPlaceServer.log"));
+		AutoPtr<PatternFormatter> formatter(new PatternFormatter("%d-%m-%Y %H:%M:%S:%F %s: %t"));
+		AutoPtr<FormattingChannel> formattingChannel(new FormattingChannel(formatter, fileChannel));
+
+		fileChannel->setProperty("rotateOnOpen", "true");
+		Poco::Logger& logger = Poco::Util::ServerApplication::logger();
+		logger.setChannel(formattingChannel);
+		logger.setLevel(Poco::Message::PRIO_INFORMATION);
+
+
         // Initialize the system.
         try
         {
@@ -120,15 +131,6 @@ namespace Eco
         	terminate();
         }
 
-
-		AutoPtr<FileChannel> fileChannel(new FileChannel("MarketPlaceServer.log"));
-		AutoPtr<PatternFormatter> formatter(new PatternFormatter("%d-%m-%Y %H:%M:%S:%F %s: %t"));
-		AutoPtr<FormattingChannel> formattingChannel(new FormattingChannel(formatter, fileChannel));
-
-		fileChannel->setProperty("rotateOnOpen", "true");
-		Poco::Logger& logger = Poco::Util::ServerApplication::logger();
-		logger.setChannel(formattingChannel);
-		logger.setLevel(Poco::Message::PRIO_INFORMATION);
 
 		// Reads from the configuration the listening port
 		unsigned short port = (unsigned short)

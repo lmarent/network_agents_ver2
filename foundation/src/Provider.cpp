@@ -80,12 +80,14 @@ void Provider::deductResourceAvailability(unsigned period,
 	Poco::Util::Application& app = Poco::Util::Application::instance();
 	app.logger().information(Poco::format("starting deduct resource availability - level:%f -quantity:%f", level, quantity) );
 
-
+	double endAvailability = 0;
 	ResourceMap::iterator it;
 	it = _resources.find(resourceId);
 	// when the resourceId is not found the system, it assumes unlimited capacity
-	if (it != _resources.end())
-		(*(it->second)).deductAvailability(period, variable, level,quantity);
+	if (it != _resources.end()){
+		endAvailability = (*(it->second)).deductAvailability(period, variable, level,quantity);
+		app.logger().information(Poco::format("provider:%s end availability %f", getId(), endAvailability));
+	}
 
 
 

@@ -88,6 +88,7 @@ double ResourceAvailability::deductAvailability(unsigned period,
 	app.logger().information(Poco::format("Entering deductAvailability level:%f quantity:%f", level, quantity) );
 
 	double quantityRequired = 0;
+	double endAvailability = 0;
 
 	if ( _resource != NULL )
 	{
@@ -107,10 +108,13 @@ double ResourceAvailability::deductAvailability(unsigned period,
 		}
 		it = _time_availability.find(period);
 		it->second -= quantityRequired;
+		endAvailability = it->second;
 
 		app.logger().information(Poco::format("Ending deductAvailability - final availability: %f", it->second) );
 
 	}
+
+	return endAvailability;
 }
 
 bool ResourceAvailability::checkAvailability(unsigned period,

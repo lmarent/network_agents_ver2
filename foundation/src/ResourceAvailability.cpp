@@ -84,11 +84,10 @@ double ResourceAvailability::deductAvailability(unsigned period,
 											    double quantity)
 {
 
-#ifndef TEST_ENABLED
 	Poco::Util::Application& app = Poco::Util::Application::instance();
-	app.logger().debug("Entering deductAvailability");
-#endif
+	app.logger().information(Poco::format("Entering deductAvailability level:%f quantity:%f", level, quantity) );
 
+	double quantityRequired = 0;
 
 	if ( _resource != NULL )
 	{
@@ -100,7 +99,7 @@ double ResourceAvailability::deductAvailability(unsigned period,
 		else
 			rateAdj = rate;
 
-		double quantityRequired = quantity * rateAdj;
+		quantityRequired = quantity * rateAdj;
 		std::map<unsigned, double>::iterator it;
 		it = _time_availability.find(period);
 		if (it == _time_availability.end()){
@@ -109,9 +108,7 @@ double ResourceAvailability::deductAvailability(unsigned period,
 		it = _time_availability.find(period);
 		it->second -= quantityRequired;
 
-#ifndef TEST_ENABLED
-		app.logger().debug(Poco::format("Ending deductAvailability - final availability: %f", it->second) );
-#endif
+		app.logger().information(Poco::format("Ending deductAvailability - final availability: %f", it->second) );
 
 	}
 }

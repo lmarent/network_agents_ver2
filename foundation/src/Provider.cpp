@@ -76,11 +76,19 @@ void Provider::deductResourceAvailability(unsigned period,
 										 double level,
 										 double quantity )
 {
+
+	Poco::Util::Application& app = Poco::Util::Application::instance();
+	app.logger().information(Poco::format("starting deduct resource availability - level:%f -quantity:%f", level, quantity) );
+
+
 	ResourceMap::iterator it;
 	it = _resources.find(resourceId);
 	// when the resourceId is not found the system, it assumes unlimited capacity
 	if (it != _resources.end())
 		(*(it->second)).deductAvailability(period, variable, level,quantity);
+
+
+
 }
 
 void Provider::deductAvailability(unsigned period,
@@ -88,6 +96,8 @@ void Provider::deductAvailability(unsigned period,
 									Purchase * purchase,
 									Bid * bid)
 {
+
+
 	std::map<std::string, DecisionVariable *>::iterator it;
 	for (it=(service->_decision_variables.begin()); it!=(service->_decision_variables.end()); ++it)
 	{
